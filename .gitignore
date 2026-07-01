@@ -1,0 +1,11 @@
+# build / dependencies
+node_modules/
+main.js
+*.js.map
+
+# obsidian local plugin data (per-vault, should not be versioned)
+data.json
+
+# os / editor
+.DS_Store
+Thumbs.db

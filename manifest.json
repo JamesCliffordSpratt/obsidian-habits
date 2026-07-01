@@ -1,0 +1,10 @@
+{
+	"id": "habits",
+	"name": "Habits",
+	"version": "0.1.0",
+	"minAppVersion": "1.5.0",
+	"description": "Track binary, repetition, and timed habits from a carousel dashboard inside your vault.",
+	"author": "James Clifford Spratt",
+	"authorUrl": "https://github.com/JamesCliffordSpratt",
+	"isDesktopOnly": false
+}
