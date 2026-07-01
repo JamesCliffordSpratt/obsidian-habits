@@ -39,14 +39,12 @@
 	display: inline-flex;
 }
 
-.habits-date-label {
+.habits-dashboard .habits-date-label {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
-	min-width: 6rem;
-	padding: 0.25rem 0.5rem;
+	padding: 0.25rem 0.6rem;
 	font-weight: var(--font-semibold);
-	text-align: center;
 	color: var(--text-normal);
 	background: transparent;
 	border: none;
@@ -55,7 +53,7 @@
 	box-shadow: none;
 }
 
-.habits-date-label:hover {
+.habits-dashboard .habits-date-label:hover {
 	background: var(--background-modifier-hover);
 }
 
