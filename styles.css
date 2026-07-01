@@ -187,3 +187,66 @@
 .habits-dot.is-active {
 	background: var(--habits-accent);
 }
+
+/* New-habit modal: live preview and icon picker */
+
+.habits-modal-preview {
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+	padding: 0.75rem 0;
+	margin-bottom: 0.25rem;
+	border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.habits-modal-preview-icon {
+	--habits-accent: var(--interactive-accent);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 3rem;
+	height: 3rem;
+	border-radius: 50%;
+	color: var(--text-on-accent);
+	background: var(--habits-accent);
+	flex: 0 0 auto;
+}
+
+.habits-modal-preview-icon .svg-icon {
+	width: 1.6rem;
+	height: 1.6rem;
+}
+
+.habits-modal-preview-name {
+	font-size: var(--font-ui-large);
+	font-weight: var(--font-semibold);
+	color: var(--text-normal);
+}
+
+.habits-button-icon {
+	display: inline-flex;
+	align-items: center;
+	margin-right: 0.4rem;
+	vertical-align: middle;
+}
+
+.habits-button-icon .svg-icon {
+	width: 1em;
+	height: 1em;
+}
+
+.habits-icon-suggestion {
+	display: flex;
+	align-items: center;
+	gap: 0.6rem;
+}
+
+.habits-icon-suggestion-glyph {
+	display: inline-flex;
+	color: var(--text-muted);
+}
+
+.habits-icon-suggestion-glyph .svg-icon {
+	width: 1.1rem;
+	height: 1.1rem;
+}

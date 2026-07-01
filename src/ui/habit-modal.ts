@@ -1,6 +1,7 @@
-import { App, Modal, Setting } from "obsidian";
+import { App, ButtonComponent, Modal, Setting, setIcon } from "obsidian";
 import type { HabitStore } from "../habit-store";
 import type { HabitType } from "../types";
+import { IconSuggestModal, iconLabel } from "./icon-suggest-modal";
 
 /** Modal that collects the details needed to create a new habit. */
 export class HabitModal extends Modal {
@@ -11,6 +12,10 @@ export class HabitModal extends Modal {
 	private color = "";
 	private icon = "";
 
+	private previewIconEl: HTMLElement | null = null;
+	private previewNameEl: HTMLElement | null = null;
+	private iconButton: ButtonComponent | null = null;
+
 	constructor(
 		app: App,
 		private store: HabitStore,
@@ -20,6 +25,7 @@ export class HabitModal extends Modal {
 	}
 
 	onOpen(): void {
+		this.modalEl.addClass("habits-modal");
 		this.build();
 	}
 
@@ -33,12 +39,15 @@ export class HabitModal extends Modal {
 
 		new Setting(contentEl).setName("New habit").setHeading();
 
+		this.renderPreview(contentEl);
+
 		new Setting(contentEl).setName("Name").addText((text) =>
 			text
 				.setPlaceholder("Drink water")
 				.setValue(this.habitName)
 				.onChange((value) => {
 					this.habitName = value;
+					this.updatePreview();
 				}),
 		);
 
@@ -61,7 +70,9 @@ export class HabitModal extends Modal {
 
 		if (this.type !== "binary") {
 			const targetName =
-				this.type === "timed" ? "Daily target (minutes)" : "Daily target";
+				this.type === "timed"
+					? "Daily target (minutes)"
+					: "Daily target";
 			new Setting(contentEl).setName(targetName).addText((text) =>
 				text
 					.setPlaceholder(this.type === "timed" ? "30" : "8")
@@ -89,22 +100,36 @@ export class HabitModal extends Modal {
 
 		new Setting(contentEl)
 			.setName("Icon")
-			.setDesc("Optional Lucide icon ID, for example droplet or dumbbell.")
-			.addText((text) =>
-				text
-					.setPlaceholder("Droplet")
-					.setValue(this.icon)
-					.onChange((value) => {
-						this.icon = value.trim();
+			.setDesc("Choose an icon to represent this habit.")
+			.addButton((button) => {
+				this.iconButton = button;
+				this.updateIconButton();
+				button.onClick(() => {
+					new IconSuggestModal(this.app, (icon) => {
+						this.icon = icon;
+						this.updateIconButton();
+						this.updatePreview();
+					}).open();
+				});
+			})
+			.addExtraButton((extra) =>
+				extra
+					.setIcon("x")
+					.setTooltip("Clear icon")
+					.onClick(() => {
+						this.icon = "";
+						this.updateIconButton();
+						this.updatePreview();
 					}),
 			);
 
 		new Setting(contentEl)
 			.setName("Colour")
-			.setDesc("Optional accent colour for the card.")
+			.setDesc("Accent colour for the card.")
 			.addColorPicker((picker) =>
 				picker.setValue(this.color || "#7c6cff").onChange((value) => {
 					this.color = value;
+					this.updatePreview();
 				}),
 			);
 
@@ -131,5 +156,45 @@ export class HabitModal extends Modal {
 						}
 					}),
 			);
+	}
+
+	private renderPreview(contentEl: HTMLElement): void {
+		const preview = contentEl.createDiv({ cls: "habits-modal-preview" });
+		this.previewIconEl = preview.createDiv({
+			cls: "habits-modal-preview-icon",
+		});
+		this.previewNameEl = preview.createDiv({
+			cls: "habits-modal-preview-name",
+		});
+		this.updatePreview();
+	}
+
+	private updatePreview(): void {
+		if (this.previewIconEl) {
+			this.previewIconEl.empty();
+			setIcon(this.previewIconEl, this.icon || "circle-dashed");
+			this.previewIconEl.setCssProps({
+				"--habits-accent": this.color || "var(--interactive-accent)",
+			});
+		}
+		if (this.previewNameEl) {
+			this.previewNameEl.setText(this.habitName || "Your habit");
+		}
+	}
+
+	private updateIconButton(): void {
+		const button = this.iconButton;
+		if (!button) {
+			return;
+		}
+		button.buttonEl.empty();
+		const glyph = button.buttonEl.createSpan({ cls: "habits-button-icon" });
+		if (this.icon) {
+			setIcon(glyph, this.icon);
+			button.buttonEl.createSpan({ text: iconLabel(this.icon) });
+		} else {
+			setIcon(glyph, "image-plus");
+			button.buttonEl.createSpan({ text: "Choose icon" });
+		}
 	}
 }
