@@ -351,3 +351,18 @@
 	font-size: 1.2rem;
 	line-height: 1;
 }
+
+/* Carousel arrow disabled state and position counter */
+
+.habits-carousel-prev.is-disabled,
+.habits-carousel-next.is-disabled {
+	opacity: 0.3;
+	pointer-events: none;
+}
+
+.habits-carousel-count {
+	min-width: 3rem;
+	text-align: center;
+	color: var(--text-muted);
+	font-size: var(--font-ui-small);
+}

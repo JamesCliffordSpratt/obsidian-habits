@@ -23,6 +23,7 @@ export class HabitsDashboard extends MarkdownRenderChild {
 	private habits: HabitDefinition[] = [];
 	private selectedDate: Date = new Date();
 	private index = 0;
+	private lastPerView = 1;
 
 	private root: HTMLElement;
 	private trackEl: HTMLElement | null = null;
@@ -39,7 +40,7 @@ export class HabitsDashboard extends MarkdownRenderChild {
 
 	onload(): void {
 		this.root.addClass("habits-dashboard");
-		this.registerDomEvent(window, "resize", () => this.applyLayout());
+		this.registerDomEvent(window, "resize", () => this.handleResize());
 		this.reload();
 	}
 
@@ -155,37 +156,89 @@ export class HabitsDashboard extends MarkdownRenderChild {
 		this.applyLayout();
 	}
 
+	/** Number of distinct positions the carousel can rest at. */
+	private pageCount(): number {
+		return Math.max(1, this.habits.length - this.perView() + 1);
+	}
+
 	private renderControls(): void {
-		const controls = this.root.createDiv({ cls: "habits-carousel-controls" });
+		const pages = this.pageCount();
+		if (pages <= 1) {
+			return;
+		}
+
+		const controls = this.root.createDiv({
+			cls: "habits-carousel-controls",
+		});
 
 		const prev = controls.createEl("button", {
-			cls: "habits-icon-button",
-			attr: { type: "button", "aria-label": "Previous habit" },
+			cls: "habits-icon-button habits-carousel-prev",
+			attr: { type: "button", "aria-label": "Previous" },
 		});
 		setIcon(prev, "chevron-left");
 		this.registerDomEvent(prev, "click", () => this.move(-1));
 
-		const dots = controls.createDiv({ cls: "habits-dots" });
-		this.habits.forEach((_, i) => {
-			const dot = dots.createEl("button", {
-				cls: "habits-dot",
-				attr: { type: "button", "aria-label": `Go to habit ${i + 1}` },
-			});
-			if (i === this.index) {
-				dot.addClass("is-active");
+		if (pages <= 7) {
+			const dots = controls.createDiv({ cls: "habits-dots" });
+			for (let i = 0; i < pages; i++) {
+				const dot = dots.createEl("button", {
+					cls: "habits-dot",
+					attr: {
+						type: "button",
+						"aria-label": `Go to position ${i + 1}`,
+					},
+				});
+				this.registerDomEvent(dot, "click", () => {
+					this.index = i;
+					this.applyLayout();
+				});
 			}
-			this.registerDomEvent(dot, "click", () => {
-				this.index = i;
-				this.applyLayout();
-			});
-		});
+		} else {
+			controls.createSpan({ cls: "habits-carousel-count" });
+		}
 
 		const next = controls.createEl("button", {
-			cls: "habits-icon-button",
-			attr: { type: "button", "aria-label": "Next habit" },
+			cls: "habits-icon-button habits-carousel-next",
+			attr: { type: "button", "aria-label": "Next" },
 		});
 		setIcon(next, "chevron-right");
 		this.registerDomEvent(next, "click", () => this.move(1));
+
+		this.updateControls();
+	}
+
+	/** Update dot/arrow/counter state to match the current position. */
+	private updateControls(): void {
+		const maxIndex = Math.max(0, this.habits.length - this.perView());
+
+		const prevBtn = this.root.querySelector<HTMLElement>(
+			".habits-carousel-prev",
+		);
+		prevBtn?.toggleClass("is-disabled", this.index <= 0);
+
+		const nextBtn = this.root.querySelector<HTMLElement>(
+			".habits-carousel-next",
+		);
+		nextBtn?.toggleClass("is-disabled", this.index >= maxIndex);
+
+		const dots = this.root.querySelectorAll(".habits-dot");
+		dots.forEach((dot, i) => {
+			dot.toggleClass("is-active", i === this.index);
+		});
+
+		const count = this.root.querySelector<HTMLElement>(
+			".habits-carousel-count",
+		);
+		count?.setText(`${this.index + 1} / ${maxIndex + 1}`);
+	}
+
+	/** Re-render on breakpoint changes, otherwise just re-position. */
+	private handleResize(): void {
+		if (this.perView() !== this.lastPerView) {
+			this.render();
+		} else {
+			this.applyLayout();
+		}
 	}
 
 	private move(delta: number): void {
@@ -201,12 +254,13 @@ export class HabitsDashboard extends MarkdownRenderChild {
 		return Math.min(this.getSettings().cardsPerView, this.habits.length);
 	}
 
-	/** Recompute card widths, carousel offset and dot/arrow states. */
+	/** Recompute card widths, carousel offset and control states. */
 	private applyLayout(): void {
 		if (!this.trackEl) {
 			return;
 		}
 		const perView = this.perView();
+		this.lastPerView = perView;
 		const maxIndex = Math.max(0, this.habits.length - perView);
 		this.index = Math.min(this.index, maxIndex);
 
@@ -215,10 +269,7 @@ export class HabitsDashboard extends MarkdownRenderChild {
 			"--habits-translate": `-${this.index * (100 / perView)}%`,
 		});
 
-		const dots = this.root.querySelectorAll(".habits-dot");
-		dots.forEach((dot, i) => {
-			dot.toggleClass("is-active", i === this.index);
-		});
+		this.updateControls();
 	}
 
 	private renderCard(track: HTMLElement, habit: HabitDefinition): void {
