@@ -308,6 +308,57 @@ export class HabitsDashboard extends MarkdownRenderChild {
 		await this.store.setRecord(habit, dateKey, clamped);
 	}
 
+	/** Swap the value display for an input so the user can type a value. */
+	private editValue(
+		habit: HabitDefinition,
+		readout: HTMLElement,
+		targetText: string,
+	): void {
+		readout.empty();
+		const input = readout.createEl("input", {
+			cls: "habits-value-input",
+			attr: {
+				type: "number",
+				min: "0",
+				step: "1",
+				inputmode: "numeric",
+				"aria-label": "Value",
+			},
+		});
+		input.value = String(this.currentValue(habit));
+		readout.createSpan({ cls: "habits-target", text: targetText });
+		input.focus();
+		input.select();
+
+		let done = false;
+		const finish = async (save: boolean): Promise<void> => {
+			if (done) {
+				return;
+			}
+			done = true;
+			if (save) {
+				const parsed = Number(input.value);
+				if (Number.isFinite(parsed)) {
+					await this.commit(habit, Math.max(0, Math.round(parsed)));
+				}
+			}
+			this.render();
+		};
+
+		this.registerDomEvent(input, "keydown", (evt: KeyboardEvent) => {
+			if (evt.key === "Enter") {
+				evt.preventDefault();
+				void finish(true);
+			} else if (evt.key === "Escape") {
+				evt.preventDefault();
+				void finish(false);
+			}
+		});
+		this.registerDomEvent(input, "blur", () => {
+			void finish(true);
+		});
+	}
+
 	private renderBinaryControl(
 		body: HTMLElement,
 		habit: HabitDefinition,
@@ -343,12 +394,24 @@ export class HabitsDashboard extends MarkdownRenderChild {
 		const unit =
 			habit.unit || (habit.type === "timed" ? "min" : "");
 
+		const targetText = unit
+			? `/ ${habit.target} ${unit}`
+			: `/ ${habit.target}`;
+
 		const readout = body.createDiv({ cls: "habits-readout" });
-		readout.createSpan({ cls: "habits-value", text: String(value) });
-		readout.createSpan({
-			cls: "habits-target",
-			text: unit ? `/ ${habit.target} ${unit}` : `/ ${habit.target}`,
+		const valueEl = readout.createEl("button", {
+			cls: "habits-value",
+			text: String(value),
+			attr: {
+				type: "button",
+				"aria-label": "Edit value",
+				title: "Click to type a value",
+			},
 		});
+		readout.createSpan({ cls: "habits-target", text: targetText });
+		this.registerDomEvent(valueEl, "click", () =>
+			this.editValue(habit, readout, targetText),
+		);
 
 		const progress = body.createDiv({ cls: "habits-progress" });
 		const fill = progress.createDiv({ cls: "habits-progress-fill" });

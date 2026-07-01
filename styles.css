@@ -168,10 +168,34 @@
 	gap: 0.35rem;
 }
 
-.habits-value {
+.habits-dashboard button.habits-value {
+	padding: 0 0.15rem;
 	font-size: 1.8rem;
 	font-weight: var(--font-bold);
+	line-height: 1;
 	color: var(--habits-accent);
+	background: transparent;
+	border: none;
+	border-radius: var(--radius-s);
+	cursor: pointer;
+	box-shadow: none;
+}
+
+.habits-dashboard button.habits-value:hover {
+	background: var(--background-modifier-hover);
+}
+
+.habits-dashboard .habits-value-input {
+	width: 4rem;
+	padding: 0 0.25rem;
+	font-size: 1.8rem;
+	font-weight: var(--font-bold);
+	line-height: 1;
+	text-align: center;
+	color: var(--habits-accent);
+	background: var(--background-modifier-form-field);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: var(--radius-s);
 }
 
 .habits-target {
