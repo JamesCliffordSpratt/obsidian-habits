@@ -27,7 +27,7 @@ export default defineConfig([
 				"warn",
 				{
 					brands: ["Lucide", "Obsidian"],
-					acronyms: ["ID"],
+					acronyms: ["ID", "PDF"],
 				},
 			],
 		},

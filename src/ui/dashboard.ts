@@ -11,6 +11,8 @@ import type { HabitsPluginSettings } from "../settings";
 import type { HabitDefinition } from "../types";
 import { HabitModal } from "./habit-modal";
 import { ConfirmModal } from "./confirm-modal";
+import { renderStatsView } from "./stats-view";
+import type { StatsPeriod } from "../stats";
 import { applyHabitIcon } from "./icon-suggest-modal";
 import {
 	addDays,
@@ -32,6 +34,8 @@ export class HabitsDashboard extends MarkdownRenderChild {
 	private selectedDate: Date = new Date();
 	private index = 0;
 	private lastPerView = 1;
+	private mode: "dashboard" | "stats" = "dashboard";
+	private statsPeriod: StatsPeriod = "weekly";
 
 	private root: HTMLElement;
 	private trackEl: HTMLElement | null = null;
@@ -61,6 +65,14 @@ export class HabitsDashboard extends MarkdownRenderChild {
 
 	private render(): void {
 		this.root.empty();
+
+		if (this.mode === "stats") {
+			this.renderStatsHeader();
+			const body = this.root.createDiv();
+			renderStatsView(body, this.habits, this.statsPeriod, new Date());
+			return;
+		}
+
 		this.renderHeader();
 
 		if (this.habits.length === 0) {
@@ -71,8 +83,60 @@ export class HabitsDashboard extends MarkdownRenderChild {
 		this.renderCarousel();
 	}
 
+	/** Header shown on the stats view: home, period tabs, export. */
+	private renderStatsHeader(): void {
+		const header = this.root.createDiv({ cls: "habits-header" });
+
+		const home = header.createEl("button", {
+			cls: "habits-icon-button habits-header-left",
+			attr: { type: "button", "aria-label": "Back to habits" },
+		});
+		setIcon(home, "home");
+		this.registerDomEvent(home, "click", () => {
+			this.mode = "dashboard";
+			this.render();
+		});
+
+		const tabs = header.createDiv({ cls: "habits-stats-tabs" });
+		const periods: { id: StatsPeriod; label: string }[] = [
+			{ id: "weekly", label: "Weekly" },
+			{ id: "monthly", label: "Monthly" },
+		];
+		for (const entry of periods) {
+			const tab = tabs.createEl("button", {
+				cls: "habits-stats-tab",
+				text: entry.label,
+				attr: { type: "button" },
+			});
+			tab.toggleClass("is-active", this.statsPeriod === entry.id);
+			this.registerDomEvent(tab, "click", () => {
+				this.statsPeriod = entry.id;
+				this.render();
+			});
+		}
+
+		const download = header.createEl("button", {
+			cls: "habits-icon-button habits-header-right",
+			attr: { type: "button", "aria-label": "Export stats" },
+		});
+		setIcon(download, "download");
+		this.registerDomEvent(download, "click", () => {
+			new Notice("Stats export is coming soon.");
+		});
+	}
+
 	private renderHeader(): void {
 		const header = this.root.createDiv({ cls: "habits-header" });
+
+		const statsBtn = header.createEl("button", {
+			cls: "habits-icon-button habits-header-left",
+			attr: { type: "button", "aria-label": "View stats" },
+		});
+		setIcon(statsBtn, "chart-column-increasing");
+		this.registerDomEvent(statsBtn, "click", () => {
+			this.mode = "stats";
+			this.render();
+		});
 
 		const nav = header.createDiv({ cls: "habits-date-nav" });
 
@@ -126,7 +190,7 @@ export class HabitsDashboard extends MarkdownRenderChild {
 		});
 
 		const add = header.createEl("button", {
-			cls: "habits-icon-button",
+			cls: "habits-icon-button habits-header-right",
 			attr: { type: "button", "aria-label": "Add habit" },
 		});
 		setIcon(add, "plus");
