@@ -250,3 +250,31 @@
 	width: 1.1rem;
 	height: 1.1rem;
 }
+
+/* Theme colour swatches */
+
+.habits-swatches {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.35rem;
+	margin-right: 0.5rem;
+}
+
+.habits-swatch {
+	width: 1.5rem;
+	height: 1.5rem;
+	padding: 0;
+	border-radius: 50%;
+	background: var(--habits-swatch);
+	border: 2px solid transparent;
+	cursor: pointer;
+	box-shadow: none;
+}
+
+.habits-swatch:hover {
+	border-color: var(--background-modifier-border-hover);
+}
+
+.habits-swatch.is-selected {
+	border-color: var(--text-normal);
+}

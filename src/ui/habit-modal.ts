@@ -1,7 +1,31 @@
-import { App, ButtonComponent, Modal, Setting, setIcon } from "obsidian";
+import {
+	App,
+	ButtonComponent,
+	ColorComponent,
+	Modal,
+	Setting,
+	setIcon,
+} from "obsidian";
 import type { HabitStore } from "../habit-store";
 import type { HabitType } from "../types";
 import { IconSuggestModal, iconLabel } from "./icon-suggest-modal";
+
+/**
+ * Accent colours taken from the current theme's palette. Storing the CSS
+ * variable (rather than a fixed hex) means a habit's colour follows the
+ * user's theme and updates automatically if they switch themes.
+ */
+const THEME_COLORS: readonly { label: string; value: string }[] = [
+	{ label: "Accent", value: "var(--interactive-accent)" },
+	{ label: "Red", value: "var(--color-red)" },
+	{ label: "Orange", value: "var(--color-orange)" },
+	{ label: "Yellow", value: "var(--color-yellow)" },
+	{ label: "Green", value: "var(--color-green)" },
+	{ label: "Cyan", value: "var(--color-cyan)" },
+	{ label: "Blue", value: "var(--color-blue)" },
+	{ label: "Purple", value: "var(--color-purple)" },
+	{ label: "Pink", value: "var(--color-pink)" },
+];
 
 /** Modal that collects the details needed to create a new habit. */
 export class HabitModal extends Modal {
@@ -9,12 +33,14 @@ export class HabitModal extends Modal {
 	private type: HabitType = "binary";
 	private target = 1;
 	private unit = "";
-	private color = "";
+	private color = "var(--interactive-accent)";
 	private icon = "";
 
 	private previewIconEl: HTMLElement | null = null;
 	private previewNameEl: HTMLElement | null = null;
 	private iconButton: ButtonComponent | null = null;
+	private customPicker: ColorComponent | null = null;
+	private colorSwatches: { value: string; el: HTMLElement }[] = [];
 
 	constructor(
 		app: App,
@@ -123,15 +149,7 @@ export class HabitModal extends Modal {
 					}),
 			);
 
-		new Setting(contentEl)
-			.setName("Colour")
-			.setDesc("Accent colour for the card.")
-			.addColorPicker((picker) =>
-				picker.setValue(this.color || "#7c6cff").onChange((value) => {
-					this.color = value;
-					this.updatePreview();
-				}),
-			);
+		this.renderColorPicker(contentEl);
 
 		new Setting(contentEl)
 			.addButton((button) =>
@@ -167,6 +185,50 @@ export class HabitModal extends Modal {
 			cls: "habits-modal-preview-name",
 		});
 		this.updatePreview();
+	}
+
+	private renderColorPicker(contentEl: HTMLElement): void {
+		const setting = new Setting(contentEl)
+			.setName("Colour")
+			.setDesc("Pick a colour from your theme, or choose a custom one.");
+
+		const swatches = setting.controlEl.createDiv({
+			cls: "habits-swatches",
+		});
+		this.colorSwatches = [];
+		for (const swatch of THEME_COLORS) {
+			const el = swatches.createEl("button", {
+				cls: "habits-swatch",
+				attr: { type: "button", "aria-label": swatch.label },
+			});
+			el.setCssProps({ "--habits-swatch": swatch.value });
+			el.addEventListener("click", () => {
+				this.color = swatch.value;
+				this.updateSwatchSelection();
+				this.updatePreview();
+			});
+			this.colorSwatches.push({ value: swatch.value, el });
+		}
+
+		setting.addColorPicker((picker) => {
+			this.customPicker = picker;
+			if (this.color.startsWith("#")) {
+				picker.setValue(this.color);
+			}
+			picker.onChange((value) => {
+				this.color = value;
+				this.updateSwatchSelection();
+				this.updatePreview();
+			});
+		});
+
+		this.updateSwatchSelection();
+	}
+
+	private updateSwatchSelection(): void {
+		for (const swatch of this.colorSwatches) {
+			swatch.el.toggleClass("is-selected", swatch.value === this.color);
+		}
 	}
 
 	private updatePreview(): void {
