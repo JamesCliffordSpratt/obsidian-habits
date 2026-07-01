@@ -1,0 +1,135 @@
+import { App, Modal, Setting } from "obsidian";
+import type { HabitStore } from "../habit-store";
+import type { HabitType } from "../types";
+
+/** Modal that collects the details needed to create a new habit. */
+export class HabitModal extends Modal {
+	private habitName = "";
+	private type: HabitType = "binary";
+	private target = 1;
+	private unit = "";
+	private color = "";
+	private icon = "";
+
+	constructor(
+		app: App,
+		private store: HabitStore,
+		private onCreated: () => void,
+	) {
+		super(app);
+	}
+
+	onOpen(): void {
+		this.build();
+	}
+
+	onClose(): void {
+		this.contentEl.empty();
+	}
+
+	private build(): void {
+		const { contentEl } = this;
+		contentEl.empty();
+
+		new Setting(contentEl).setName("New habit").setHeading();
+
+		new Setting(contentEl).setName("Name").addText((text) =>
+			text
+				.setPlaceholder("Drink water")
+				.setValue(this.habitName)
+				.onChange((value) => {
+					this.habitName = value;
+				}),
+		);
+
+		new Setting(contentEl)
+			.setName("Type")
+			.setDesc(
+				"Binary is done or not done. Repetition counts towards a target. Timed tracks minutes.",
+			)
+			.addDropdown((dropdown) =>
+				dropdown
+					.addOption("binary", "Binary")
+					.addOption("repetition", "Repetition")
+					.addOption("timed", "Timed")
+					.setValue(this.type)
+					.onChange((value) => {
+						this.type = value as HabitType;
+						this.build();
+					}),
+			);
+
+		if (this.type !== "binary") {
+			const targetName =
+				this.type === "timed" ? "Daily target (minutes)" : "Daily target";
+			new Setting(contentEl).setName(targetName).addText((text) =>
+				text
+					.setPlaceholder(this.type === "timed" ? "30" : "8")
+					.setValue(String(this.target))
+					.onChange((value) => {
+						const parsed = Number(value);
+						this.target = Number.isFinite(parsed) ? parsed : 1;
+					}),
+			);
+
+			if (this.type === "repetition") {
+				new Setting(contentEl)
+					.setName("Unit")
+					.setDesc("Optional label shown next to the count.")
+					.addText((text) =>
+						text
+							.setPlaceholder("Cups")
+							.setValue(this.unit)
+							.onChange((value) => {
+								this.unit = value;
+							}),
+					);
+			}
+		}
+
+		new Setting(contentEl)
+			.setName("Icon")
+			.setDesc("Optional Lucide icon ID, for example droplet or dumbbell.")
+			.addText((text) =>
+				text
+					.setPlaceholder("Droplet")
+					.setValue(this.icon)
+					.onChange((value) => {
+						this.icon = value.trim();
+					}),
+			);
+
+		new Setting(contentEl)
+			.setName("Colour")
+			.setDesc("Optional accent colour for the card.")
+			.addColorPicker((picker) =>
+				picker.setValue(this.color || "#7c6cff").onChange((value) => {
+					this.color = value;
+				}),
+			);
+
+		new Setting(contentEl)
+			.addButton((button) =>
+				button.setButtonText("Cancel").onClick(() => this.close()),
+			)
+			.addButton((button) =>
+				button
+					.setButtonText("Create habit")
+					.setCta()
+					.onClick(async () => {
+						const file = await this.store.createHabit({
+							name: this.habitName,
+							type: this.type,
+							target: this.target,
+							unit: this.unit,
+							icon: this.icon,
+							color: this.color,
+						});
+						if (file) {
+							this.close();
+							this.onCreated();
+						}
+					}),
+			);
+	}
+}

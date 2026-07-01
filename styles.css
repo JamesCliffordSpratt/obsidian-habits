@@ -1,0 +1,189 @@
+/* Habits plugin — dashboard styles.
+   Colours use Obsidian theme variables so the plugin adapts to light/dark and
+   custom themes. Each card exposes an optional --habits-accent override. */
+
+.habits-dashboard {
+	--habits-accent: var(--interactive-accent);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: var(--radius-m);
+	padding: 0.75rem;
+	background: var(--background-secondary);
+}
+
+.habits-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.5rem;
+	margin-bottom: 0.75rem;
+}
+
+.habits-date-nav {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+}
+
+.habits-date-label {
+	font-weight: var(--font-semibold);
+	min-width: 8rem;
+	text-align: center;
+}
+
+.habits-icon-button {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.25rem;
+	padding: 0.35rem;
+	border-radius: var(--radius-s);
+	background: transparent;
+	color: var(--text-normal);
+	cursor: pointer;
+	box-shadow: none;
+}
+
+.habits-icon-button:hover {
+	background: var(--background-modifier-hover);
+}
+
+.habits-empty {
+	text-align: center;
+	padding: 1.5rem 0.5rem;
+	color: var(--text-muted);
+}
+
+.habits-carousel-viewport {
+	overflow: hidden;
+}
+
+.habits-carousel-track {
+	display: flex;
+	transform: translateX(var(--habits-translate, 0));
+	transition: transform 0.25s ease;
+}
+
+.habits-card {
+	flex: 0 0 calc(100% / var(--habits-per-view, 1));
+	box-sizing: border-box;
+	padding: 1rem;
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+	border-left: 3px solid var(--habits-accent);
+}
+
+.habits-card-title {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	font-size: var(--font-ui-large);
+	font-weight: var(--font-semibold);
+}
+
+.habits-card-icon {
+	display: inline-flex;
+	color: var(--habits-accent);
+}
+
+.habits-card-body {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 0.75rem;
+}
+
+.habits-binary-toggle {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 0.35rem;
+	padding: 1rem 1.5rem;
+	border-radius: var(--radius-m);
+	background: var(--background-primary);
+	color: var(--text-muted);
+	cursor: pointer;
+}
+
+.habits-binary-toggle.is-done {
+	background: var(--habits-accent);
+	color: var(--text-on-accent);
+}
+
+.habits-binary-label {
+	font-weight: var(--font-semibold);
+}
+
+.habits-readout {
+	display: flex;
+	align-items: baseline;
+	gap: 0.35rem;
+}
+
+.habits-value {
+	font-size: 1.8rem;
+	font-weight: var(--font-bold);
+	color: var(--habits-accent);
+}
+
+.habits-target {
+	color: var(--text-muted);
+}
+
+.habits-progress {
+	width: 100%;
+	height: 0.4rem;
+	border-radius: var(--radius-s);
+	background: var(--background-modifier-border);
+	overflow: hidden;
+}
+
+.habits-progress-fill {
+	width: var(--habits-progress, 0%);
+	height: 100%;
+	background: var(--habits-accent);
+	transition: width 0.2s ease;
+}
+
+.habits-progress.is-complete .habits-progress-fill {
+	background: var(--color-green, var(--habits-accent));
+}
+
+.habits-counter-buttons {
+	display: flex;
+	align-items: center;
+	gap: 1.5rem;
+}
+
+.habits-counter-buttons .habits-icon-button {
+	padding: 0.5rem;
+	border: 1px solid var(--background-modifier-border);
+}
+
+.habits-carousel-controls {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.75rem;
+	margin-top: 0.75rem;
+}
+
+.habits-dots {
+	display: flex;
+	align-items: center;
+	gap: 0.35rem;
+}
+
+.habits-dot {
+	width: 0.5rem;
+	height: 0.5rem;
+	padding: 0;
+	border-radius: 50%;
+	background: var(--background-modifier-border);
+	cursor: pointer;
+	box-shadow: none;
+}
+
+.habits-dot.is-active {
+	background: var(--habits-accent);
+}
