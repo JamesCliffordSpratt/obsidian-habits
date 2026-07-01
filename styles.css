@@ -280,3 +280,26 @@
 .habits-swatches button.habits-swatch.is-selected {
 	border-color: var(--text-normal);
 }
+
+/* Emoji icons */
+
+.habits-modal-preview-icon {
+	font-size: 1.5rem;
+	line-height: 1;
+}
+
+.habits-card-icon {
+	font-size: 1.1rem;
+	line-height: 1;
+}
+
+.habits-emoji-suggestion {
+	display: flex;
+	align-items: center;
+	gap: 0.6rem;
+}
+
+.habits-emoji-suggestion-glyph {
+	font-size: 1.2rem;
+	line-height: 1;
+}

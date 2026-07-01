@@ -8,7 +8,13 @@ import {
 } from "obsidian";
 import type { HabitStore } from "../habit-store";
 import type { HabitType } from "../types";
-import { IconSuggestModal, iconLabel } from "./icon-suggest-modal";
+import {
+	applyHabitIcon,
+	IconSuggestModal,
+	iconLabel,
+	isLucideIcon,
+} from "./icon-suggest-modal";
+import { EmojiSuggestModal } from "./emoji-suggest-modal";
 
 /**
  * Accent colours taken from the current theme's palette. Storing the CSS
@@ -186,7 +192,7 @@ export class HabitModal extends Modal {
 
 		new Setting(contentEl)
 			.setName("Icon")
-			.setDesc("Choose an icon to represent this habit.")
+			.setDesc("Choose a Lucide icon or an emoji to represent this habit.")
 			.addButton((button) => {
 				this.iconButton = button;
 				this.updateIconButton();
@@ -198,6 +204,18 @@ export class HabitModal extends Modal {
 					}).open();
 				});
 			})
+			.addButton((button) =>
+				button
+					.setButtonText("Emoji")
+					.setTooltip("Choose an emoji")
+					.onClick(() => {
+						new EmojiSuggestModal(this.app, (emoji) => {
+							this.icon = emoji;
+							this.updateIconButton();
+							this.updatePreview();
+						}).open();
+					}),
+			)
 			.addExtraButton((extra) =>
 				extra
 					.setIcon("x")
@@ -306,8 +324,12 @@ export class HabitModal extends Modal {
 
 	private updatePreview(): void {
 		if (this.previewIconEl) {
-			this.previewIconEl.empty();
-			setIcon(this.previewIconEl, this.icon || "circle-dashed");
+			if (this.icon) {
+				applyHabitIcon(this.previewIconEl, this.icon);
+			} else {
+				this.previewIconEl.empty();
+				setIcon(this.previewIconEl, "circle-dashed");
+			}
 			this.previewIconEl.setCssProps({
 				"--habits-accent": this.color || "var(--interactive-accent)",
 			});
@@ -325,8 +347,10 @@ export class HabitModal extends Modal {
 		button.buttonEl.empty();
 		const glyph = button.buttonEl.createSpan({ cls: "habits-button-icon" });
 		if (this.icon) {
-			setIcon(glyph, this.icon);
-			button.buttonEl.createSpan({ text: iconLabel(this.icon) });
+			applyHabitIcon(glyph, this.icon);
+			button.buttonEl.createSpan({
+				text: isLucideIcon(this.icon) ? iconLabel(this.icon) : "Emoji",
+			});
 		} else {
 			setIcon(glyph, "image-plus");
 			button.buttonEl.createSpan({ text: "Choose icon" });

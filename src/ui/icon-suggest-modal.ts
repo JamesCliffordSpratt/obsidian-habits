@@ -51,3 +51,18 @@ export function iconLabel(iconId: string): string {
 	const spaced = iconId.replace(/^lucide-/, "").replace(/-/g, " ");
 	return spaced.charAt(0).toUpperCase() + spaced.slice(1);
 }
+
+/** True when the value is a Lucide icon id rather than an emoji. */
+export function isLucideIcon(icon: string): boolean {
+	return /^[a-z0-9-]+$/.test(icon);
+}
+
+/** Render a habit icon — a Lucide id via setIcon, or an emoji as text. */
+export function applyHabitIcon(el: HTMLElement, icon: string): void {
+	el.empty();
+	if (isLucideIcon(icon)) {
+		setIcon(el, icon);
+	} else {
+		el.setText(icon);
+	}
+}

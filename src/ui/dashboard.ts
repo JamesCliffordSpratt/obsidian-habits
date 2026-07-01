@@ -3,6 +3,7 @@ import type { HabitStore } from "../habit-store";
 import type { HabitsPluginSettings } from "../settings";
 import type { HabitDefinition } from "../types";
 import { HabitModal } from "./habit-modal";
+import { applyHabitIcon } from "./icon-suggest-modal";
 import { addDays, friendlyDateLabel, toDateKey } from "../utils";
 
 const MOBILE_BREAKPOINT = 768;
@@ -200,7 +201,7 @@ export class HabitsDashboard extends MarkdownRenderChild {
 		const title = card.createDiv({ cls: "habits-card-title" });
 		if (habit.icon) {
 			const iconEl = title.createSpan({ cls: "habits-card-icon" });
-			setIcon(iconEl, habit.icon);
+			applyHabitIcon(iconEl, habit.icon);
 		}
 		title.createSpan({ cls: "habits-card-name", text: habit.name });
 
