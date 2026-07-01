@@ -27,6 +27,56 @@ const THEME_COLORS: readonly { label: string; value: string }[] = [
 	{ label: "Pink", value: "var(--color-pink)" },
 ];
 
+/** A placeholder example shown to hint at how a habit type is used. */
+interface HabitExample {
+	name: string;
+	unit?: string;
+	target?: number;
+}
+
+/**
+ * Ten example habits per type. One is chosen at random each time the modal
+ * opens so the placeholders vary and illustrate different use cases.
+ */
+const EXAMPLES: Record<HabitType, HabitExample[]> = {
+	binary: [
+		{ name: "Make the bed" },
+		{ name: "Take vitamins" },
+		{ name: "Floss teeth" },
+		{ name: "No sugar today" },
+		{ name: "Write a journal entry" },
+		{ name: "Stretch" },
+		{ name: "Read before bed" },
+		{ name: "Tidy the workspace" },
+		{ name: "Take a cold shower" },
+		{ name: "Call a friend" },
+	],
+	repetition: [
+		{ name: "Drink water", unit: "Cups", target: 8 },
+		{ name: "Step count", unit: "Steps", target: 10000 },
+		{ name: "Push-ups", unit: "Reps", target: 50 },
+		{ name: "Read", unit: "Pages", target: 20 },
+		{ name: "Eat vegetables", unit: "Servings", target: 5 },
+		{ name: "Water the plants", unit: "Plants", target: 4 },
+		{ name: "Learn vocabulary", unit: "Words", target: 10 },
+		{ name: "Sit-ups", unit: "Reps", target: 30 },
+		{ name: "Practise chords", unit: "Chords", target: 6 },
+		{ name: "Drink milk", unit: "Glasses", target: 2 },
+	],
+	timed: [
+		{ name: "Exercise", target: 30 },
+		{ name: "Meditate", target: 10 },
+		{ name: "Read", target: 20 },
+		{ name: "Study", target: 45 },
+		{ name: "Walk", target: 25 },
+		{ name: "Practise piano", target: 30 },
+		{ name: "Yoga", target: 20 },
+		{ name: "Deep work", target: 60 },
+		{ name: "Practise a language", target: 15 },
+		{ name: "Stretch", target: 10 },
+	],
+};
+
 /** Modal that collects the details needed to create a new habit. */
 export class HabitModal extends Modal {
 	private habitName = "";
@@ -35,6 +85,7 @@ export class HabitModal extends Modal {
 	private unit = "";
 	private color = "var(--interactive-accent)";
 	private icon = "";
+	private exampleIndex = 0;
 
 	private previewIconEl: HTMLElement | null = null;
 	private previewNameEl: HTMLElement | null = null;
@@ -52,6 +103,7 @@ export class HabitModal extends Modal {
 
 	onOpen(): void {
 		this.modalEl.addClass("habits-modal");
+		this.exampleIndex = Math.floor(Math.random() * 10);
 		this.build();
 	}
 
@@ -69,7 +121,7 @@ export class HabitModal extends Modal {
 
 		new Setting(contentEl).setName("Name").addText((text) =>
 			text
-				.setPlaceholder("Drink water")
+				.setPlaceholder(this.currentExample().name)
 				.setValue(this.habitName)
 				.onChange((value) => {
 					this.habitName = value;
@@ -101,7 +153,12 @@ export class HabitModal extends Modal {
 					: "Daily target";
 			new Setting(contentEl).setName(targetName).addText((text) =>
 				text
-					.setPlaceholder(this.type === "timed" ? "30" : "8")
+					.setPlaceholder(
+						String(
+							this.currentExample().target ??
+								(this.type === "timed" ? 30 : 8),
+						),
+					)
 					.setValue(String(this.target))
 					.onChange((value) => {
 						const parsed = Number(value);
@@ -115,7 +172,7 @@ export class HabitModal extends Modal {
 					.setDesc("Optional label shown next to the count.")
 					.addText((text) =>
 						text
-							.setPlaceholder("Cups")
+							.setPlaceholder(this.currentExample().unit ?? "Cups")
 							.setValue(this.unit)
 							.onChange((value) => {
 								this.unit = value;
@@ -174,6 +231,11 @@ export class HabitModal extends Modal {
 						}
 					}),
 			);
+	}
+
+	private currentExample(): HabitExample {
+		const list = EXAMPLES[this.type];
+		return list[this.exampleIndex % list.length];
 	}
 
 	private renderPreview(contentEl: HTMLElement): void {
