@@ -405,7 +405,6 @@ export class HabitsDashboard extends MarkdownRenderChild {
 			attr: {
 				type: "button",
 				"aria-label": "Edit value",
-				title: "Click to type a value",
 			},
 		});
 		readout.createSpan({ cls: "habits-target", text: targetText });
