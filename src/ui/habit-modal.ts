@@ -108,6 +108,7 @@ export class HabitModal extends Modal {
 	private monthlyTarget = 0;
 	private weeklyPerfect = false;
 	private monthlyPerfect = false;
+	private targetsOpen = false;
 	private color = "var(--interactive-accent)";
 	private icon = "";
 	private exampleIndex = 0;
@@ -136,6 +137,11 @@ export class HabitModal extends Modal {
 			this.monthlyTarget = editing.monthlyTarget || 0;
 			this.weeklyPerfect = editing.weeklyPerfect;
 			this.monthlyPerfect = editing.monthlyPerfect;
+			this.targetsOpen =
+				editing.weeklyTarget > 0 ||
+				editing.monthlyTarget > 0 ||
+				editing.weeklyPerfect ||
+				editing.monthlyPerfect;
 			this.icon = editing.icon;
 			this.color = editing.color || "var(--interactive-accent)";
 		}
@@ -227,64 +233,7 @@ export class HabitModal extends Modal {
 			}
 		}
 
-		new Setting(contentEl)
-			.setName("Perfect week")
-			.setDesc("Aim to complete this habit every day of the week.")
-			.addToggle((toggle) =>
-				toggle.setValue(this.weeklyPerfect).onChange((value) => {
-					this.weeklyPerfect = value;
-					this.build();
-				}),
-			);
-		if (!this.weeklyPerfect) {
-			new Setting(contentEl)
-				.setName("Weekly target")
-				.setDesc("Optional. Days to complete per week (max 7).")
-				.addText((text) => {
-					applyNumeric(text.inputEl, 1, 7);
-					text
-						.setPlaceholder("None")
-						.setValue(
-							this.weeklyTarget ? String(this.weeklyTarget) : "",
-						)
-						.onChange((value) => {
-							const parsed = Number(value);
-							this.weeklyTarget =
-								Number.isFinite(parsed) && parsed > 0
-									? Math.min(7, Math.round(parsed))
-									: 0;
-						});
-				});
-		}
-		new Setting(contentEl)
-			.setName("Perfect month")
-			.setDesc("Aim to complete this habit every day of the month.")
-			.addToggle((toggle) =>
-				toggle.setValue(this.monthlyPerfect).onChange((value) => {
-					this.monthlyPerfect = value;
-					this.build();
-				}),
-			);
-		if (!this.monthlyPerfect) {
-			new Setting(contentEl)
-				.setName("Monthly target")
-				.setDesc("Optional. Days to complete per month.")
-				.addText((text) => {
-					applyNumeric(text.inputEl, 1, 31);
-					text
-						.setPlaceholder("None")
-						.setValue(
-							this.monthlyTarget ? String(this.monthlyTarget) : "",
-						)
-						.onChange((value) => {
-							const parsed = Number(value);
-							this.monthlyTarget =
-								Number.isFinite(parsed) && parsed > 0
-									? Math.min(31, Math.round(parsed))
-									: 0;
-						});
-				});
-		}
+		this.renderTargets(contentEl);
 
 		new Setting(contentEl)
 			.setName("Icon")
@@ -368,6 +317,82 @@ export class HabitModal extends Modal {
 	private currentExample(): HabitExample {
 		const list = EXAMPLES[this.type];
 		return list[this.exampleIndex % list.length];
+	}
+
+	/** Collapsible, optional weekly/monthly targets section. */
+	private renderTargets(contentEl: HTMLElement): void {
+		const details = contentEl.createEl("details", { cls: "habits-targets" });
+		details.open = this.targetsOpen;
+		details.addEventListener("toggle", () => {
+			this.targetsOpen = details.open;
+		});
+		details.createEl("summary", {
+			cls: "habits-targets-summary",
+			text: "Targets (optional)",
+		});
+		details.createEl("p", {
+			cls: "habits-targets-intro",
+			text: "Set an optional weekly or monthly goal for how many days you complete this habit. For example, hitting your daily goal on all 7 days is a weekly target of 7. Turn on a perfect toggle to aim for every day of the period automatically, whatever its length.",
+		});
+
+		new Setting(details)
+			.setName("Perfect week")
+			.setDesc("Aim to complete this habit every day of the week.")
+			.addToggle((toggle) =>
+				toggle.setValue(this.weeklyPerfect).onChange((value) => {
+					this.weeklyPerfect = value;
+					this.build();
+				}),
+			);
+		if (!this.weeklyPerfect) {
+			new Setting(details)
+				.setName("Weekly target")
+				.setDesc("Optional. Days to complete per week (max 7).")
+				.addText((text) => {
+					applyNumeric(text.inputEl, 1, 7);
+					text
+						.setPlaceholder("None")
+						.setValue(
+							this.weeklyTarget ? String(this.weeklyTarget) : "",
+						)
+						.onChange((value) => {
+							const parsed = Number(value);
+							this.weeklyTarget =
+								Number.isFinite(parsed) && parsed > 0
+									? Math.min(7, Math.round(parsed))
+									: 0;
+						});
+				});
+		}
+		new Setting(details)
+			.setName("Perfect month")
+			.setDesc("Aim to complete this habit every day of the month.")
+			.addToggle((toggle) =>
+				toggle.setValue(this.monthlyPerfect).onChange((value) => {
+					this.monthlyPerfect = value;
+					this.build();
+				}),
+			);
+		if (!this.monthlyPerfect) {
+			new Setting(details)
+				.setName("Monthly target")
+				.setDesc("Optional. Days to complete per month.")
+				.addText((text) => {
+					applyNumeric(text.inputEl, 1, 31);
+					text
+						.setPlaceholder("None")
+						.setValue(
+							this.monthlyTarget ? String(this.monthlyTarget) : "",
+						)
+						.onChange((value) => {
+							const parsed = Number(value);
+							this.monthlyTarget =
+								Number.isFinite(parsed) && parsed > 0
+									? Math.min(31, Math.round(parsed))
+									: 0;
+						});
+				});
+		}
 	}
 
 	private renderPreview(contentEl: HTMLElement): void {

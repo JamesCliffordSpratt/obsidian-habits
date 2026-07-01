@@ -586,3 +586,50 @@
 	color: var(--text-muted);
 	font-size: var(--font-ui-smaller);
 }
+
+/* Collapsible targets section in the habit modal */
+
+.habits-targets {
+	margin: 0.25rem 0 0.5rem;
+	padding: 0.4rem 0.6rem;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: var(--radius-m);
+	background: var(--background-secondary);
+}
+
+.habits-targets-summary {
+	cursor: pointer;
+	font-weight: var(--font-semibold);
+	color: var(--text-normal);
+	list-style: none;
+	display: flex;
+	align-items: center;
+	gap: 0.4rem;
+	padding: 0.15rem 0;
+}
+
+.habits-targets-summary::-webkit-details-marker {
+	display: none;
+}
+
+.habits-targets-summary::before {
+	content: "▸";
+	color: var(--text-muted);
+	transition: transform 0.15s ease;
+}
+
+.habits-targets[open] .habits-targets-summary::before {
+	transform: rotate(90deg);
+}
+
+.habits-targets-intro {
+	margin: 0.25rem 0 0.5rem;
+	color: var(--text-muted);
+	font-size: var(--font-ui-small);
+}
+
+/* Trim the last setting's bottom border inside the section */
+.habits-targets .setting-item:last-child {
+	border-bottom: none;
+	padding-bottom: 0;
+}
