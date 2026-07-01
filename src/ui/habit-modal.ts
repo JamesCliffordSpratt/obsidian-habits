@@ -103,7 +103,9 @@ export class HabitModal extends Modal {
 
 	onOpen(): void {
 		this.modalEl.addClass("habits-modal");
-		this.exampleIndex = Math.floor(Math.random() * 10);
+		this.exampleIndex = Math.floor(
+			Math.random() * EXAMPLES[this.type].length,
+		);
 		this.build();
 	}
 
@@ -142,6 +144,7 @@ export class HabitModal extends Modal {
 					.setValue(this.type)
 					.onChange((value) => {
 						this.type = value as HabitType;
+						this.randomizeExample();
 						this.build();
 					}),
 			);
@@ -231,6 +234,14 @@ export class HabitModal extends Modal {
 						}
 					}),
 			);
+	}
+
+	/** Move to a different example so switching type always rotates. */
+	private randomizeExample(): void {
+		const count = EXAMPLES[this.type].length;
+		this.exampleIndex =
+			(this.exampleIndex + 1 + Math.floor(Math.random() * (count - 1))) %
+			count;
 	}
 
 	private currentExample(): HabitExample {
