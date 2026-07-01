@@ -137,11 +137,6 @@ export class HabitModal extends Modal {
 			this.monthlyTarget = editing.monthlyTarget || 0;
 			this.weeklyPerfect = editing.weeklyPerfect;
 			this.monthlyPerfect = editing.monthlyPerfect;
-			this.targetsOpen =
-				editing.weeklyTarget > 0 ||
-				editing.monthlyTarget > 0 ||
-				editing.weeklyPerfect ||
-				editing.monthlyPerfect;
 			this.icon = editing.icon;
 			this.color = editing.color || "var(--interactive-accent)";
 		}
