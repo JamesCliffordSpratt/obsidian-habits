@@ -1,8 +1,16 @@
-import { App, MarkdownRenderChild, Notice, setIcon } from "obsidian";
+import {
+	App,
+	MarkdownRenderChild,
+	Menu,
+	Notice,
+	setIcon,
+	setTooltip,
+} from "obsidian";
 import type { HabitStore } from "../habit-store";
 import type { HabitsPluginSettings } from "../settings";
 import type { HabitDefinition } from "../types";
 import { HabitModal } from "./habit-modal";
+import { ConfirmModal } from "./confirm-modal";
 import { applyHabitIcon } from "./icon-suggest-modal";
 import {
 	addDays,
@@ -277,6 +285,11 @@ export class HabitsDashboard extends MarkdownRenderChild {
 		if (habit.color) {
 			card.setCssProps({ "--habits-accent": habit.color });
 		}
+		setTooltip(card, "Right-click for more options");
+		this.registerDomEvent(card, "contextmenu", (evt: MouseEvent) => {
+			evt.preventDefault();
+			this.showCardMenu(evt, habit);
+		});
 
 		const title = card.createDiv({ cls: "habits-card-title" });
 		if (habit.icon) {
@@ -444,6 +457,43 @@ export class HabitsDashboard extends MarkdownRenderChild {
 			await this.commit(habit, value + step);
 			this.render();
 		});
+	}
+
+	private showCardMenu(evt: MouseEvent, habit: HabitDefinition): void {
+		const menu = new Menu();
+		menu.addItem((item) =>
+			item
+				.setTitle("Edit habit")
+				.setIcon("pencil")
+				.onClick(() => {
+					new HabitModal(
+						this.app,
+						this.store,
+						() => this.reload(),
+						habit,
+					).open();
+				}),
+		);
+		menu.addItem((item) =>
+			item
+				.setTitle("Remove habit")
+				.setIcon("trash")
+				.onClick(() => this.confirmRemove(habit)),
+		);
+		menu.showAtMouseEvent(evt);
+	}
+
+	private confirmRemove(habit: HabitDefinition): void {
+		new ConfirmModal(this.app, {
+			title: "Remove habit",
+			message: `Remove "${habit.name}"? Its note will be moved to the trash.`,
+			confirmText: "Remove",
+			danger: true,
+			onConfirm: async () => {
+				await this.store.deleteHabit(habit);
+				this.reload();
+			},
+		}).open();
 	}
 
 	private openCreateModal(): void {

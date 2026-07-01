@@ -189,4 +189,75 @@ export class HabitStore {
 		new Notice(`Created habit "${cleanName}".`);
 		return file;
 	}
+
+	/** Update an existing habit's definition, renaming its note if needed. */
+	async updateHabit(
+		habit: HabitDefinition,
+		options: NewHabitOptions,
+	): Promise<TFile | null> {
+		let file = this.fileForHabit(habit);
+		if (!file) {
+			new Notice(`Could not find the note for "${habit.name}".`);
+			return null;
+		}
+
+		const cleanName = sanitizeFileName(options.name);
+		if (!cleanName) {
+			new Notice("Please enter a valid habit name.");
+			return null;
+		}
+
+		if (cleanName !== habit.name) {
+			const newPath = normalizePath(`${this.folderPath}/${cleanName}.md`);
+			if (this.app.vault.getAbstractFileByPath(newPath)) {
+				new Notice(`A habit called "${cleanName}" already exists.`);
+				return null;
+			}
+			await this.app.fileManager.renameFile(file, newPath);
+			const renamed = this.app.vault.getAbstractFileByPath(newPath);
+			if (renamed instanceof TFile) {
+				file = renamed;
+			}
+		}
+
+		await this.app.fileManager.processFrontMatter(file, (frontmatter) => {
+			const fm = frontmatter as Record<string, unknown>;
+			fm.habit = true;
+			fm.type = options.type;
+			if (options.type === "binary") {
+				delete fm.target;
+			} else {
+				fm.target = options.target;
+			}
+			if (options.unit) {
+				fm.unit = options.unit;
+			} else {
+				delete fm.unit;
+			}
+			if (options.icon) {
+				fm.icon = options.icon;
+			} else {
+				delete fm.icon;
+			}
+			if (options.color) {
+				fm.color = options.color;
+			} else {
+				delete fm.color;
+			}
+		});
+
+		new Notice(`Updated "${cleanName}".`);
+		return file;
+	}
+
+	/** Move a habit's note to the trash (respecting the user's settings). */
+	async deleteHabit(habit: HabitDefinition): Promise<void> {
+		const file = this.fileForHabit(habit);
+		if (!file) {
+			new Notice(`Could not find the note for "${habit.name}".`);
+			return;
+		}
+		await this.app.fileManager.trashFile(file);
+		new Notice(`Removed "${habit.name}".`);
+	}
 }

@@ -7,7 +7,7 @@ import {
 	setIcon,
 } from "obsidian";
 import type { HabitStore } from "../habit-store";
-import type { HabitType } from "../types";
+import type { HabitDefinition, HabitType } from "../types";
 import {
 	applyHabitIcon,
 	IconSuggestModal,
@@ -92,6 +92,7 @@ export class HabitModal extends Modal {
 	private color = "var(--interactive-accent)";
 	private icon = "";
 	private exampleIndex = 0;
+	private editing: HabitDefinition | null = null;
 
 	private previewIconEl: HTMLElement | null = null;
 	private previewNameEl: HTMLElement | null = null;
@@ -103,8 +104,18 @@ export class HabitModal extends Modal {
 		app: App,
 		private store: HabitStore,
 		private onCreated: () => void,
+		editing: HabitDefinition | null = null,
 	) {
 		super(app);
+		this.editing = editing;
+		if (editing) {
+			this.habitName = editing.name;
+			this.type = editing.type;
+			this.target = editing.target || 1;
+			this.unit = editing.unit;
+			this.icon = editing.icon;
+			this.color = editing.color || "var(--interactive-accent)";
+		}
 	}
 
 	onOpen(): void {
@@ -123,7 +134,9 @@ export class HabitModal extends Modal {
 		const { contentEl } = this;
 		contentEl.empty();
 
-		new Setting(contentEl).setName("New habit").setHeading();
+		new Setting(contentEl)
+			.setName(this.editing ? "Edit habit" : "New habit")
+			.setHeading();
 
 		this.renderPreview(contentEl);
 
@@ -235,17 +248,20 @@ export class HabitModal extends Modal {
 			)
 			.addButton((button) =>
 				button
-					.setButtonText("Create habit")
+					.setButtonText(this.editing ? "Save changes" : "Create habit")
 					.setCta()
 					.onClick(async () => {
-						const file = await this.store.createHabit({
+						const options = {
 							name: this.habitName,
 							type: this.type,
 							target: this.target,
 							unit: this.unit,
 							icon: this.icon,
 							color: this.color,
-						});
+						};
+						const file = this.editing
+							? await this.store.updateHabit(this.editing, options)
+							: await this.store.createHabit(options);
 						if (file) {
 							this.close();
 							this.onCreated();
