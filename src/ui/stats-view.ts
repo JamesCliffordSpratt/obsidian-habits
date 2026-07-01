@@ -78,14 +78,13 @@ export function renderStatsView(
 
 	const goalOf = (habit: HabitDefinition): number =>
 		period === "weekly" ? habit.weeklyTarget : habit.monthlyTarget;
-	const progressOf = (habit: HabitDefinition, i: number): number =>
-		habit.type === "binary" ? allStats[i].completed : allStats[i].total;
+	const progressOf = (i: number): number => allStats[i].completed;
 	let goalsTotal = 0;
 	let goalsMet = 0;
 	habits.forEach((habit, i) => {
 		if (goalOf(habit) > 0) {
 			goalsTotal++;
-			if (progressOf(habit, i) >= goalOf(habit)) {
+			if (progressOf(i) >= goalOf(habit)) {
 				goalsMet++;
 			}
 		}
@@ -148,7 +147,7 @@ export function renderStatsView(
 
 		const goal = goalOf(habit);
 		if (goal > 0) {
-			const progress = progressOf(habit, i);
+			const progress = progressOf(i);
 			const pct = Math.min(100, Math.round((progress / goal) * 100));
 			const bar = row.createDiv({ cls: "habits-goal-bar" });
 			if (progress >= goal) {
@@ -157,13 +156,9 @@ export function renderStatsView(
 			bar
 				.createDiv({ cls: "habits-goal-fill" })
 				.setCssProps({ "--habits-progress": `${pct}%` });
-			const goalUnit =
-				habit.type === "binary"
-					? "days"
-					: habit.unit || (habit.type === "timed" ? "min" : "");
 			row.createDiv({
 				cls: "habits-stats-goal-label",
-				text: `${progress}/${goal}${goalUnit ? ` ${goalUnit}` : ""} ${period === "weekly" ? "weekly" : "monthly"} goal · ${pct}%`,
+				text: `${progress}/${goal} days ${period === "weekly" ? "weekly" : "monthly"} goal · ${pct}%`,
 			});
 		}
 	});

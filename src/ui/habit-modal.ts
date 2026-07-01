@@ -207,18 +207,10 @@ export class HabitModal extends Modal {
 			}
 		}
 
-		const periodUnit =
-			this.type === "timed"
-				? "minutes"
-				: this.type === "repetition"
-					? this.unit || "count"
-					: "days";
 		new Setting(contentEl)
 			.setName("Weekly target")
 			.setDesc(
-				this.type === "binary"
-					? "Optional. Days to complete per week."
-					: `Optional. Total ${periodUnit} per week.`,
+				"Optional. Days you aim to complete this habit per week (max 7).",
 			)
 			.addText((text) =>
 				text
@@ -227,16 +219,14 @@ export class HabitModal extends Modal {
 					.onChange((value) => {
 						const parsed = Number(value);
 						this.weeklyTarget =
-							Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
+							Number.isFinite(parsed) && parsed > 0
+								? Math.min(7, Math.round(parsed))
+								: 0;
 					}),
 			);
 		new Setting(contentEl)
 			.setName("Monthly target")
-			.setDesc(
-				this.type === "binary"
-					? "Optional. Days to complete per month."
-					: `Optional. Total ${periodUnit} per month.`,
-			)
+			.setDesc("Optional. Days you aim to complete this habit per month.")
 			.addText((text) =>
 				text
 					.setPlaceholder("None")
@@ -246,7 +236,9 @@ export class HabitModal extends Modal {
 					.onChange((value) => {
 						const parsed = Number(value);
 						this.monthlyTarget =
-							Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
+							Number.isFinite(parsed) && parsed > 0
+								? Math.min(31, Math.round(parsed))
+								: 0;
 					}),
 			);
 
