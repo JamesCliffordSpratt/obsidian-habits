@@ -40,7 +40,10 @@
 }
 
 .habits-date-label {
-	min-width: 8rem;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 6rem;
 	padding: 0.25rem 0.5rem;
 	font-weight: var(--font-semibold);
 	text-align: center;
