@@ -73,6 +73,8 @@ export class HabitStore {
 			unit: typeof fm.unit === "string" ? fm.unit : "",
 			weeklyTarget: this.readNumber(fm.weeklyTarget, 0),
 			monthlyTarget: this.readNumber(fm.monthlyTarget, 0),
+			weeklyPerfect: fm.weeklyPerfect === true,
+			monthlyPerfect: fm.monthlyPerfect === true,
 			icon: typeof fm.icon === "string" ? fm.icon : "",
 			color: typeof fm.color === "string" ? fm.color : "",
 			startDate: typeof fm.startDate === "string" ? fm.startDate : "",
@@ -178,10 +180,14 @@ export class HabitStore {
 			if (options.unit) {
 				fm.unit = options.unit;
 			}
-			if (options.weeklyTarget > 0) {
+			if (options.weeklyPerfect) {
+				fm.weeklyPerfect = true;
+			} else if (options.weeklyTarget > 0) {
 				fm.weeklyTarget = options.weeklyTarget;
 			}
-			if (options.monthlyTarget > 0) {
+			if (options.monthlyPerfect) {
+				fm.monthlyPerfect = true;
+			} else if (options.monthlyTarget > 0) {
 				fm.monthlyTarget = options.monthlyTarget;
 			}
 			if (options.icon) {
@@ -242,15 +248,27 @@ export class HabitStore {
 			} else {
 				delete fm.unit;
 			}
-			if (options.weeklyTarget > 0) {
-				fm.weeklyTarget = options.weeklyTarget;
-			} else {
+			if (options.weeklyPerfect) {
+				fm.weeklyPerfect = true;
 				delete fm.weeklyTarget;
-			}
-			if (options.monthlyTarget > 0) {
-				fm.monthlyTarget = options.monthlyTarget;
 			} else {
+				delete fm.weeklyPerfect;
+				if (options.weeklyTarget > 0) {
+					fm.weeklyTarget = options.weeklyTarget;
+				} else {
+					delete fm.weeklyTarget;
+				}
+			}
+			if (options.monthlyPerfect) {
+				fm.monthlyPerfect = true;
 				delete fm.monthlyTarget;
+			} else {
+				delete fm.monthlyPerfect;
+				if (options.monthlyTarget > 0) {
+					fm.monthlyTarget = options.monthlyTarget;
+				} else {
+					delete fm.monthlyTarget;
+				}
 			}
 			if (options.icon) {
 				fm.icon = options.icon;

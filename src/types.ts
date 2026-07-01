@@ -28,12 +28,16 @@ export interface HabitDefinition {
 	/** Optional unit label shown next to the value (e.g. "cups"). */
 	unit: string;
 	/**
-	 * Optional target for a week. For `binary` this is days completed; for
-	 * `repetition`/`timed` it is the total value. `0` means no target.
+	 * Optional weekly goal: the number of days the daily goal should be met.
+	 * `0` means no target. Ignored when `weeklyPerfect` is true.
 	 */
 	weeklyTarget: number;
-	/** Optional target for a month, interpreted like `weeklyTarget`. */
+	/** Optional monthly goal, interpreted like `weeklyTarget`. */
 	monthlyTarget: number;
+	/** When true, the weekly goal is every day of the week. */
+	weeklyPerfect: boolean;
+	/** When true, the monthly goal is every day of the month. */
+	monthlyPerfect: boolean;
 	/** Optional Lucide icon id shown on the card. */
 	icon: string;
 	/** Optional accent colour (any valid CSS colour). */
@@ -58,6 +62,8 @@ export interface NewHabitOptions {
 	unit: string;
 	weeklyTarget: number;
 	monthlyTarget: number;
+	weeklyPerfect: boolean;
+	monthlyPerfect: boolean;
 	icon: string;
 	color: string;
 }

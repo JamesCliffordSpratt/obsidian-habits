@@ -76,8 +76,14 @@ export function renderStatsView(
 	const bestCurrent = allStats.reduce((max, s) => Math.max(max, s.current), 0);
 	const perfect = perfectDays(habits, range, today);
 
-	const goalOf = (habit: HabitDefinition): number =>
-		period === "weekly" ? habit.weeklyTarget : habit.monthlyTarget;
+	const isPerfect = (habit: HabitDefinition): boolean =>
+		period === "weekly" ? habit.weeklyPerfect : habit.monthlyPerfect;
+	const goalOf = (habit: HabitDefinition): number => {
+		if (isPerfect(habit)) {
+			return length;
+		}
+		return period === "weekly" ? habit.weeklyTarget : habit.monthlyTarget;
+	};
 	const progressOf = (i: number): number => allStats[i].completed;
 	let goalsTotal = 0;
 	let goalsMet = 0;
@@ -156,9 +162,16 @@ export function renderStatsView(
 			bar
 				.createDiv({ cls: "habits-goal-fill" })
 				.setCssProps({ "--habits-progress": `${pct}%` });
+			const goalName = isPerfect(habit)
+				? period === "weekly"
+					? "perfect week"
+					: "perfect month"
+				: period === "weekly"
+					? "weekly goal"
+					: "monthly goal";
 			row.createDiv({
 				cls: "habits-stats-goal-label",
-				text: `${progress}/${goal} days ${period === "weekly" ? "weekly" : "monthly"} goal · ${pct}%`,
+				text: `${progress}/${goal} days · ${goalName} · ${pct}%`,
 			});
 		}
 	});
