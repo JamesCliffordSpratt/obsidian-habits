@@ -430,7 +430,7 @@
 
 .habits-stats-summary {
 	display: grid;
-	grid-template-columns: repeat(4, 1fr);
+	grid-template-columns: repeat(auto-fit, minmax(4.5rem, 1fr));
 	gap: 0.5rem;
 	margin-bottom: 0.85rem;
 }
@@ -558,4 +558,31 @@
 .habits-stats-cell.is-future {
 	background: transparent;
 	border: 1px dashed var(--background-modifier-border);
+}
+
+/* Stats per-habit goal progress */
+
+.habits-goal-bar {
+	width: 100%;
+	height: 0.4rem;
+	margin-top: 0.15rem;
+	border-radius: var(--radius-s);
+	background: var(--background-modifier-border);
+	overflow: hidden;
+}
+
+.habits-goal-fill {
+	width: var(--habits-progress, 0%);
+	height: 100%;
+	background: var(--habits-accent);
+	transition: width 0.2s ease;
+}
+
+.habits-goal-bar.is-complete .habits-goal-fill {
+	background: var(--color-green, var(--habits-accent));
+}
+
+.habits-stats-goal-label {
+	color: var(--text-muted);
+	font-size: var(--font-ui-smaller);
 }

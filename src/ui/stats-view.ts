@@ -76,11 +76,29 @@ export function renderStatsView(
 	const bestCurrent = allStats.reduce((max, s) => Math.max(max, s.current), 0);
 	const perfect = perfectDays(habits, range, today);
 
+	const goalOf = (habit: HabitDefinition): number =>
+		period === "weekly" ? habit.weeklyTarget : habit.monthlyTarget;
+	const progressOf = (habit: HabitDefinition, i: number): number =>
+		habit.type === "binary" ? allStats[i].completed : allStats[i].total;
+	let goalsTotal = 0;
+	let goalsMet = 0;
+	habits.forEach((habit, i) => {
+		if (goalOf(habit) > 0) {
+			goalsTotal++;
+			if (progressOf(habit, i) >= goalOf(habit)) {
+				goalsMet++;
+			}
+		}
+	});
+
 	const summary = container.createDiv({ cls: "habits-stats-summary" });
 	tile(summary, `${overallRate}%`, "Completion");
 	tile(summary, `${bestCurrent}`, "Best streak");
 	tile(summary, `${perfect}`, "Perfect days");
 	tile(summary, `${totalCompleted}`, "Completions");
+	if (goalsTotal > 0) {
+		tile(summary, `${goalsMet}/${goalsTotal}`, "Goals met");
+	}
 
 	const list = container.createDiv({ cls: "habits-stats-list" });
 	habits.forEach((habit, i) => {
@@ -127,5 +145,26 @@ export function renderStatsView(
 			cls: "habits-stats-meta",
 			text: `${Math.round(stats.rate * 100)}% · ${totalText} · best 🔥 ${stats.best}`,
 		});
+
+		const goal = goalOf(habit);
+		if (goal > 0) {
+			const progress = progressOf(habit, i);
+			const pct = Math.min(100, Math.round((progress / goal) * 100));
+			const bar = row.createDiv({ cls: "habits-goal-bar" });
+			if (progress >= goal) {
+				bar.addClass("is-complete");
+			}
+			bar
+				.createDiv({ cls: "habits-goal-fill" })
+				.setCssProps({ "--habits-progress": `${pct}%` });
+			const goalUnit =
+				habit.type === "binary"
+					? "days"
+					: habit.unit || (habit.type === "timed" ? "min" : "");
+			row.createDiv({
+				cls: "habits-stats-goal-label",
+				text: `${progress}/${goal}${goalUnit ? ` ${goalUnit}` : ""} ${period === "weekly" ? "weekly" : "monthly"} goal · ${pct}%`,
+			});
+		}
 	});
 }

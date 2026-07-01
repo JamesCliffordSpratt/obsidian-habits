@@ -27,6 +27,13 @@ export interface HabitDefinition {
 	target: number;
 	/** Optional unit label shown next to the value (e.g. "cups"). */
 	unit: string;
+	/**
+	 * Optional target for a week. For `binary` this is days completed; for
+	 * `repetition`/`timed` it is the total value. `0` means no target.
+	 */
+	weeklyTarget: number;
+	/** Optional target for a month, interpreted like `weeklyTarget`. */
+	monthlyTarget: number;
 	/** Optional Lucide icon id shown on the card. */
 	icon: string;
 	/** Optional accent colour (any valid CSS colour). */
@@ -49,6 +56,8 @@ export interface NewHabitOptions {
 	type: HabitType;
 	target: number;
 	unit: string;
+	weeklyTarget: number;
+	monthlyTarget: number;
 	icon: string;
 	color: string;
 }

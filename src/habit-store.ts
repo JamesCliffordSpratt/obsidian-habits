@@ -71,6 +71,8 @@ export class HabitStore {
 			type: fm.type,
 			target: this.readNumber(fm.target, 1),
 			unit: typeof fm.unit === "string" ? fm.unit : "",
+			weeklyTarget: this.readNumber(fm.weeklyTarget, 0),
+			monthlyTarget: this.readNumber(fm.monthlyTarget, 0),
 			icon: typeof fm.icon === "string" ? fm.icon : "",
 			color: typeof fm.color === "string" ? fm.color : "",
 			startDate: typeof fm.startDate === "string" ? fm.startDate : "",
@@ -176,6 +178,12 @@ export class HabitStore {
 			if (options.unit) {
 				fm.unit = options.unit;
 			}
+			if (options.weeklyTarget > 0) {
+				fm.weeklyTarget = options.weeklyTarget;
+			}
+			if (options.monthlyTarget > 0) {
+				fm.monthlyTarget = options.monthlyTarget;
+			}
 			if (options.icon) {
 				fm.icon = options.icon;
 			}
@@ -233,6 +241,16 @@ export class HabitStore {
 				fm.unit = options.unit;
 			} else {
 				delete fm.unit;
+			}
+			if (options.weeklyTarget > 0) {
+				fm.weeklyTarget = options.weeklyTarget;
+			} else {
+				delete fm.weeklyTarget;
+			}
+			if (options.monthlyTarget > 0) {
+				fm.monthlyTarget = options.monthlyTarget;
+			} else {
+				delete fm.monthlyTarget;
 			}
 			if (options.icon) {
 				fm.icon = options.icon;

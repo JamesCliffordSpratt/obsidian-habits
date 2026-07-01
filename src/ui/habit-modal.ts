@@ -89,6 +89,8 @@ export class HabitModal extends Modal {
 	private type: HabitType = "binary";
 	private target = 1;
 	private unit = "";
+	private weeklyTarget = 0;
+	private monthlyTarget = 0;
 	private color = "var(--interactive-accent)";
 	private icon = "";
 	private exampleIndex = 0;
@@ -113,6 +115,8 @@ export class HabitModal extends Modal {
 			this.type = editing.type;
 			this.target = editing.target || 1;
 			this.unit = editing.unit;
+			this.weeklyTarget = editing.weeklyTarget || 0;
+			this.monthlyTarget = editing.monthlyTarget || 0;
 			this.icon = editing.icon;
 			this.color = editing.color || "var(--interactive-accent)";
 		}
@@ -203,6 +207,49 @@ export class HabitModal extends Modal {
 			}
 		}
 
+		const periodUnit =
+			this.type === "timed"
+				? "minutes"
+				: this.type === "repetition"
+					? this.unit || "count"
+					: "days";
+		new Setting(contentEl)
+			.setName("Weekly target")
+			.setDesc(
+				this.type === "binary"
+					? "Optional. Days to complete per week."
+					: `Optional. Total ${periodUnit} per week.`,
+			)
+			.addText((text) =>
+				text
+					.setPlaceholder("None")
+					.setValue(this.weeklyTarget ? String(this.weeklyTarget) : "")
+					.onChange((value) => {
+						const parsed = Number(value);
+						this.weeklyTarget =
+							Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
+					}),
+			);
+		new Setting(contentEl)
+			.setName("Monthly target")
+			.setDesc(
+				this.type === "binary"
+					? "Optional. Days to complete per month."
+					: `Optional. Total ${periodUnit} per month.`,
+			)
+			.addText((text) =>
+				text
+					.setPlaceholder("None")
+					.setValue(
+						this.monthlyTarget ? String(this.monthlyTarget) : "",
+					)
+					.onChange((value) => {
+						const parsed = Number(value);
+						this.monthlyTarget =
+							Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
+					}),
+			);
+
 		new Setting(contentEl)
 			.setName("Icon")
 			.setDesc("Choose a Lucide icon or an emoji to represent this habit.")
@@ -256,6 +303,8 @@ export class HabitModal extends Modal {
 							type: this.type,
 							target: this.target,
 							unit: this.unit,
+							weeklyTarget: this.weeklyTarget,
+							monthlyTarget: this.monthlyTarget,
 							icon: this.icon,
 							color: this.color,
 						};
