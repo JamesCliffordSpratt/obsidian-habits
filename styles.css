@@ -260,21 +260,23 @@
 	margin-right: 0.5rem;
 }
 
-.habits-swatch {
+.habits-swatches button.habits-swatch {
 	width: 1.5rem;
 	height: 1.5rem;
+	min-width: 0;
 	padding: 0;
 	border-radius: 50%;
-	background: var(--habits-swatch);
+	background-color: var(--habits-swatch);
+	background-image: none;
 	border: 2px solid transparent;
 	cursor: pointer;
 	box-shadow: none;
 }
 
-.habits-swatch:hover {
+.habits-swatches button.habits-swatch:hover {
 	border-color: var(--background-modifier-border-hover);
 }
 
-.habits-swatch.is-selected {
+.habits-swatches button.habits-swatch.is-selected {
 	border-color: var(--text-normal);
 }
