@@ -48,3 +48,12 @@ export function friendlyDateLabel(date: Date, today: Date): string {
 		year: "numeric",
 	});
 }
+
+/** Parse a `YYYY-MM-DD` key into a local date, or null if malformed. */
+export function fromDateKey(key: string): Date | null {
+	const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(key);
+	if (!match) {
+		return null;
+	}
+	return new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+}

@@ -11,11 +11,21 @@
 }
 
 .habits-header {
-	display: flex;
+	display: grid;
+	grid-template-columns: 1fr auto 1fr;
 	align-items: center;
-	justify-content: space-between;
 	gap: 0.5rem;
 	margin-bottom: 0.75rem;
+}
+
+.habits-date-nav {
+	grid-column: 2;
+	justify-self: center;
+}
+
+.habits-header > .habits-icon-button {
+	grid-column: 3;
+	justify-self: end;
 }
 
 .habits-date-nav {
@@ -24,10 +34,38 @@
 	gap: 0.5rem;
 }
 
+.habits-date-display {
+	position: relative;
+	display: inline-flex;
+}
+
 .habits-date-label {
-	font-weight: var(--font-semibold);
 	min-width: 8rem;
+	padding: 0.25rem 0.5rem;
+	font-weight: var(--font-semibold);
 	text-align: center;
+	color: var(--text-normal);
+	background: transparent;
+	border: none;
+	border-radius: var(--radius-s);
+	cursor: pointer;
+	box-shadow: none;
+}
+
+.habits-date-label:hover {
+	background: var(--background-modifier-hover);
+}
+
+.habits-date-input {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	opacity: 0;
+	pointer-events: none;
 }
 
 .habits-icon-button {

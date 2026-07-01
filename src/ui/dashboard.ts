@@ -4,7 +4,12 @@ import type { HabitsPluginSettings } from "../settings";
 import type { HabitDefinition } from "../types";
 import { HabitModal } from "./habit-modal";
 import { applyHabitIcon } from "./icon-suggest-modal";
-import { addDays, friendlyDateLabel, toDateKey } from "../utils";
+import {
+	addDays,
+	friendlyDateLabel,
+	fromDateKey,
+	toDateKey,
+} from "../utils";
 
 const MOBILE_BREAKPOINT = 768;
 
@@ -72,9 +77,33 @@ export class HabitsDashboard extends MarkdownRenderChild {
 			this.render();
 		});
 
-		nav.createEl("span", {
+		const dateDisplay = nav.createEl("span", {
+			cls: "habits-date-display",
+		});
+		const dateButton = dateDisplay.createEl("button", {
 			cls: "habits-date-label",
 			text: friendlyDateLabel(this.selectedDate, new Date()),
+			attr: { type: "button", "aria-label": "Choose a date" },
+		});
+		const dateInput = dateDisplay.createEl("input", {
+			cls: "habits-date-input",
+			attr: { type: "date", tabindex: "-1", "aria-hidden": "true" },
+		});
+		dateInput.value = toDateKey(this.selectedDate);
+		this.registerDomEvent(dateInput, "change", () => {
+			const parsed = fromDateKey(dateInput.value);
+			if (parsed) {
+				this.selectedDate = parsed;
+				this.render();
+			}
+		});
+		this.registerDomEvent(dateButton, "click", () => {
+			dateInput.value = toDateKey(this.selectedDate);
+			if (typeof dateInput.showPicker === "function") {
+				dateInput.showPicker();
+			} else {
+				dateInput.click();
+			}
 		});
 
 		const next = nav.createEl("button", {
