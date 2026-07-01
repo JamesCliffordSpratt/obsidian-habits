@@ -12,7 +12,7 @@ import type { HabitDefinition } from "../types";
 import { HabitModal } from "./habit-modal";
 import { ConfirmModal } from "./confirm-modal";
 import { renderStatsView } from "./stats-view";
-import type { StatsPeriod } from "../stats";
+import type { StatsPeriod, StatsRangeMode } from "../stats";
 import { applyHabitIcon } from "./icon-suggest-modal";
 import {
 	addDays,
@@ -36,6 +36,7 @@ export class HabitsDashboard extends MarkdownRenderChild {
 	private lastPerView = 1;
 	private mode: "dashboard" | "stats" = "dashboard";
 	private statsPeriod: StatsPeriod = "weekly";
+	private statsRange: StatsRangeMode = "rolling";
 
 	private root: HTMLElement;
 	private trackEl: HTMLElement | null = null;
@@ -68,8 +69,15 @@ export class HabitsDashboard extends MarkdownRenderChild {
 
 		if (this.mode === "stats") {
 			this.renderStatsHeader();
+			this.renderRangeToggle();
 			const body = this.root.createDiv();
-			renderStatsView(body, this.habits, this.statsPeriod, new Date());
+			renderStatsView(
+				body,
+				this.habits,
+				this.statsPeriod,
+				this.statsRange,
+				new Date(),
+			);
 			return;
 		}
 
@@ -123,6 +131,28 @@ export class HabitsDashboard extends MarkdownRenderChild {
 		this.registerDomEvent(download, "click", () => {
 			new Notice("Stats export is coming soon.");
 		});
+	}
+
+	/** Segmented toggle between rolling and calendar date ranges. */
+	private renderRangeToggle(): void {
+		const wrap = this.root.createDiv({ cls: "habits-range-toggle" });
+		const weekly = this.statsPeriod === "weekly";
+		const options: { id: StatsRangeMode; label: string }[] = [
+			{ id: "rolling", label: weekly ? "Last 7 days" : "Last 30 days" },
+			{ id: "calendar", label: weekly ? "This week" : "This month" },
+		];
+		for (const option of options) {
+			const btn = wrap.createEl("button", {
+				cls: "habits-range-btn",
+				text: option.label,
+				attr: { type: "button" },
+			});
+			btn.toggleClass("is-active", this.statsRange === option.id);
+			this.registerDomEvent(btn, "click", () => {
+				this.statsRange = option.id;
+				this.render();
+			});
+		}
 	}
 
 	private renderHeader(): void {

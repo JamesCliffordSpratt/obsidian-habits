@@ -2,11 +2,13 @@ import type { HabitDefinition } from "../types";
 import { addDays, toDateKey } from "../utils";
 import { applyHabitIcon } from "./icon-suggest-modal";
 import {
+	getStatsRange,
 	habitStats,
 	isComplete,
 	perfectDays,
-	periodLength,
+	rangeLength,
 	type StatsPeriod,
+	type StatsRangeMode,
 } from "../stats";
 
 function formatShort(date: Date): string {
@@ -27,17 +29,34 @@ export function renderStatsView(
 	container: HTMLElement,
 	habits: HabitDefinition[],
 	period: StatsPeriod,
+	mode: StatsRangeMode,
 	today: Date,
 ): void {
 	container.empty();
 	container.addClass("habits-stats");
 
-	const length = periodLength(period);
-	const start = addDays(today, -(length - 1));
+	const range = getStatsRange(today, period, mode);
+	const length = rangeLength(range);
+
+	const title =
+		mode === "rolling"
+			? period === "weekly"
+				? "Last 7 days"
+				: "Last 30 days"
+			: period === "weekly"
+				? "This week"
+				: "This month";
+	const subtitle =
+		mode === "calendar" && period === "monthly"
+			? today.toLocaleDateString(undefined, {
+					month: "long",
+					year: "numeric",
+				})
+			: `${formatShort(range.start)} – ${formatShort(range.end)}`;
 
 	container.createDiv({
 		cls: "habits-stats-range",
-		text: `${period === "weekly" ? "Last 7 days" : "Last 30 days"} · ${formatShort(start)} – ${formatShort(today)}`,
+		text: `${title} · ${subtitle}`,
 	});
 
 	if (habits.length === 0) {
@@ -48,13 +67,14 @@ export function renderStatsView(
 		return;
 	}
 
-	const allStats = habits.map((habit) => habitStats(habit, today, period));
+	const todayKey = toDateKey(today);
+	const allStats = habits.map((habit) => habitStats(habit, range, today));
 	const totalDays = allStats.reduce((sum, s) => sum + s.days, 0);
 	const totalCompleted = allStats.reduce((sum, s) => sum + s.completed, 0);
 	const overallRate =
 		totalDays > 0 ? Math.round((totalCompleted / totalDays) * 100) : 0;
 	const bestCurrent = allStats.reduce((max, s) => Math.max(max, s.current), 0);
-	const perfect = perfectDays(habits, today, period);
+	const perfect = perfectDays(habits, range, today);
 
 	const summary = container.createDiv({ cls: "habits-stats-summary" });
 	tile(summary, `${overallRate}%`, "Completion");
@@ -84,10 +104,13 @@ export function renderStatsView(
 
 		const heatmap = row.createDiv({ cls: "habits-stats-heatmap" });
 		for (let d = 0; d < length; d++) {
-			const key = toDateKey(addDays(today, -(length - 1) + d));
+			const date = addDays(range.start, d);
+			const key = toDateKey(date);
 			const value = habit.records[key] ?? 0;
 			const cell = heatmap.createDiv({ cls: "habits-stats-cell" });
-			if (isComplete(habit, key)) {
+			if (key > todayKey) {
+				cell.addClass("is-future");
+			} else if (isComplete(habit, key)) {
 				cell.addClass("is-complete");
 			} else if (value > 0) {
 				cell.addClass("is-partial");

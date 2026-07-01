@@ -522,3 +522,40 @@
 	color: var(--text-muted);
 	font-size: var(--font-ui-small);
 }
+
+/* Stats range toggle (rolling vs calendar) */
+
+.habits-range-toggle {
+	display: flex;
+	justify-content: center;
+	gap: 0.25rem;
+	margin-bottom: 0.75rem;
+	padding: 0.2rem;
+	background: var(--background-primary);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: var(--radius-m);
+}
+
+.habits-dashboard .habits-range-btn {
+	flex: 1;
+	max-width: 12rem;
+	padding: 0.3rem 0.6rem;
+	font-size: var(--font-ui-small);
+	font-weight: var(--font-semibold);
+	color: var(--text-muted);
+	background: transparent;
+	border: none;
+	border-radius: var(--radius-s);
+	cursor: pointer;
+	box-shadow: none;
+}
+
+.habits-dashboard .habits-range-btn.is-active {
+	color: var(--text-normal);
+	background: var(--background-modifier-hover);
+}
+
+.habits-stats-cell.is-future {
+	background: transparent;
+	border: 1px dashed var(--background-modifier-border);
+}
