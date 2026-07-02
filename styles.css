@@ -1122,20 +1122,20 @@
 /* Export modal: options left, live A4 preview right. */
 
 .habits-export-modal .modal {
-	width: 960px;
-	max-width: 95vw;
+	width: 1020px;
+	max-width: 96vw;
 }
 
 .habits-export-body {
 	display: flex;
 	gap: 1rem;
 	align-items: flex-start;
-	max-height: 70vh;
+	max-height: 80vh;
 }
 
 .habits-export-controls {
 	flex: 0 0 320px;
-	max-height: 70vh;
+	max-height: 80vh;
 	overflow-y: auto;
 	padding-right: 0.5rem;
 }
@@ -1151,8 +1151,9 @@
 
 .habits-export-preview {
 	flex: 1;
-	max-height: 70vh;
-	overflow: auto;
+	max-height: 80vh;
+	overflow-y: auto;
+	overflow-x: hidden;
 	padding: 0.75rem;
 	background: var(--background-secondary-alt, var(--background-secondary));
 	border: 1px solid var(--background-modifier-border);
@@ -1172,7 +1173,20 @@
 	text-align: center;
 }
 
+/* Scaled wrapper: reserves the on-screen footprint of the scaled page. */
+.habits-export-page-outer {
+	flex: 0 0 auto;
+	width: var(--hx-outer-w);
+	height: var(--hx-outer-h);
+	overflow: hidden;
+}
+
 /* The preview page is always paper-white regardless of theme. */
+.habits-export-page {
+	transform: scale(var(--hx-scale, 1));
+	transform-origin: top left;
+}
+
 .habits-export-page {
 	position: relative;
 	flex: 0 0 auto;

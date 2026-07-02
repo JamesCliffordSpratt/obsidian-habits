@@ -150,12 +150,22 @@ export class ExportModal extends Modal {
 		});
 
 		this.buildControls(controls);
-		void this.refresh();
+		// Wait a frame so the preview pane has a measurable width, then
+		// keep the fit-to-width scale fresh across window resizes.
+		this.contentEl.win.requestAnimationFrame(() => {
+			void this.refresh();
+		});
+		this.contentEl.win.addEventListener("resize", this.onWinResize);
 	}
 
 	onClose(): void {
+		this.contentEl.win.removeEventListener("resize", this.onWinResize);
 		this.contentEl.empty();
 	}
+
+	private onWinResize = (): void => {
+		this.requestRefresh();
+	};
 
 	private buildControls(root: HTMLElement): void {
 		new Setting(root)
@@ -598,12 +608,31 @@ export class ExportModal extends Modal {
 		}
 
 		const pages = this.paginate(this.buildBlocks(ctx), ctx);
+
+		// Fit each page to the preview pane's width, like a PDF viewer:
+		// the page keeps its true A4 pixel size and is scaled via a CSS
+		// transform, so the layout maths stay exact.
+		const scroller = root.parentElement;
+		let avail = scroller ? scroller.clientWidth - 28 : 0;
+		if (avail < 100) {
+			avail = 520;
+		}
+		const scale = Math.min(1.5, avail / (ctx.pageW * PX));
+
 		pages.forEach((page, index) => {
-			const pageEl = root.createDiv({ cls: "habits-export-page" });
+			const outer = root.createDiv({
+				cls: "habits-export-page-outer",
+			});
+			outer.setCssProps({
+				"--hx-outer-w": `${ctx.pageW * PX * scale}px`,
+				"--hx-outer-h": `${ctx.pageH * PX * scale}px`,
+			});
+			const pageEl = outer.createDiv({ cls: "habits-export-page" });
 			pageEl.setCssProps({
 				"--hx-page-w": `${ctx.pageW * PX}px`,
 				"--hx-page-h": `${ctx.pageH * PX}px`,
 				"--hx-page-pad": `${MARGIN * PX}px`,
+				"--hx-scale": String(scale),
 			});
 			for (const block of page) {
 				this.renderBlockHtml(block, pageEl, ctx);
