@@ -118,6 +118,7 @@
 .habits-card {
 	position: relative;
 	overflow: hidden;
+	min-width: 0;
 	flex: 0 0 calc(100% / var(--habits-per-view, 1));
 	box-sizing: border-box;
 	display: flex;
@@ -299,8 +300,7 @@
 .habits-complete-icon {
 	display: inline-flex;
 	color: var(--color-green, var(--text-success));
-	animation: habits-complete-swoosh 0.55s cubic-bezier(0.34, 1.56, 0.64, 1)
-		forwards;
+	animation: habits-complete-swoosh 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }
 
 .habits-complete-icon .svg-icon {
@@ -355,26 +355,22 @@
 	}
 }
 
-/* Reduced motion: swap the spin for a gentle fade so the reward still
-   registers without movement. */
-@media (prefers-reduced-motion: reduce) {
-	.habits-complete-icon {
-		animation: habits-complete-gentle 0.45s ease-out forwards;
-	}
-
-	.habits-complete-ring {
-		animation: none;
-		opacity: 0;
-	}
-}
-
-@keyframes habits-complete-gentle {
-	from {
-		opacity: 0;
-	}
-	to {
-		opacity: 1;
-	}
+/* Departure: the completed card swooshes off to the right and its slot
+   collapses, so the rest of the queue slides in to close the gap. */
+.habits-card.is-departing {
+	opacity: 0;
+	transform: translateX(45%) scale(0.9);
+	flex-basis: 0;
+	padding-left: 0;
+	padding-right: 0;
+	border-left-width: 0;
+	border-right-width: 0;
+	transition:
+		opacity 0.25s ease-in,
+		transform 0.3s ease-in,
+		flex-basis 0.3s ease-in-out 0.25s,
+		padding 0.3s ease-in-out 0.25s,
+		border-width 0.3s ease-in-out 0.25s;
 }
 
 /* New-habit modal: live preview and icon picker */

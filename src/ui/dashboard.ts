@@ -435,7 +435,8 @@ export class HabitsDashboard extends MarkdownRenderChild {
 		wasComplete: boolean,
 	): Promise<void> {
 		if (!wasComplete && this.isComplete(habit)) {
-			await this.playCompletionAnimation(card);
+			const overlay = await this.playCompletionAnimation(card);
+			await this.playCardDeparture(card, overlay);
 		}
 		this.render();
 	}
@@ -445,7 +446,9 @@ export class HabitsDashboard extends MarkdownRenderChild {
 	 * swooshes in with a springy spin while a ring pulses outward behind it.
 	 * Colour comes from the theme palette (`--color-green`).
 	 */
-	private async playCompletionAnimation(card: HTMLElement): Promise<void> {
+	private async playCompletionAnimation(
+		card: HTMLElement,
+	): Promise<HTMLElement> {
 		// Brief pause so the user sees their input land before the reward.
 		await sleep(350);
 		const overlay = card.createDiv({ cls: "habits-complete-overlay" });
@@ -454,9 +457,27 @@ export class HabitsDashboard extends MarkdownRenderChild {
 		setIcon(icon, "circle-check");
 		// Swoosh-in plus a short hold at full size.
 		await sleep(950);
-		overlay.addClass("is-leaving");
-		await sleep(200);
-		overlay.remove();
+		return overlay;
+	}
+
+	/**
+	 * Send the completed card (still showing its green check) swooshing off
+	 * to the right while its slot collapses, so the queue visibly closes the
+	 * gap and the next card slides in. Skipped when the card is already at
+	 * the end of the queue — then the overlay simply fades out in place.
+	 */
+	private async playCardDeparture(
+		card: HTMLElement,
+		overlay: HTMLElement,
+	): Promise<void> {
+		const track = card.parentElement;
+		if (!track || track.lastElementChild === card) {
+			overlay.addClass("is-leaving");
+			await sleep(200);
+			return;
+		}
+		card.addClass("is-departing");
+		await sleep(600);
 	}
 
 	private async commit(habit: HabitDefinition, value: number): Promise<void> {
