@@ -1,5 +1,43 @@
-import { App, PluginSettingTab, Setting } from "obsidian";
+import {
+	AbstractInputSuggest,
+	App,
+	PluginSettingTab,
+	Setting,
+	TFolder,
+} from "obsidian";
 import type HabitsPlugin from "./main";
+
+/** Suggests matching vault folders while typing in a folder field. */
+class FolderSuggest extends AbstractInputSuggest<TFolder> {
+	constructor(
+		app: App,
+		private textInputEl: HTMLInputElement,
+	) {
+		super(app, textInputEl);
+	}
+
+	getSuggestions(query: string): TFolder[] {
+		const needle = query.toLowerCase();
+		return this.app.vault
+			.getAllLoadedFiles()
+			.filter(
+				(file): file is TFolder =>
+					file instanceof TFolder && file.path !== "/",
+			)
+			.filter((folder) => folder.path.toLowerCase().includes(needle))
+			.slice(0, 20);
+	}
+
+	renderSuggestion(folder: TFolder, el: HTMLElement): void {
+		el.setText(folder.path);
+	}
+
+	selectSuggestion(folder: TFolder): void {
+		this.textInputEl.value = folder.path;
+		this.textInputEl.trigger("input");
+		this.close();
+	}
+}
 
 /** User-configurable settings for the plugin. */
 export interface HabitsPluginSettings {
@@ -16,7 +54,7 @@ export interface HabitsPluginSettings {
 
 export const DEFAULT_SETTINGS: HabitsPluginSettings = {
 	habitsFolder: "Habits",
-	cardsPerView: 1,
+	cardsPerView: 4,
 	followDailyNoteDate: true,
 };
 
@@ -38,7 +76,7 @@ export class HabitsSettingTab extends PluginSettingTab {
 			.setDesc(
 				"Folder where each habit is stored as its own note. It is created automatically if it does not exist.",
 			)
-			.addText((text) =>
+			.addText((text) => {
 				text
 					.setPlaceholder("Habits")
 					.setValue(this.plugin.settings.habitsFolder)
@@ -46,8 +84,9 @@ export class HabitsSettingTab extends PluginSettingTab {
 						this.plugin.settings.habitsFolder =
 							value.trim() || DEFAULT_SETTINGS.habitsFolder;
 						await this.plugin.saveSettings();
-					}),
-			);
+					});
+				new FolderSuggest(this.app, text.inputEl);
+			});
 
 		new Setting(containerEl)
 			.setName("Follow daily note date")
@@ -68,12 +107,15 @@ export class HabitsSettingTab extends PluginSettingTab {
 			.setDesc(
 				"How many habit cards the carousel shows at once on wider screens.",
 			)
-			.addSlider((slider) =>
-				slider
-					.setLimits(1, 4, 1)
-					.setValue(this.plugin.settings.cardsPerView)
+			.addDropdown((dropdown) =>
+				dropdown
+					.addOption("1", "1")
+					.addOption("2", "2")
+					.addOption("3", "3")
+					.addOption("4", "4")
+					.setValue(String(this.plugin.settings.cardsPerView))
 					.onChange(async (value) => {
-						this.plugin.settings.cardsPerView = value;
+						this.plugin.settings.cardsPerView = Number(value);
 						await this.plugin.saveSettings();
 					}),
 			);
