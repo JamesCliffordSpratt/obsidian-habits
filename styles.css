@@ -265,6 +265,19 @@
 	border: 1px solid var(--background-modifier-border);
 }
 
+/* Timed habits show +1/+5/+10 chips, so tighten the row. */
+.habits-counter-buttons.is-compact {
+	gap: 0.5rem;
+}
+
+.habits-dashboard .habits-step-button {
+	padding: 0.45rem 0.55rem;
+	font-size: var(--font-ui-small);
+	font-weight: var(--font-semibold);
+	font-variant-numeric: tabular-nums;
+	line-height: 1;
+}
+
 .habits-carousel-controls {
 	display: flex;
 	align-items: center;
@@ -1000,6 +1013,14 @@
 .habits-panel .habits-panel-mini .svg-icon {
 	width: 0.85rem;
 	height: 0.85rem;
+}
+
+.habits-panel .habits-panel-step {
+	padding: 0.2rem 0.3rem;
+	font-size: var(--font-ui-smaller);
+	font-weight: var(--font-semibold);
+	font-variant-numeric: tabular-nums;
+	line-height: 1;
 }
 
 .habits-panel .habits-panel-toggle {

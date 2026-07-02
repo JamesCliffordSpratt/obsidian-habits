@@ -270,7 +270,7 @@ export class HabitsPanelView extends ItemView {
 		}
 
 		const value = this.valueOf(habit);
-		const step = habit.type === "timed" ? 5 : 1;
+		const timed = habit.type === "timed";
 		main.createSpan({
 			cls: "habits-panel-value",
 			text: `${value}/${habit.target}`,
@@ -278,21 +278,38 @@ export class HabitsPanelView extends ItemView {
 
 		const minus = main.createEl("button", {
 			cls: "habits-icon-button habits-panel-mini",
-			attr: { type: "button", "aria-label": `Decrease by ${step}` },
+			attr: { type: "button", "aria-label": "Decrease by 1" },
 		});
 		setIcon(minus, "minus");
 		this.registerDomEvent(minus, "click", async () => {
-			await this.commit(habit, value - step, row);
+			await this.commit(habit, value - 1, row);
 		});
 
-		const plus = main.createEl("button", {
-			cls: "habits-icon-button habits-panel-mini",
-			attr: { type: "button", "aria-label": `Increase by ${step}` },
-		});
-		setIcon(plus, "plus");
-		this.registerDomEvent(plus, "click", async () => {
-			await this.commit(habit, value + step, row);
-		});
+		if (timed) {
+			// Time gets logged in chunks, so offer 1, 5 and 10 minutes.
+			for (const step of [1, 5, 10]) {
+				const btn = main.createEl("button", {
+					cls: "habits-icon-button habits-panel-mini habits-panel-step",
+					text: `+${step}`,
+					attr: {
+						type: "button",
+						"aria-label": `Increase by ${step}`,
+					},
+				});
+				this.registerDomEvent(btn, "click", async () => {
+					await this.commit(habit, value + step, row);
+				});
+			}
+		} else {
+			const plus = main.createEl("button", {
+				cls: "habits-icon-button habits-panel-mini",
+				attr: { type: "button", "aria-label": "Increase by 1" },
+			});
+			setIcon(plus, "plus");
+			this.registerDomEvent(plus, "click", async () => {
+				await this.commit(habit, value + 1, row);
+			});
+		}
 
 		const progress = row.createDiv({ cls: "habits-panel-progress" });
 		const fill = progress.createDiv({

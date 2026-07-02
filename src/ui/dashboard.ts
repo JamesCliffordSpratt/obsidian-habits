@@ -724,9 +724,8 @@ export class HabitsDashboard extends MarkdownRenderChild {
 		card: HTMLElement,
 	): void {
 		const value = this.currentValue(habit);
-		const step = habit.type === "timed" ? 5 : 1;
-		const unit =
-			habit.unit || (habit.type === "timed" ? "min" : "");
+		const timed = habit.type === "timed";
+		const unit = habit.unit || (timed ? "min" : "");
 
 		const targetText = unit
 			? `/ ${habit.target} ${unit}`
@@ -758,27 +757,49 @@ export class HabitsDashboard extends MarkdownRenderChild {
 		}
 
 		const buttons = body.createDiv({ cls: "habits-counter-buttons" });
+		buttons.toggleClass("is-compact", timed);
 
 		const minus = buttons.createEl("button", {
 			cls: "habits-icon-button",
-			attr: { type: "button", "aria-label": `Decrease by ${step}` },
+			attr: { type: "button", "aria-label": "Decrease by 1" },
 		});
 		setIcon(minus, "minus");
 		this.registerDomEvent(minus, "click", async () => {
-			await this.commit(habit, value - step);
+			await this.commit(habit, value - 1);
 			this.render();
 		});
 
-		const plus = buttons.createEl("button", {
-			cls: "habits-icon-button",
-			attr: { type: "button", "aria-label": `Increase by ${step}` },
-		});
-		setIcon(plus, "plus");
-		this.registerDomEvent(plus, "click", async () => {
+		const addValue = async (amount: number): Promise<void> => {
 			const wasComplete = this.isComplete(habit);
-			await this.commit(habit, value + step);
+			await this.commit(habit, value + amount);
 			await this.finishChange(card, habit, wasComplete);
-		});
+		};
+
+		if (timed) {
+			// Time gets logged in chunks, so offer 1, 5 and 10 minutes.
+			for (const step of [1, 5, 10]) {
+				const btn = buttons.createEl("button", {
+					cls: "habits-icon-button habits-step-button",
+					text: `+${step}`,
+					attr: {
+						type: "button",
+						"aria-label": `Increase by ${step}`,
+					},
+				});
+				this.registerDomEvent(btn, "click", () => {
+					void addValue(step);
+				});
+			}
+		} else {
+			const plus = buttons.createEl("button", {
+				cls: "habits-icon-button",
+				attr: { type: "button", "aria-label": "Increase by 1" },
+			});
+			setIcon(plus, "plus");
+			this.registerDomEvent(plus, "click", () => {
+				void addValue(1);
+			});
+		}
 	}
 
 	private showCardMenu(
