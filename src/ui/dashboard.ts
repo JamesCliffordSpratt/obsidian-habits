@@ -390,7 +390,18 @@ export class HabitsDashboard extends MarkdownRenderChild {
 			const iconEl = title.createSpan({ cls: "habits-card-icon" });
 			applyHabitIcon(iconEl, habit.icon);
 		}
-		title.createSpan({ cls: "habits-card-name", text: habit.name });
+		const name = title.createEl("button", {
+			cls: "habits-card-name",
+			text: habit.name,
+			attr: {
+				type: "button",
+				"aria-label": `Open the note for ${habit.name}`,
+			},
+		});
+		setTooltip(name, "Open habit note");
+		this.registerDomEvent(name, "click", () => {
+			void this.app.workspace.openLinkText(habit.path, "", false);
+		});
 
 		const body = card.createDiv({ cls: "habits-card-body" });
 		if (habit.type === "binary") {
