@@ -247,7 +247,7 @@ export class HabitsDashboard extends MarkdownRenderChild {
 		const track = viewport.createDiv({ cls: "habits-carousel-track" });
 		this.trackEl = track;
 
-		for (const habit of this.habits) {
+		for (const habit of this.orderedHabits()) {
 			this.renderCard(track, habit);
 		}
 
@@ -394,14 +394,69 @@ export class HabitsDashboard extends MarkdownRenderChild {
 
 		const body = card.createDiv({ cls: "habits-card-body" });
 		if (habit.type === "binary") {
-			this.renderBinaryControl(body, habit);
+			this.renderBinaryControl(body, habit, card);
 		} else {
-			this.renderCounterControl(body, habit);
+			this.renderCounterControl(body, habit, card);
 		}
 	}
 
 	private currentValue(habit: HabitDefinition): number {
 		return habit.records[toDateKey(this.selectedDate)] ?? 0;
+	}
+
+	/** Whether the habit's goal is met for the selected day. */
+	private isComplete(habit: HabitDefinition): boolean {
+		const value = this.currentValue(habit);
+		if (habit.type === "binary") {
+			return value >= 1;
+		}
+		return habit.target > 0 && value >= habit.target;
+	}
+
+	/**
+	 * Carousel order for the selected day: incomplete habits first (in store
+	 * order), completed habits at the end of the queue.
+	 */
+	private orderedHabits(): HabitDefinition[] {
+		return [
+			...this.habits.filter((habit) => !this.isComplete(habit)),
+			...this.habits.filter((habit) => this.isComplete(habit)),
+		];
+	}
+
+	/**
+	 * Re-render after a value change. If the habit just transitioned to
+	 * complete, play the completion animation first; the re-render then moves
+	 * the card to the end of the queue.
+	 */
+	private async finishChange(
+		card: HTMLElement,
+		habit: HabitDefinition,
+		wasComplete: boolean,
+	): Promise<void> {
+		if (!wasComplete && this.isComplete(habit)) {
+			await this.playCompletionAnimation(card);
+		}
+		this.render();
+	}
+
+	/**
+	 * Overlay a red circle-x that rotates into a green circle-check.
+	 * Colours come from the theme palette (`--color-red` / `--color-green`).
+	 */
+	private async playCompletionAnimation(card: HTMLElement): Promise<void> {
+		const overlay = card.createDiv({ cls: "habits-complete-overlay" });
+		const icon = overlay.createSpan({ cls: "habits-complete-icon" });
+		setIcon(icon, "circle-x");
+		// Swap the icon at the rotation midpoint so the X appears to turn
+		// into the check as it spins.
+		await sleep(300);
+		setIcon(icon, "circle-check");
+		icon.addClass("is-check");
+		await sleep(600);
+		overlay.addClass("is-leaving");
+		await sleep(200);
+		overlay.remove();
 	}
 
 	private async commit(habit: HabitDefinition, value: number): Promise<void> {
@@ -420,6 +475,7 @@ export class HabitsDashboard extends MarkdownRenderChild {
 		habit: HabitDefinition,
 		readout: HTMLElement,
 		targetText: string,
+		card: HTMLElement,
 	): void {
 		readout.empty();
 		const input = readout.createEl("input", {
@@ -443,13 +499,14 @@ export class HabitsDashboard extends MarkdownRenderChild {
 				return;
 			}
 			done = true;
+			const wasComplete = this.isComplete(habit);
 			if (save) {
 				const parsed = Number(input.value);
 				if (Number.isFinite(parsed)) {
 					await this.commit(habit, Math.max(0, Math.round(parsed)));
 				}
 			}
-			this.render();
+			await this.finishChange(card, habit, wasComplete);
 		};
 
 		this.registerDomEvent(input, "keydown", (evt: KeyboardEvent) => {
@@ -469,6 +526,7 @@ export class HabitsDashboard extends MarkdownRenderChild {
 	private renderBinaryControl(
 		body: HTMLElement,
 		habit: HabitDefinition,
+		card: HTMLElement,
 	): void {
 		const done = this.currentValue(habit) >= 1;
 		const button = body.createEl("button", {
@@ -488,13 +546,14 @@ export class HabitsDashboard extends MarkdownRenderChild {
 
 		this.registerDomEvent(button, "click", async () => {
 			await this.commit(habit, done ? 0 : 1);
-			this.render();
+			await this.finishChange(card, habit, done);
 		});
 	}
 
 	private renderCounterControl(
 		body: HTMLElement,
 		habit: HabitDefinition,
+		card: HTMLElement,
 	): void {
 		const value = this.currentValue(habit);
 		const step = habit.type === "timed" ? 5 : 1;
@@ -516,7 +575,7 @@ export class HabitsDashboard extends MarkdownRenderChild {
 		});
 		readout.createSpan({ cls: "habits-target", text: targetText });
 		this.registerDomEvent(valueEl, "click", () =>
-			this.editValue(habit, readout, targetText),
+			this.editValue(habit, readout, targetText, card),
 		);
 
 		const progress = body.createDiv({ cls: "habits-progress" });
@@ -548,8 +607,9 @@ export class HabitsDashboard extends MarkdownRenderChild {
 		});
 		setIcon(plus, "plus");
 		this.registerDomEvent(plus, "click", async () => {
+			const wasComplete = this.isComplete(habit);
 			await this.commit(habit, value + step);
-			this.render();
+			await this.finishChange(card, habit, wasComplete);
 		});
 	}
 

@@ -116,6 +116,8 @@
 }
 
 .habits-card {
+	position: relative;
+	overflow: hidden;
 	flex: 0 0 calc(100% / var(--habits-per-view, 1));
 	box-sizing: border-box;
 	display: flex;
@@ -270,6 +272,65 @@
 
 .habits-dot.is-active {
 	background: var(--habits-accent);
+}
+
+/* Completion animation: a red circle-x rotates into a green circle-check,
+   then the card is re-queued to the end of the carousel. Colours come from
+   the theme palette with sensible fallbacks. */
+
+.habits-complete-overlay {
+	position: absolute;
+	inset: 0;
+	z-index: 1;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: var(--background-primary);
+	border-radius: inherit;
+	opacity: 1;
+	transition: opacity 0.2s ease;
+}
+
+.habits-complete-overlay.is-leaving {
+	opacity: 0;
+}
+
+.habits-complete-icon {
+	display: inline-flex;
+	color: var(--color-red, var(--text-error));
+	animation: habits-complete-spin 0.6s ease-in-out forwards;
+}
+
+.habits-complete-icon.is-check {
+	color: var(--color-green, var(--text-success));
+}
+
+.habits-complete-icon .svg-icon {
+	width: 3rem;
+	height: 3rem;
+}
+
+@keyframes habits-complete-spin {
+	0% {
+		transform: rotate(0deg) scale(0.6);
+		opacity: 0;
+	}
+	20% {
+		opacity: 1;
+	}
+	50% {
+		transform: rotate(180deg) scale(1.15);
+	}
+	100% {
+		transform: rotate(360deg) scale(1);
+		opacity: 1;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.habits-complete-icon {
+		animation: none;
+	}
 }
 
 /* New-habit modal: live preview and icon picker */
