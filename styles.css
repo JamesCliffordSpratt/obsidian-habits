@@ -355,13 +355,24 @@
 	}
 }
 
+/* Reduced motion: swap the spin for a gentle fade so the reward still
+   registers without movement. */
 @media (prefers-reduced-motion: reduce) {
-	.habits-complete-icon,
-	.habits-complete-ring {
-		animation: none;
+	.habits-complete-icon {
+		animation: habits-complete-gentle 0.45s ease-out forwards;
 	}
 
-	.habits-complete-icon {
+	.habits-complete-ring {
+		animation: none;
+		opacity: 0;
+	}
+}
+
+@keyframes habits-complete-gentle {
+	from {
+		opacity: 0;
+	}
+	to {
 		opacity: 1;
 	}
 }
