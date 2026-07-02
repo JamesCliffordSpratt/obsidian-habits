@@ -18,6 +18,9 @@
 	],
 	"author": "James Spratt",
 	"license": "MIT",
+	"dependencies": {
+		"chart.js": "^4.4.0"
+	},
 	"devDependencies": {
 		"@types/node": "^22.0.0",
 		"@typescript-eslint/parser": "^8.0.0",

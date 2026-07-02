@@ -6,6 +6,7 @@ import {
 	type HabitsPluginSettings,
 } from "./settings";
 import { HabitsDashboard } from "./ui/dashboard";
+import { HabitMetrics } from "./ui/habit-metrics";
 import { HabitModal } from "./ui/habit-modal";
 
 export default class HabitsPlugin extends Plugin {
@@ -28,6 +29,15 @@ export default class HabitsPlugin extends Plugin {
 			ctx.addChild(dashboard);
 		});
 
+		this.registerMarkdownCodeBlockProcessor(
+			"habit-metrics",
+			(_source, el, ctx) => {
+				ctx.addChild(
+					new HabitMetrics(this.store, ctx.sourcePath, el),
+				);
+			},
+		);
+
 		this.addCommand({
 			id: "create-habit",
 			name: "Create habit",
@@ -43,6 +53,14 @@ export default class HabitsPlugin extends Plugin {
 			name: "Insert dashboard",
 			editorCallback: (editor: Editor) => {
 				editor.replaceSelection("```habits\n```\n");
+			},
+		});
+
+		this.addCommand({
+			id: "insert-habit-metrics",
+			name: "Insert habit metrics",
+			editorCallback: (editor: Editor) => {
+				editor.replaceSelection("```habit-metrics\n```\n");
 			},
 		});
 	}

@@ -167,7 +167,17 @@ export class HabitStore {
 			return null;
 		}
 
-		const body = `# ${cleanName}\n\nThis note is managed by the Habits plugin.\n`;
+		const body = [
+			`# ${cleanName}`,
+			"",
+			"This note is managed by the Habits plugin.",
+			"",
+			"## Metrics",
+			"",
+			"```habit-metrics",
+			"```",
+			"",
+		].join("\n");
 		const file = await this.app.vault.create(path, body);
 
 		await this.app.fileManager.processFrontMatter(file, (frontmatter) => {

@@ -149,6 +149,24 @@
 	color: var(--habits-accent);
 }
 
+/* The card name is a button that opens the habit's note. */
+.habits-dashboard button.habits-card-name {
+	padding: 0 0.15rem;
+	font-size: inherit;
+	font-weight: inherit;
+	color: var(--text-normal);
+	background: transparent;
+	border: none;
+	border-radius: var(--radius-s);
+	cursor: pointer;
+	box-shadow: none;
+}
+
+.habits-dashboard button.habits-card-name:hover {
+	color: var(--habits-accent);
+	text-decoration: underline;
+}
+
 .habits-card-body {
 	display: flex;
 	flex-direction: column;
@@ -733,4 +751,39 @@
 .habits-targets .setting-item:last-child {
 	border-bottom: none;
 	padding-bottom: 0;
+}
+
+/* Habit metrics (rendered by the habit-metrics code block) */
+
+.habits-metrics {
+	display: flex;
+	flex-direction: column;
+	gap: 0.85rem;
+	padding: 0.75rem;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: var(--radius-m);
+	background: var(--background-secondary);
+}
+
+.habits-metrics-empty {
+	margin: 0;
+	text-align: center;
+	color: var(--text-muted);
+}
+
+.habits-metrics-section {
+	display: flex;
+	flex-direction: column;
+	gap: 0.4rem;
+}
+
+.habits-metrics-title {
+	font-weight: var(--font-semibold);
+	font-size: var(--font-ui-small);
+	color: var(--text-muted);
+}
+
+.habits-metrics-canvas {
+	position: relative;
+	height: 220px;
 }
