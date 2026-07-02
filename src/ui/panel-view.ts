@@ -107,9 +107,17 @@ export class HabitsPanelView extends ItemView {
 	}
 
 	private autoReload(): void {
-		if (!this.suppressAutoReload) {
-			this.reload();
+		if (this.suppressAutoReload) {
+			return;
 		}
+		const active = this.contentEl.doc.activeElement;
+		if (
+			active instanceof HTMLInputElement &&
+			this.contentEl.contains(active)
+		) {
+			return;
+		}
+		this.reload();
 	}
 
 	private reload(): void {
@@ -271,9 +279,14 @@ export class HabitsPanelView extends ItemView {
 
 		const value = this.valueOf(habit);
 		const timed = habit.type === "timed";
-		main.createSpan({
+		const valueBtn = main.createEl("button", {
 			cls: "habits-panel-value",
 			text: `${value}/${habit.target}`,
+			attr: { type: "button", "aria-label": "Edit value" },
+		});
+		setTooltip(valueBtn, "Click to type a value");
+		this.registerDomEvent(valueBtn, "click", () => {
+			this.editRowValue(habit, row, valueBtn);
 		});
 
 		const minus = main.createEl("button", {
@@ -323,6 +336,61 @@ export class HabitsPanelView extends ItemView {
 		if (done) {
 			progress.addClass("is-complete");
 		}
+	}
+
+	/** Swap the value readout for an input so the user can type a value. */
+	private editRowValue(
+		habit: HabitDefinition,
+		row: HTMLElement,
+		valueBtn: HTMLElement,
+	): void {
+		const input = createEl("input", {
+			cls: "habits-panel-value-input",
+			attr: {
+				type: "number",
+				min: "0",
+				step: "1",
+				inputmode: "numeric",
+				"aria-label": "Value",
+			},
+		});
+		input.value = String(this.valueOf(habit));
+		valueBtn.replaceWith(input);
+		input.focus();
+		input.select();
+
+		let done = false;
+		const finish = async (save: boolean): Promise<void> => {
+			if (done) {
+				return;
+			}
+			done = true;
+			if (save) {
+				const parsed = Number(input.value);
+				if (Number.isFinite(parsed)) {
+					await this.commit(
+						habit,
+						Math.max(0, Math.round(parsed)),
+						row,
+					);
+					return;
+				}
+			}
+			this.reload();
+		};
+
+		this.registerDomEvent(input, "keydown", (evt: KeyboardEvent) => {
+			if (evt.key === "Enter") {
+				evt.preventDefault();
+				void finish(true);
+			} else if (evt.key === "Escape") {
+				evt.preventDefault();
+				void finish(false);
+			}
+		});
+		this.registerDomEvent(input, "blur", () => {
+			void finish(true);
+		});
 	}
 
 	/** Write a value for today, celebrating a fresh completion briefly. */

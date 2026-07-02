@@ -265,9 +265,18 @@
 	border: 1px solid var(--background-modifier-border);
 }
 
-/* Timed habits show +1/+5/+10 chips, so tighten the row. */
+/* Timed habits show +1/+5/+10 chips: spread them across the card. */
 .habits-counter-buttons.is-compact {
-	gap: 0.5rem;
+	width: 100%;
+	gap: 0.4rem;
+	justify-content: center;
+}
+
+.habits-counter-buttons.is-compact .habits-icon-button {
+	flex: 1 1 0;
+	min-width: 0;
+	max-width: 4.5rem;
+	padding: 0.45rem 0.3rem;
 }
 
 .habits-dashboard .habits-step-button {
@@ -996,12 +1005,36 @@
 	text-decoration: underline;
 }
 
-.habits-panel-value {
+.habits-panel .habits-panel-value {
 	flex: 0 0 auto;
+	margin: 0;
+	padding: 0 0.15rem;
+	background: transparent;
+	border: none;
+	border-radius: var(--radius-s);
+	box-shadow: none;
+	cursor: pointer;
 	color: var(--text-muted);
 	font-size: var(--font-ui-smaller);
 	font-variant-numeric: tabular-nums;
 	white-space: nowrap;
+}
+
+.habits-panel .habits-panel-value:hover {
+	color: var(--text-normal);
+	background: var(--background-modifier-hover);
+}
+
+.habits-panel .habits-panel-value-input {
+	flex: 0 0 auto;
+	width: 3rem;
+	padding: 0 0.2rem;
+	font-size: var(--font-ui-smaller);
+	text-align: center;
+	color: var(--text-normal);
+	background: var(--background-modifier-form-field);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: var(--radius-s);
 }
 
 .habits-panel .habits-panel-mini {
