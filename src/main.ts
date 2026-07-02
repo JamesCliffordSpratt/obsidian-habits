@@ -1,4 +1,4 @@
-import { Editor, Events, Plugin } from "obsidian";
+import { Editor, Events, Plugin, type WorkspaceLeaf } from "obsidian";
 import { HabitStore } from "./habit-store";
 import {
 	DEFAULT_SETTINGS,
@@ -8,6 +8,10 @@ import {
 import { HabitsDashboard } from "./ui/dashboard";
 import { HabitMetrics } from "./ui/habit-metrics";
 import { HabitModal } from "./ui/habit-modal";
+import {
+	HABITS_PANEL_VIEW_TYPE,
+	HabitsPanelView,
+} from "./ui/panel-view";
 
 export default class HabitsPlugin extends Plugin {
 	settings: HabitsPluginSettings = DEFAULT_SETTINGS;
@@ -41,6 +45,29 @@ export default class HabitsPlugin extends Plugin {
 			},
 		);
 
+		this.registerView(
+			HABITS_PANEL_VIEW_TYPE,
+			(leaf) =>
+				new HabitsPanelView(
+					leaf,
+					this.store,
+					() => this.settings,
+					this.events,
+				),
+		);
+
+		this.addRibbonIcon("list-checks", "Open habits panel", () => {
+			void this.activatePanel();
+		});
+
+		this.addCommand({
+			id: "open-panel",
+			name: "Open panel",
+			callback: () => {
+				void this.activatePanel();
+			},
+		});
+
 		this.addCommand({
 			id: "create-habit",
 			name: "Create habit",
@@ -66,6 +93,25 @@ export default class HabitsPlugin extends Plugin {
 				editor.replaceSelection("```habit-metrics\n```\n");
 			},
 		});
+	}
+
+	/** Open (or reveal) the habits panel in the right sidebar. */
+	private async activatePanel(): Promise<void> {
+		const existing = this.app.workspace.getLeavesOfType(
+			HABITS_PANEL_VIEW_TYPE,
+		);
+		let leaf: WorkspaceLeaf | null = existing[0] ?? null;
+		if (!leaf) {
+			leaf = this.app.workspace.getRightLeaf(false);
+			if (!leaf) {
+				return;
+			}
+			await leaf.setViewState({
+				type: HABITS_PANEL_VIEW_TYPE,
+				active: true,
+			});
+		}
+		await this.app.workspace.revealLeaf(leaf);
 	}
 
 	async loadSettings(): Promise<void> {
