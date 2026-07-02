@@ -1,7 +1,10 @@
 import {
 	App,
+	debounce,
+	Events,
 	MarkdownRenderChild,
 	Menu,
+	normalizePath,
 	Notice,
 	setIcon,
 	setTooltip,
@@ -44,11 +47,14 @@ export class HabitsDashboard extends MarkdownRenderChild {
 
 	private root: HTMLElement;
 	private trackEl: HTMLElement | null = null;
+	/** Suppresses event-driven reloads while an animation sequence plays. */
+	private suppressAutoReload = false;
 
 	constructor(
 		private app: App,
 		private store: HabitStore,
 		private getSettings: () => HabitsPluginSettings,
+		private pluginEvents: Events,
 		root: HTMLElement,
 	) {
 		super(root);
@@ -58,6 +64,69 @@ export class HabitsDashboard extends MarkdownRenderChild {
 	onload(): void {
 		this.root.addClass("habits-dashboard");
 		this.registerDomEvent(window, "resize", () => this.handleResize());
+
+		// Keep the dashboard fresh: reload whenever habit notes change on
+		// disk (from any pane, sync, or manual edits) or settings change.
+		const requestReload = debounce(() => this.autoReload(), 250, true);
+		this.registerEvent(
+			this.app.metadataCache.on("changed", (file) => {
+				if (this.isHabitFile(file.path)) {
+					requestReload();
+				}
+			}),
+		);
+		this.registerEvent(
+			this.app.vault.on("create", (file) => {
+				if (this.isHabitFile(file.path)) {
+					requestReload();
+				}
+			}),
+		);
+		this.registerEvent(
+			this.app.vault.on("delete", (file) => {
+				if (this.isHabitFile(file.path)) {
+					requestReload();
+				}
+			}),
+		);
+		this.registerEvent(
+			this.app.vault.on("rename", (file, oldPath) => {
+				if (
+					this.isHabitFile(file.path) ||
+					this.isHabitFile(oldPath)
+				) {
+					requestReload();
+				}
+			}),
+		);
+		this.registerEvent(
+			this.pluginEvents.on("settings-changed", () => {
+				requestReload();
+			}),
+		);
+
+		this.reload();
+	}
+
+	/** True when the path lives inside the configured habits folder. */
+	private isHabitFile(path: string): boolean {
+		const folder = normalizePath(this.getSettings().habitsFolder);
+		return path === folder || path.startsWith(`${folder}/`);
+	}
+
+	/**
+	 * Event-driven reload. Skipped while an animation is playing (the
+	 * animation flow reloads when it finishes) or while the user is typing
+	 * in a value input.
+	 */
+	private autoReload(): void {
+		if (this.suppressAutoReload) {
+			return;
+		}
+		const active = this.root.doc.activeElement;
+		if (active instanceof HTMLInputElement && this.root.contains(active)) {
+			return;
+		}
 		this.reload();
 	}
 
@@ -491,10 +560,15 @@ export class HabitsDashboard extends MarkdownRenderChild {
 		wasComplete: boolean,
 	): Promise<void> {
 		if (!wasComplete && this.isComplete(habit)) {
-			const overlay = await this.playCompletionAnimation(card);
-			await this.playCardDeparture(card, overlay);
+			this.suppressAutoReload = true;
+			try {
+				const overlay = await this.playCompletionAnimation(card);
+				await this.playCardDeparture(card, overlay);
+			} finally {
+				this.suppressAutoReload = false;
+			}
 		}
-		this.render();
+		this.reload();
 	}
 
 	/**
@@ -742,10 +816,15 @@ export class HabitsDashboard extends MarkdownRenderChild {
 					.setTitle("Pause habit")
 					.setIcon("pause")
 					.onClick(async () => {
-						await this.store.pauseHabit(habit);
-						const overlay =
-							await this.playPauseAnimation(card);
-						await this.playCardDeparture(card, overlay);
+						this.suppressAutoReload = true;
+						try {
+							await this.store.pauseHabit(habit);
+							const overlay =
+								await this.playPauseAnimation(card);
+							await this.playCardDeparture(card, overlay);
+						} finally {
+							this.suppressAutoReload = false;
+						}
 						this.reload();
 					}),
 			);

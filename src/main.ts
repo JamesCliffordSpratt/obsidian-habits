@@ -1,4 +1,4 @@
-import { Editor, Plugin } from "obsidian";
+import { Editor, Events, Plugin } from "obsidian";
 import { HabitStore } from "./habit-store";
 import {
 	DEFAULT_SETTINGS,
@@ -11,6 +11,8 @@ import { HabitModal } from "./ui/habit-modal";
 
 export default class HabitsPlugin extends Plugin {
 	settings: HabitsPluginSettings = DEFAULT_SETTINGS;
+	/** Plugin-internal event bus (e.g. "settings-changed"). */
+	readonly events = new Events();
 	private store!: HabitStore;
 
 	async onload(): Promise<void> {
@@ -24,6 +26,7 @@ export default class HabitsPlugin extends Plugin {
 				this.app,
 				this.store,
 				() => this.settings,
+				this.events,
 				el,
 			);
 			ctx.addChild(dashboard);
@@ -74,5 +77,6 @@ export default class HabitsPlugin extends Plugin {
 
 	async saveSettings(): Promise<void> {
 		await this.saveData(this.settings);
+		this.events.trigger("settings-changed");
 	}
 }
