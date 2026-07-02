@@ -1,4 +1,12 @@
-import { App, Modal, Notice, Setting, debounce } from "obsidian";
+import {
+	App,
+	debounce,
+	Modal,
+	Notice,
+	setIcon,
+	Setting,
+	setTooltip,
+} from "obsidian";
 import {
 	CategoryScale,
 	Chart,
@@ -618,7 +626,17 @@ export class ExportModal extends Modal {
 			avail = 520;
 		}
 		const scale = Math.min(1.5, avail / (ctx.pageW * PX));
+		this.renderPages(root, ctx, pages, scale, true);
+	}
 
+	/** Render every page into `root` at the given scale. */
+	private renderPages(
+		root: HTMLElement,
+		ctx: RenderCtx,
+		pages: Block[][],
+		scale: number,
+		zoomable: boolean,
+	): void {
 		pages.forEach((page, index) => {
 			const outer = root.createDiv({
 				cls: "habits-export-page-outer",
@@ -627,6 +645,17 @@ export class ExportModal extends Modal {
 				"--hx-outer-w": `${ctx.pageW * PX * scale}px`,
 				"--hx-outer-h": `${ctx.pageH * PX * scale}px`,
 			});
+			if (zoomable) {
+				outer.addClass("is-zoomable");
+				setTooltip(outer, "Click to view full size");
+				const hint = outer.createDiv({
+					cls: "habits-export-zoom-hint",
+				});
+				setIcon(hint, "zoom-in");
+				outer.addEventListener("click", () => {
+					this.openLightbox();
+				});
+			}
 			const pageEl = outer.createDiv({ cls: "habits-export-page" });
 			pageEl.setCssProps({
 				"--hx-page-w": `${ctx.pageW * PX}px`,
@@ -641,6 +670,40 @@ export class ExportModal extends Modal {
 				cls: "habits-export-page-number",
 				text: `${index + 1} / ${pages.length}`,
 			});
+		});
+	}
+
+	/** Full-size page viewer overlaid on the whole window. */
+	private openLightbox(): void {
+		const range = this.computeRange();
+		const ctx = this.renderCtx(range);
+		const pages = this.paginate(this.buildBlocks(ctx), ctx);
+
+		const overlay = this.containerEl.createDiv({
+			cls: "habits-export-lightbox",
+		});
+		const win = overlay.win;
+		const scale = Math.max(
+			0.5,
+			Math.min(
+				(win.innerWidth * 0.85) / (ctx.pageW * PX),
+				(win.innerHeight * 0.88) / (ctx.pageH * PX),
+			),
+		);
+
+		const close = overlay.createEl("button", {
+			cls: "habits-export-lightbox-close",
+			attr: { type: "button", "aria-label": "Close full-size view" },
+		});
+		setIcon(close, "x");
+
+		const pagesEl = overlay.createDiv({
+			cls: "habits-export-lightbox-pages",
+		});
+		this.renderPages(pagesEl, ctx, pages, scale, false);
+
+		overlay.addEventListener("click", () => {
+			overlay.remove();
 		});
 	}
 

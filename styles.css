@@ -1121,7 +1121,7 @@
 
 /* Export modal: options left, live A4 preview right. */
 
-.habits-export-modal .modal {
+.modal.habits-export-modal {
 	width: 1020px;
 	max-width: 96vw;
 }
@@ -1175,10 +1175,84 @@
 
 /* Scaled wrapper: reserves the on-screen footprint of the scaled page. */
 .habits-export-page-outer {
+	position: relative;
 	flex: 0 0 auto;
 	width: var(--hx-outer-w);
 	height: var(--hx-outer-h);
 	overflow: hidden;
+}
+
+.habits-export-page-outer.is-zoomable {
+	cursor: zoom-in;
+}
+
+/* Magnifying-glass badge shown while hovering a preview page. */
+.habits-export-zoom-hint {
+	position: absolute;
+	top: 6px;
+	right: 6px;
+	z-index: 2;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 26px;
+	height: 26px;
+	border-radius: 50%;
+	background: rgba(0, 0, 0, 0.55);
+	color: #ffffff;
+	opacity: 0;
+	transition: opacity 0.15s ease;
+	pointer-events: none;
+}
+
+.habits-export-zoom-hint .svg-icon {
+	width: 14px;
+	height: 14px;
+}
+
+.habits-export-page-outer.is-zoomable:hover .habits-export-zoom-hint {
+	opacity: 1;
+}
+
+/* Full-size lightbox overlaying the whole window. */
+.habits-export-lightbox {
+	position: absolute;
+	inset: 0;
+	z-index: 100;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	overflow-y: auto;
+	padding: 1.5rem;
+	background: rgba(0, 0, 0, 0.7);
+	cursor: zoom-out;
+}
+
+.habits-export-lightbox-pages {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 1rem;
+	margin: auto;
+}
+
+.habits-export-lightbox-close {
+	position: sticky;
+	top: 0;
+	z-index: 2;
+	align-self: flex-end;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 2rem;
+	height: 2rem;
+	padding: 0;
+	border-radius: 50%;
+	background: rgba(0, 0, 0, 0.6);
+	color: #ffffff;
+	border: 1px solid rgba(255, 255, 255, 0.25);
+	cursor: pointer;
+	box-shadow: none;
 }
 
 /* The preview page is always paper-white regardless of theme. */
