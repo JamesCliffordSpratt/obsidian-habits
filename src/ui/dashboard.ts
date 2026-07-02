@@ -56,14 +56,32 @@ export class HabitsDashboard extends MarkdownRenderChild {
 		private store: HabitStore,
 		private getSettings: () => HabitsPluginSettings,
 		private pluginEvents: Events,
+		private sourcePath: string,
 		root: HTMLElement,
 	) {
 		super(root);
 		this.root = root;
 	}
 
+	/**
+	 * When embedded in a daily note (a note whose name contains a date),
+	 * the dashboard opens on that note's date instead of today.
+	 */
+	private dailyNoteDate(): Date | null {
+		if (!this.getSettings().followDailyNoteDate) {
+			return null;
+		}
+		const base = this.sourcePath.split("/").pop() ?? "";
+		const match = /(\d{4}-\d{2}-\d{2})/.exec(base);
+		return match ? fromDateKey(match[1]) : null;
+	}
+
 	onload(): void {
 		this.root.addClass("habits-dashboard");
+		const noteDate = this.dailyNoteDate();
+		if (noteDate) {
+			this.selectedDate = noteDate;
+		}
 		this.registerDomEvent(window, "resize", () => this.handleResize());
 
 		// Keep the dashboard fresh: reload whenever habit notes change on

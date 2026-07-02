@@ -31,6 +31,7 @@ export default class HabitsPlugin extends Plugin {
 				this.store,
 				() => this.settings,
 				this.events,
+				ctx.sourcePath,
 				el,
 			);
 			ctx.addChild(dashboard);

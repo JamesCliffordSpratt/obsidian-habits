@@ -7,11 +7,17 @@ export interface HabitsPluginSettings {
 	habitsFolder: string;
 	/** How many cards are visible at once in the carousel on wide screens. */
 	cardsPerView: number;
+	/**
+	 * When a dashboard is embedded in a daily note (a note whose name
+	 * contains a date), open it on that note's date instead of today.
+	 */
+	followDailyNoteDate: boolean;
 }
 
 export const DEFAULT_SETTINGS: HabitsPluginSettings = {
 	habitsFolder: "Habits",
 	cardsPerView: 1,
+	followDailyNoteDate: true,
 };
 
 /** Settings tab shown under Settings → Community plugins → Habits. */
@@ -39,6 +45,20 @@ export class HabitsSettingTab extends PluginSettingTab {
 					.onChange(async (value) => {
 						this.plugin.settings.habitsFolder =
 							value.trim() || DEFAULT_SETTINGS.habitsFolder;
+						await this.plugin.saveSettings();
+					}),
+			);
+
+		new Setting(containerEl)
+			.setName("Follow daily note date")
+			.setDesc(
+				"When a dashboard is embedded in a daily note (a note whose name contains a date like 2026-07-01), open it on that note's date instead of today.",
+			)
+			.addToggle((toggle) =>
+				toggle
+					.setValue(this.plugin.settings.followDailyNoteDate)
+					.onChange(async (value) => {
+						this.plugin.settings.followDailyNoteDate = value;
 						await this.plugin.saveSettings();
 					}),
 			);
