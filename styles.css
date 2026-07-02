@@ -958,9 +958,13 @@
 }
 
 .habits-panel .habits-panel-name {
-	flex: 1;
+	display: block;
+	flex: 1 1 auto;
 	min-width: 0;
+	width: auto;
+	margin: 0;
 	padding: 0;
+	justify-content: flex-start;
 	text-align: left;
 	font-size: var(--font-ui-small);
 	font-weight: var(--font-semibold);
