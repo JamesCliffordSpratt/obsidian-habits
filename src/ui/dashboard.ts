@@ -388,7 +388,7 @@ export class HabitsDashboard extends MarkdownRenderChild {
 		setTooltip(card, "Right-click for more options");
 		this.registerDomEvent(card, "contextmenu", (evt: MouseEvent) => {
 			evt.preventDefault();
-			this.showCardMenu(evt, habit);
+			this.showCardMenu(evt, habit, card);
 		});
 
 		const title = card.createDiv({ cls: "habits-card-title" });
@@ -513,6 +513,23 @@ export class HabitsDashboard extends MarkdownRenderChild {
 		setIcon(icon, "circle-check");
 		// Swoosh-in plus a short hold at full size.
 		await sleep(950);
+		return overlay;
+	}
+
+	/**
+	 * Quieter cousin of the completion animation for pausing: a muted
+	 * circle-pause swooshes in before the card departs for the end of the
+	 * queue.
+	 */
+	private async playPauseAnimation(
+		card: HTMLElement,
+	): Promise<HTMLElement> {
+		const overlay = card.createDiv({ cls: "habits-complete-overlay" });
+		const icon = overlay.createSpan({
+			cls: "habits-paused-overlay-icon",
+		});
+		setIcon(icon, "circle-pause");
+		await sleep(600);
 		return overlay;
 	}
 
@@ -690,7 +707,11 @@ export class HabitsDashboard extends MarkdownRenderChild {
 		});
 	}
 
-	private showCardMenu(evt: MouseEvent, habit: HabitDefinition): void {
+	private showCardMenu(
+		evt: MouseEvent,
+		habit: HabitDefinition,
+		card: HTMLElement,
+	): void {
 		const menu = new Menu();
 		menu.addItem((item) =>
 			item
@@ -722,6 +743,9 @@ export class HabitsDashboard extends MarkdownRenderChild {
 					.setIcon("pause")
 					.onClick(async () => {
 						await this.store.pauseHabit(habit);
+						const overlay =
+							await this.playPauseAnimation(card);
+						await this.playCardDeparture(card, overlay);
 						this.reload();
 					}),
 			);

@@ -816,6 +816,18 @@
 	display: inline-flex;
 }
 
+/* Overlay icon shown while a freshly paused card departs the queue. */
+.habits-paused-overlay-icon {
+	display: inline-flex;
+	color: var(--text-muted);
+	animation: habits-complete-swoosh 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.habits-paused-overlay-icon .svg-icon {
+	width: 3rem;
+	height: 3rem;
+}
+
 .habits-paused-note {
 	color: var(--text-faint);
 	font-size: var(--font-ui-smaller);
