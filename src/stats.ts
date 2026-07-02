@@ -65,41 +65,71 @@ export function isComplete(habit: HabitDefinition, dateKey: string): boolean {
 	return habit.target > 0 ? value >= habit.target : value > 0;
 }
 
-/** Consecutive complete days ending today (or yesterday if today is blank). */
+/** True when the habit was paused on the given day. */
+export function isPausedOn(habit: HabitDefinition, dateKey: string): boolean {
+	return habit.pauses.some(
+		(pause) =>
+			dateKey >= pause.start &&
+			(pause.end === "" || dateKey <= pause.end),
+	);
+}
+
+/**
+ * Consecutive complete days ending today (or yesterday if today is blank).
+ * Paused days are skipped entirely: they neither break nor extend a streak.
+ */
 export function currentStreak(habit: HabitDefinition, today: Date): number {
 	let cursor = startOfDay(today);
-	if (!isComplete(habit, toDateKey(cursor))) {
-		cursor = addDays(cursor, -1);
-		if (!isComplete(habit, toDateKey(cursor))) {
-			return 0;
-		}
-	}
 	let streak = 0;
-	while (isComplete(habit, toDateKey(cursor))) {
-		streak++;
+	let graceUsed = false;
+	for (;;) {
+		const key = toDateKey(cursor);
+		if (isPausedOn(habit, key)) {
+			cursor = addDays(cursor, -1);
+			continue;
+		}
+		if (isComplete(habit, key)) {
+			streak++;
+		} else if (streak === 0 && !graceUsed) {
+			// The most recent active day may still be blank (e.g. today).
+			graceUsed = true;
+		} else {
+			break;
+		}
 		cursor = addDays(cursor, -1);
 	}
 	return streak;
 }
 
-/** The longest run of consecutive complete days ever recorded. */
+/**
+ * The longest run of consecutive complete days ever recorded. Paused days
+ * inside a run do not break it.
+ */
 export function longestStreak(habit: HabitDefinition): number {
-	const dayIndices = Object.keys(habit.records)
+	const completedKeys = Object.keys(habit.records)
 		.filter((key) => isComplete(habit, key))
-		.map((key) => {
-			const date = fromDateKey(key);
-			return date ? Math.round(date.getTime() / MS_PER_DAY) : Number.NaN;
-		})
-		.filter((index) => !Number.isNaN(index))
-		.sort((a, b) => a - b);
+		.sort();
+	if (completedKeys.length === 0) {
+		return 0;
+	}
+	const first = fromDateKey(completedKeys[0]);
+	const last = fromDateKey(completedKeys[completedKeys.length - 1]);
+	if (!first || !last) {
+		return 0;
+	}
 
 	let best = 0;
 	let run = 0;
-	let previous = Number.NaN;
-	for (const index of dayIndices) {
-		run = !Number.isNaN(previous) && index - previous === 1 ? run + 1 : 1;
-		best = Math.max(best, run);
-		previous = index;
+	let cursor = first;
+	while (cursor.getTime() <= last.getTime()) {
+		const key = toDateKey(cursor);
+		if (isComplete(habit, key)) {
+			run++;
+			best = Math.max(best, run);
+		} else if (!isPausedOn(habit, key)) {
+			run = 0;
+		}
+		cursor = addDays(cursor, 1);
 	}
 	return best;
 }
@@ -131,6 +161,10 @@ export function habitStats(
 	let cursor = new Date(range.start);
 	while (cursor.getTime() <= end) {
 		const key = toDateKey(cursor);
+		if (isPausedOn(habit, key)) {
+			cursor = addDays(cursor, 1);
+			continue;
+		}
 		days++;
 		const value = habit.records[key] ?? 0;
 		if (habit.type === "binary") {
@@ -156,7 +190,11 @@ export function habitStats(
 	};
 }
 
-/** Count elapsed days in the range where every habit was complete. */
+/**
+ * Count elapsed days in the range where every habit was complete.
+ * Habits paused on a given day are ignored for that day; a day with every
+ * habit paused cannot be perfect.
+ */
 export function perfectDays(
 	habits: HabitDefinition[],
 	range: DateRange,
@@ -170,7 +208,11 @@ export function perfectDays(
 	let cursor = new Date(range.start);
 	while (cursor.getTime() <= end) {
 		const key = toDateKey(cursor);
-		if (habits.every((habit) => isComplete(habit, key))) {
+		const active = habits.filter((habit) => !isPausedOn(habit, key));
+		if (
+			active.length > 0 &&
+			active.every((habit) => isComplete(habit, key))
+		) {
 			count++;
 		}
 		cursor = addDays(cursor, 1);

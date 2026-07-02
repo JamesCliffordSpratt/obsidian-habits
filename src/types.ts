@@ -8,6 +8,15 @@
 export type HabitType = "binary" | "repetition" | "timed";
 
 /**
+ * A period during which a habit was paused (inclusive of both ends).
+ * An empty `end` means the pause is still ongoing.
+ */
+export interface HabitPause {
+	start: string;
+	end: string;
+}
+
+/**
  * A single habit, parsed from a note in the habits folder.
  *
  * The note's frontmatter holds the definition, and a `records` map holds the
@@ -44,6 +53,14 @@ export interface HabitDefinition {
 	color: string;
 	/** Date the habit started, as `YYYY-MM-DD`. */
 	startDate: string;
+	/** True while an open pause exists. Paused days are skipped by stats. */
+	paused: boolean;
+	/** Every pause period recorded for the habit, including any open one. */
+	pauses: HabitPause[];
+	/** True when the habit is no longer tracked but keeps its history. */
+	stopped: boolean;
+	/** Date tracking stopped, as `YYYY-MM-DD` (empty when tracking). */
+	stopDate: string;
 	/**
 	 * Logged values keyed by day (`YYYY-MM-DD`).
 	 *

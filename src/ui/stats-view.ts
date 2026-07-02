@@ -5,6 +5,7 @@ import {
 	getStatsRange,
 	habitStats,
 	isComplete,
+	isPausedOn,
 	perfectDays,
 	rangeLength,
 	type StatsPeriod,
@@ -133,6 +134,8 @@ export function renderStatsView(
 			const cell = heatmap.createDiv({ cls: "habits-stats-cell" });
 			if (key > todayKey) {
 				cell.addClass("is-future");
+			} else if (isPausedOn(habit, key)) {
+				cell.addClass("is-paused");
 			} else if (isComplete(habit, key)) {
 				cell.addClass("is-complete");
 			} else if (value > 0) {

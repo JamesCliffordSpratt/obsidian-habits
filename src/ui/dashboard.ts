@@ -12,7 +12,11 @@ import type { HabitDefinition } from "../types";
 import { HabitModal } from "./habit-modal";
 import { ConfirmModal } from "./confirm-modal";
 import { renderStatsView } from "./stats-view";
-import type { StatsPeriod, StatsRangeMode } from "../stats";
+import {
+	isPausedOn,
+	type StatsPeriod,
+	type StatsRangeMode,
+} from "../stats";
 import { applyHabitIcon } from "./icon-suggest-modal";
 import {
 	addDays,
@@ -59,7 +63,9 @@ export class HabitsDashboard extends MarkdownRenderChild {
 
 	/** Reload habits from disk and rebuild the whole dashboard. */
 	private reload(): void {
-		this.habits = this.store.getHabits();
+		this.habits = this.store
+			.getHabits()
+			.filter((habit) => !habit.stopped);
 		this.index = Math.min(this.index, Math.max(0, this.habits.length - 1));
 		this.render();
 	}
@@ -403,12 +409,42 @@ export class HabitsDashboard extends MarkdownRenderChild {
 			void this.app.workspace.openLinkText(habit.path, "", false);
 		});
 
+		if (this.isPausedOnSelected(habit)) {
+			this.renderPausedBody(card, habit);
+			return;
+		}
+
 		const body = card.createDiv({ cls: "habits-card-body" });
 		if (habit.type === "binary") {
 			this.renderBinaryControl(body, habit, card);
 		} else {
 			this.renderCounterControl(body, habit, card);
 		}
+	}
+
+	/** Body shown instead of controls when the habit is paused. */
+	private renderPausedBody(
+		card: HTMLElement,
+		habit: HabitDefinition,
+	): void {
+		card.addClass("is-paused");
+		const body = card.createDiv({ cls: "habits-card-body" });
+		const badge = body.createDiv({ cls: "habits-paused-badge" });
+		const icon = badge.createSpan({ cls: "habits-paused-icon" });
+		setIcon(icon, "pause");
+		badge.createSpan({ text: "Paused" });
+
+		const openPause = habit.pauses.find((pause) => pause.end === "");
+		const started = openPause ? fromDateKey(openPause.start) : null;
+		body.createDiv({
+			cls: "habits-paused-note",
+			text: started
+				? `Since ${started.toLocaleDateString(undefined, {
+						day: "numeric",
+						month: "short",
+					})} · right-click to resume`
+				: "Paused on this day",
+		});
 	}
 
 	private currentValue(habit: HabitDefinition): number {
@@ -424,14 +460,23 @@ export class HabitsDashboard extends MarkdownRenderChild {
 		return habit.target > 0 && value >= habit.target;
 	}
 
+	/** Whether the habit is paused on the currently selected day. */
+	private isPausedOnSelected(habit: HabitDefinition): boolean {
+		return isPausedOn(habit, toDateKey(this.selectedDate));
+	}
+
 	/**
 	 * Carousel order for the selected day: incomplete habits first (in store
-	 * order), completed habits at the end of the queue.
+	 * order), then completed habits, with paused habits parked at the end.
 	 */
 	private orderedHabits(): HabitDefinition[] {
+		const active = this.habits.filter(
+			(habit) => !this.isPausedOnSelected(habit),
+		);
 		return [
-			...this.habits.filter((habit) => !this.isComplete(habit)),
-			...this.habits.filter((habit) => this.isComplete(habit)),
+			...active.filter((habit) => !this.isComplete(habit)),
+			...active.filter((habit) => this.isComplete(habit)),
+			...this.habits.filter((habit) => this.isPausedOnSelected(habit)),
 		];
 	}
 
@@ -660,6 +705,33 @@ export class HabitsDashboard extends MarkdownRenderChild {
 					).open();
 				}),
 		);
+		if (habit.paused) {
+			menu.addItem((item) =>
+				item
+					.setTitle("Resume habit")
+					.setIcon("play")
+					.onClick(async () => {
+						await this.store.resumeHabit(habit);
+						this.reload();
+					}),
+			);
+		} else {
+			menu.addItem((item) =>
+				item
+					.setTitle("Pause habit")
+					.setIcon("pause")
+					.onClick(async () => {
+						await this.store.pauseHabit(habit);
+						this.reload();
+					}),
+			);
+		}
+		menu.addItem((item) =>
+			item
+				.setTitle("Stop tracking")
+				.setIcon("circle-stop")
+				.onClick(() => this.confirmStop(habit)),
+		);
 		menu.addItem((item) =>
 			item
 				.setTitle("Remove habit")
@@ -667,6 +739,18 @@ export class HabitsDashboard extends MarkdownRenderChild {
 				.onClick(() => this.confirmRemove(habit)),
 		);
 		menu.showAtMouseEvent(evt);
+	}
+
+	private confirmStop(habit: HabitDefinition): void {
+		new ConfirmModal(this.app, {
+			title: "Stop tracking",
+			message: `Stop tracking "${habit.name}"? It leaves the dashboard and stats, but its note and full history are kept. You can resume tracking any time from the note's metrics view.`,
+			confirmText: "Stop tracking",
+			onConfirm: async () => {
+				await this.store.stopHabit(habit);
+				this.reload();
+			},
+		}).open();
 	}
 
 	private confirmRemove(habit: HabitDefinition): void {

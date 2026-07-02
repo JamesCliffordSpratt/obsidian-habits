@@ -679,6 +679,12 @@
 	border: 1px dashed var(--background-modifier-border);
 }
 
+.habits-stats-cell.is-paused {
+	background: transparent;
+	border: 1px solid var(--background-modifier-border);
+	opacity: 0.6;
+}
+
 /* Stats per-habit goal progress */
 
 .habits-goal-bar {
@@ -786,4 +792,52 @@
 .habits-metrics-canvas {
 	position: relative;
 	height: 220px;
+}
+
+/* Paused and stopped habit states */
+
+.habits-card.is-paused {
+	opacity: 0.75;
+	border-left-style: dashed;
+}
+
+.habits-paused-badge {
+	display: flex;
+	align-items: center;
+	gap: 0.4rem;
+	padding: 0.5rem 1rem;
+	border-radius: var(--radius-m);
+	background: var(--background-modifier-hover);
+	color: var(--text-muted);
+	font-weight: var(--font-semibold);
+}
+
+.habits-paused-icon {
+	display: inline-flex;
+}
+
+.habits-paused-note {
+	color: var(--text-faint);
+	font-size: var(--font-ui-smaller);
+	text-align: center;
+}
+
+.habits-metrics-banner {
+	display: flex;
+	align-items: center;
+	gap: 0.6rem;
+	padding: 0.5rem 0.75rem;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: var(--radius-m);
+	background: var(--background-primary);
+	color: var(--text-muted);
+}
+
+.habits-metrics-banner-icon {
+	display: inline-flex;
+}
+
+.habits-metrics-banner-text {
+	flex: 1;
+	font-size: var(--font-ui-small);
 }

@@ -1,7 +1,12 @@
 import { App, normalizePath, Notice, TFile, TFolder } from "obsidian";
 import type { HabitsPluginSettings } from "./settings";
-import type { HabitDefinition, HabitType, NewHabitOptions } from "./types";
-import { sanitizeFileName, toDateKey } from "./utils";
+import type {
+	HabitDefinition,
+	HabitPause,
+	HabitType,
+	NewHabitOptions,
+} from "./types";
+import { addDays, sanitizeFileName, toDateKey } from "./utils";
 
 const HABIT_TYPES: readonly HabitType[] = ["binary", "repetition", "timed"];
 
@@ -65,6 +70,7 @@ export class HabitStore {
 			return null;
 		}
 
+		const pauses = this.readPauses(fm.pauses);
 		return {
 			path: file.path,
 			name: file.basename,
@@ -78,6 +84,10 @@ export class HabitStore {
 			icon: typeof fm.icon === "string" ? fm.icon : "",
 			color: typeof fm.color === "string" ? fm.color : "",
 			startDate: typeof fm.startDate === "string" ? fm.startDate : "",
+			paused: pauses.some((pause) => pause.end === ""),
+			pauses,
+			stopped: fm.stopped === true,
+			stopDate: typeof fm.stopDate === "string" ? fm.stopDate : "",
 			records: this.readRecords(fm.records),
 		};
 	}
@@ -116,6 +126,54 @@ export class HabitStore {
 		return records;
 	}
 
+	/** Parse the frontmatter `pauses` array, dropping malformed entries. */
+	private readPauses(raw: unknown): HabitPause[] {
+		if (!Array.isArray(raw)) {
+			return [];
+		}
+		const pauses: HabitPause[] = [];
+		for (const item of raw) {
+			if (!item || typeof item !== "object") {
+				continue;
+			}
+			const entry = item as Record<string, unknown>;
+			if (typeof entry.start !== "string" || entry.start === "") {
+				continue;
+			}
+			pauses.push({
+				start: entry.start,
+				end: typeof entry.end === "string" ? entry.end : "",
+			});
+		}
+		return pauses;
+	}
+
+	/** Close any open pause as of yesterday; drop it if it covered no days. */
+	private closeOpenPause(pauses: HabitPause[]): HabitPause[] {
+		const yesterday = toDateKey(addDays(new Date(), -1));
+		const closed: HabitPause[] = [];
+		for (const pause of pauses) {
+			if (pause.end !== "") {
+				closed.push(pause);
+			} else if (pause.start <= yesterday) {
+				closed.push({ start: pause.start, end: yesterday });
+			}
+			// An open pause that started today covered no full day; drop it.
+		}
+		return closed;
+	}
+
+	/** Frontmatter form of pauses: open pauses omit the `end` key. */
+	private serializePauses(
+		pauses: HabitPause[],
+	): { start: string; end?: string }[] {
+		return pauses.map((pause) =>
+			pause.end === ""
+				? { start: pause.start }
+				: { start: pause.start, end: pause.end },
+		);
+	}
+
 	private fileForHabit(habit: HabitDefinition): TFile | null {
 		const file = this.app.vault.getAbstractFileByPath(habit.path);
 		return file instanceof TFile ? file : null;
@@ -150,6 +208,82 @@ export class HabitStore {
 			}
 			fm.records = records;
 		});
+	}
+
+	/** Pause a habit from today. Paused days are skipped by streaks/stats. */
+	async pauseHabit(habit: HabitDefinition): Promise<void> {
+		const file = this.fileForHabit(habit);
+		if (!file) {
+			new Notice(`Could not find the note for "${habit.name}".`);
+			return;
+		}
+		await this.app.fileManager.processFrontMatter(file, (frontmatter) => {
+			const fm = frontmatter as Record<string, unknown>;
+			const pauses = this.readPauses(fm.pauses);
+			if (pauses.some((pause) => pause.end === "")) {
+				return;
+			}
+			pauses.push({ start: toDateKey(new Date()), end: "" });
+			fm.pauses = this.serializePauses(pauses);
+		});
+		new Notice(`Paused "${habit.name}".`);
+	}
+
+	/** Resume a paused habit; the pause period stays excluded from stats. */
+	async resumeHabit(habit: HabitDefinition): Promise<void> {
+		const file = this.fileForHabit(habit);
+		if (!file) {
+			new Notice(`Could not find the note for "${habit.name}".`);
+			return;
+		}
+		await this.app.fileManager.processFrontMatter(file, (frontmatter) => {
+			const fm = frontmatter as Record<string, unknown>;
+			const pauses = this.closeOpenPause(this.readPauses(fm.pauses));
+			if (pauses.length > 0) {
+				fm.pauses = this.serializePauses(pauses);
+			} else {
+				delete fm.pauses;
+			}
+		});
+		new Notice(`Resumed "${habit.name}".`);
+	}
+
+	/** Stop tracking a habit. The note and every record are kept. */
+	async stopHabit(habit: HabitDefinition): Promise<void> {
+		const file = this.fileForHabit(habit);
+		if (!file) {
+			new Notice(`Could not find the note for "${habit.name}".`);
+			return;
+		}
+		await this.app.fileManager.processFrontMatter(file, (frontmatter) => {
+			const fm = frontmatter as Record<string, unknown>;
+			fm.stopped = true;
+			fm.stopDate = toDateKey(new Date());
+			const pauses = this.closeOpenPause(this.readPauses(fm.pauses));
+			if (pauses.length > 0) {
+				fm.pauses = this.serializePauses(pauses);
+			} else {
+				delete fm.pauses;
+			}
+		});
+		new Notice(
+			`Stopped tracking "${habit.name}". Its history is kept in the note.`,
+		);
+	}
+
+	/** Resume tracking a previously stopped habit. */
+	async restartHabit(habit: HabitDefinition): Promise<void> {
+		const file = this.fileForHabit(habit);
+		if (!file) {
+			new Notice(`Could not find the note for "${habit.name}".`);
+			return;
+		}
+		await this.app.fileManager.processFrontMatter(file, (frontmatter) => {
+			const fm = frontmatter as Record<string, unknown>;
+			delete fm.stopped;
+			delete fm.stopDate;
+		});
+		new Notice(`Resumed tracking "${habit.name}".`);
 	}
 
 	/** Create a new habit note and return the created file. */

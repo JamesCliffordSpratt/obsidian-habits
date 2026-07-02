@@ -1,4 +1,4 @@
-import { MarkdownRenderChild } from "obsidian";
+import { MarkdownRenderChild, setIcon } from "obsidian";
 import {
 	BarController,
 	BarElement,
@@ -15,7 +15,12 @@ import {
 } from "chart.js";
 import type { HabitStore } from "../habit-store";
 import type { HabitDefinition } from "../types";
-import { currentStreak, isComplete, longestStreak } from "../stats";
+import {
+	currentStreak,
+	isComplete,
+	isPausedOn,
+	longestStreak,
+} from "../stats";
 import { addDays, toDateKey } from "../utils";
 
 Chart.register(
@@ -63,9 +68,54 @@ export class HabitMetrics extends MarkdownRenderChild {
 			return;
 		}
 
+		if (habit.stopped) {
+			this.renderBanner(
+				"circle-stop",
+				habit.stopDate
+					? `No longer tracked since ${habit.stopDate}. All history is kept.`
+					: "No longer tracked. All history is kept.",
+				"Resume tracking",
+				() => this.store.restartHabit(habit),
+			);
+		} else if (habit.paused) {
+			const open = habit.pauses.find((pause) => pause.end === "");
+			this.renderBanner(
+				"pause",
+				open
+					? `Paused since ${open.start}. Paused days don't count against streaks or stats.`
+					: "Paused. Paused days don't count against streaks or stats.",
+				"Resume habit",
+				() => this.store.resumeHabit(habit),
+			);
+		}
+
 		this.renderSummary(habit);
 		this.renderDailyChart(habit);
 		this.renderWeeklyChart(habit);
+	}
+
+	/** Status banner with a resume action for paused or stopped habits. */
+	private renderBanner(
+		icon: string,
+		text: string,
+		buttonText: string,
+		onClick: () => Promise<void>,
+	): void {
+		const banner = this.containerEl.createDiv({
+			cls: "habits-metrics-banner",
+		});
+		const iconEl = banner.createSpan({
+			cls: "habits-metrics-banner-icon",
+		});
+		setIcon(iconEl, icon);
+		banner.createSpan({ cls: "habits-metrics-banner-text", text });
+		const button = banner.createEl("button", {
+			text: buttonText,
+			attr: { type: "button" },
+		});
+		this.registerDomEvent(button, "click", () => {
+			void onClick();
+		});
 	}
 
 	onunload(): void {
@@ -82,9 +132,15 @@ export class HabitMetrics extends MarkdownRenderChild {
 			isComplete(habit, key),
 		).length;
 
+		let recentDays = 0;
 		let recentHits = 0;
 		for (let i = 0; i < DAILY_DAYS; i++) {
-			if (isComplete(habit, toDateKey(addDays(today, -i)))) {
+			const key = toDateKey(addDays(today, -i));
+			if (isPausedOn(habit, key)) {
+				continue;
+			}
+			recentDays++;
+			if (isComplete(habit, key)) {
 				recentHits++;
 			}
 		}
@@ -97,7 +153,10 @@ export class HabitMetrics extends MarkdownRenderChild {
 			{ value: String(longestStreak(habit)), label: "Best streak" },
 			{ value: String(completedDays), label: "Days completed" },
 			{
-				value: `${Math.round((recentHits / DAILY_DAYS) * 100)}%`,
+				value:
+					recentDays > 0
+						? `${Math.round((recentHits / recentDays) * 100)}%`
+						: "–",
 				label: "30-day rate",
 			},
 		];
@@ -201,8 +260,12 @@ export class HabitMetrics extends MarkdownRenderChild {
 				if (day.getTime() > base.getTime()) {
 					break;
 				}
+				const key = toDateKey(day);
+				if (isPausedOn(habit, key)) {
+					continue;
+				}
 				elapsed++;
-				if (isComplete(habit, toDateKey(day))) {
+				if (isComplete(habit, key)) {
 					completed++;
 				}
 			}
