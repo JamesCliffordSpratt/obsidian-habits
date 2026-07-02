@@ -19,7 +19,8 @@
 	"author": "James Spratt",
 	"license": "MIT",
 	"dependencies": {
-		"chart.js": "^4.4.0"
+		"chart.js": "^4.4.0",
+		"jspdf": "^2.5.2"
 	},
 	"devDependencies": {
 		"@types/node": "^22.0.0",

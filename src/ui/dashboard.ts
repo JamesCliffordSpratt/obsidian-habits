@@ -14,6 +14,7 @@ import type { HabitsPluginSettings } from "../settings";
 import type { HabitDefinition } from "../types";
 import { HabitModal } from "./habit-modal";
 import { ConfirmModal } from "./confirm-modal";
+import { ExportModal } from "./export-modal";
 import { renderStatsView } from "./stats-view";
 import {
 	isPausedOn,
@@ -204,7 +205,7 @@ export class HabitsDashboard extends MarkdownRenderChild {
 		});
 		setIcon(download, "download");
 		this.registerDomEvent(download, "click", () => {
-			new Notice("Stats export is coming soon.");
+			new ExportModal(this.app, this.habits).open();
 		});
 	}
 
