@@ -441,19 +441,19 @@ export class HabitsDashboard extends MarkdownRenderChild {
 	}
 
 	/**
-	 * Overlay a red circle-x that rotates into a green circle-check.
-	 * Colours come from the theme palette (`--color-red` / `--color-green`).
+	 * Celebrate a completed habit: after a short beat, a green circle-check
+	 * swooshes in with a springy spin while a ring pulses outward behind it.
+	 * Colour comes from the theme palette (`--color-green`).
 	 */
 	private async playCompletionAnimation(card: HTMLElement): Promise<void> {
+		// Brief pause so the user sees their input land before the reward.
+		await sleep(350);
 		const overlay = card.createDiv({ cls: "habits-complete-overlay" });
+		overlay.createDiv({ cls: "habits-complete-ring" });
 		const icon = overlay.createSpan({ cls: "habits-complete-icon" });
-		setIcon(icon, "circle-x");
-		// Swap the icon at the rotation midpoint so the X appears to turn
-		// into the check as it spins.
-		await sleep(300);
 		setIcon(icon, "circle-check");
-		icon.addClass("is-check");
-		await sleep(600);
+		// Swoosh-in plus a short hold at full size.
+		await sleep(950);
 		overlay.addClass("is-leaving");
 		await sleep(200);
 		overlay.remove();
@@ -650,6 +650,7 @@ export class HabitsDashboard extends MarkdownRenderChild {
 		}).open();
 	}
 
+	/** Open the modal for creating a brand-new habit. */
 	private openCreateModal(): void {
 		new HabitModal(this.app, this.store, () => {
 			new Notice("Habit added to the dashboard.");
