@@ -105,8 +105,12 @@
 	color: var(--text-muted);
 }
 
+/* Vertical slack (padding + negative margin) so hovered cards can lift
+   and cast a shadow without being clipped by the carousel. */
 .habits-carousel-viewport {
 	overflow: hidden;
+	padding: 8px 0;
+	margin: -8px 0;
 }
 
 .habits-carousel-track {
@@ -131,6 +135,22 @@
 	border-left: 3px solid var(--habits-accent);
 	border-radius: var(--radius-m);
 	box-shadow: var(--shadow-s);
+}
+
+/* Hover: a gentle lift with a deeper shadow and an accent-tinted border.
+   Departing cards are excluded so the exit animation owns the transform. */
+.habits-card:not(.is-departing) {
+	transition:
+		transform 0.18s ease,
+		box-shadow 0.18s ease,
+		border-color 0.18s ease;
+}
+
+.habits-card:not(.is-departing):hover {
+	transform: translateY(-3px) scale(1.015);
+	box-shadow: 0 6px 16px rgba(0, 0, 0, 0.22);
+	border-color: var(--habits-accent);
+	z-index: 2;
 }
 
 .habits-card-title {
