@@ -1,3 +1,4 @@
+import { setIcon } from "obsidian";
 import type { HabitDefinition } from "../types";
 import { addDays, toDateKey } from "../utils";
 import { applyHabitIcon } from "./icon-suggest-modal";
@@ -121,10 +122,10 @@ export function renderStatsView(
 			applyHabitIcon(icon, habit.icon);
 		}
 		name.createSpan({ text: habit.name });
-		top.createSpan({
-			cls: "habits-stats-streak",
-			text: `🔥 ${stats.current}`,
-		});
+		const streak = top.createSpan({ cls: "habits-stats-streak" });
+		const flame = streak.createSpan({ cls: "habits-stats-flame" });
+		setIcon(flame, "flame");
+		streak.createSpan({ text: `${stats.current}` });
 
 		const heatmap = row.createDiv({ cls: "habits-stats-heatmap" });
 		for (let d = 0; d < length; d++) {
@@ -149,10 +150,13 @@ export function renderStatsView(
 			habit.type === "binary"
 				? `${stats.completed}/${stats.days} days`
 				: `${stats.total}${unit ? ` ${unit}` : ""} total`;
-		row.createDiv({
-			cls: "habits-stats-meta",
-			text: `${Math.round(stats.rate * 100)}% · ${totalText} · best 🔥 ${stats.best}`,
+		const meta = row.createDiv({ cls: "habits-stats-meta" });
+		meta.createSpan({
+			text: `${Math.round(stats.rate * 100)}% · ${totalText} · best `,
 		});
+		const bestFlame = meta.createSpan({ cls: "habits-stats-flame" });
+		setIcon(bestFlame, "flame");
+		meta.createSpan({ text: `${stats.best}` });
 
 		const goal = goalOf(habit);
 		if (goal > 0) {

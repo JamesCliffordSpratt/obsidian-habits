@@ -633,8 +633,24 @@
 }
 
 .habits-stats-streak {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.2rem;
 	font-weight: var(--font-semibold);
 	white-space: nowrap;
+}
+
+/* Lucide flame used for streaks, tinted with the habit's accent. */
+.habits-stats-flame {
+	display: inline-flex;
+	align-items: center;
+	vertical-align: text-bottom;
+	color: var(--habits-accent);
+}
+
+.habits-stats-flame .svg-icon {
+	width: 1em;
+	height: 1em;
 }
 
 .habits-stats-heatmap {
