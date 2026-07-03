@@ -1,14 +1,17 @@
 {
 	"name": "obsidian-habits",
-	"version": "0.1.0",
-	"description": "Track binary, repetition, and timed habits from a carousel dashboard inside your vault.",
+	"version": "1.0.0",
+	"description": "Habit tracker with streaks, charts, and statistics. Log daily habits from a carousel dashboard or sidebar panel, pause habits without losing streaks, and export printable PDF reports.",
 	"main": "main.js",
 	"scripts": {
 		"dev": "node esbuild.config.mjs",
 		"build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
 		"lint": "eslint .",
 		"lint:fix": "eslint . --fix",
-		"version": "node version-bump.mjs && git add manifest.json versions.json"
+		"version": "node version-bump.mjs && git add manifest.json versions.json",
+		"release": "npm run build && npm run lint && npm version patch && git push --follow-tags",
+		"release:minor": "npm run build && npm run lint && npm version minor && git push --follow-tags",
+		"release:major": "npm run build && npm run lint && npm version major && git push --follow-tags"
 	},
 	"keywords": [
 		"obsidian",
