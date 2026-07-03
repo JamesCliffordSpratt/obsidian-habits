@@ -45,6 +45,8 @@ export interface HabitsPluginSettings {
 	habitsFolder: string;
 	/** How many cards are visible at once in the carousel on wide screens. */
 	cardsPerView: number;
+	/** How many cards are visible at once on phone-sized screens (1–2). */
+	mobileCardsPerView: number;
 	/**
 	 * When a dashboard is embedded in a daily note (a note whose name
 	 * contains a date), open it on that note's date instead of today.
@@ -55,6 +57,7 @@ export interface HabitsPluginSettings {
 export const DEFAULT_SETTINGS: HabitsPluginSettings = {
 	habitsFolder: "Habits",
 	cardsPerView: 4,
+	mobileCardsPerView: 2,
 	followDailyNoteDate: true,
 };
 
@@ -116,6 +119,25 @@ export class HabitsSettingTab extends PluginSettingTab {
 					.setValue(String(this.plugin.settings.cardsPerView))
 					.onChange(async (value) => {
 						this.plugin.settings.cardsPerView = Number(value);
+						await this.plugin.saveSettings();
+					}),
+			);
+
+		new Setting(containerEl)
+			.setName("Cards per view on mobile")
+			.setDesc(
+				"How many habit cards the carousel shows at once on phone-sized screens.",
+			)
+			.addDropdown((dropdown) =>
+				dropdown
+					.addOption("1", "1")
+					.addOption("2", "2")
+					.setValue(
+						String(this.plugin.settings.mobileCardsPerView),
+					)
+					.onChange(async (value) => {
+						this.plugin.settings.mobileCardsPerView =
+							Number(value);
 						await this.plugin.saveSettings();
 					}),
 			);

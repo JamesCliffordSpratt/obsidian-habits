@@ -26,6 +26,7 @@ import {
 	addDays,
 	friendlyDateLabel,
 	fromDateKey,
+	registerLongPress,
 	toDateKey,
 } from "../utils";
 
@@ -445,7 +446,10 @@ export class HabitsDashboard extends MarkdownRenderChild {
 
 	private perView(): number {
 		if (window.innerWidth <= MOBILE_BREAKPOINT) {
-			return 1;
+			return Math.min(
+				this.getSettings().mobileCardsPerView,
+				this.habits.length,
+			);
 		}
 		return Math.min(this.getSettings().cardsPerView, this.habits.length);
 	}
@@ -473,10 +477,13 @@ export class HabitsDashboard extends MarkdownRenderChild {
 		if (habit.color) {
 			card.setCssProps({ "--habits-accent": habit.color });
 		}
-		setTooltip(card, "Right-click for more options");
+		setTooltip(card, "Right-click or long-press for more options");
 		this.registerDomEvent(card, "contextmenu", (evt: MouseEvent) => {
 			evt.preventDefault();
-			this.showCardMenu(evt, habit, card);
+			this.showCardMenu(habit, card, evt.clientX, evt.clientY);
+		});
+		registerLongPress(this, card, (x, y) => {
+			this.showCardMenu(habit, card, x, y);
 		});
 
 		const title = card.createDiv({ cls: "habits-card-title" });
@@ -821,11 +828,20 @@ export class HabitsDashboard extends MarkdownRenderChild {
 		}
 	}
 
+	/** Last time a card menu opened; guards double-fire on long-press. */
+	private lastMenuAt = 0;
+
 	private showCardMenu(
-		evt: MouseEvent,
 		habit: HabitDefinition,
 		card: HTMLElement,
+		x: number,
+		y: number,
 	): void {
+		const now = Date.now();
+		if (now - this.lastMenuAt < 500) {
+			return;
+		}
+		this.lastMenuAt = now;
 		const menu = new Menu();
 		menu.addItem((item) =>
 			item
@@ -881,7 +897,7 @@ export class HabitsDashboard extends MarkdownRenderChild {
 				.setIcon("trash")
 				.onClick(() => this.confirmRemove(habit)),
 		);
-		menu.showAtMouseEvent(evt);
+		menu.showAtPosition({ x, y });
 	}
 
 	private confirmStop(habit: HabitDefinition): void {

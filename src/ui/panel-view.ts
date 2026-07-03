@@ -12,7 +12,7 @@ import type { HabitStore } from "../habit-store";
 import type { HabitsPluginSettings } from "../settings";
 import type { HabitDefinition } from "../types";
 import { isComplete, isPausedOn } from "../stats";
-import { toDateKey } from "../utils";
+import { registerLongPress, toDateKey } from "../utils";
 import { HabitModal } from "./habit-modal";
 import { ConfirmModal } from "./confirm-modal";
 import { applyHabitIcon } from "./icon-suggest-modal";
@@ -222,7 +222,10 @@ export class HabitsPanelView extends ItemView {
 		}
 		this.registerDomEvent(row, "contextmenu", (evt: MouseEvent) => {
 			evt.preventDefault();
-			this.showRowMenu(evt, habit);
+			this.showRowMenu(habit, evt.clientX, evt.clientY);
+		});
+		registerLongPress(this, row, (x, y) => {
+			this.showRowMenu(habit, x, y);
 		});
 
 		const main = row.createDiv({ cls: "habits-panel-row-main" });
@@ -426,7 +429,15 @@ export class HabitsPanelView extends ItemView {
 		this.reload();
 	}
 
-	private showRowMenu(evt: MouseEvent, habit: HabitDefinition): void {
+	/** Last time a row menu opened; guards double-fire on long-press. */
+	private lastMenuAt = 0;
+
+	private showRowMenu(habit: HabitDefinition, x: number, y: number): void {
+		const now = Date.now();
+		if (now - this.lastMenuAt < 500) {
+			return;
+		}
+		this.lastMenuAt = now;
 		const menu = new Menu();
 		menu.addItem((item) =>
 			item
@@ -507,6 +518,6 @@ export class HabitsPanelView extends ItemView {
 					}).open();
 				}),
 		);
-		menu.showAtMouseEvent(evt);
+		menu.showAtPosition({ x, y });
 	}
 }

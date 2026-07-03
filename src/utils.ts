@@ -1,3 +1,52 @@
+import type { Component } from "obsidian";
+
+/**
+ * Invoke `onTrigger` when the user holds a touch on `el` for half a second
+ * without moving — the mobile stand-in for a right-click.
+ */
+export function registerLongPress(
+	component: Component,
+	el: HTMLElement,
+	onTrigger: (x: number, y: number) => void,
+): void {
+	let timer: number | null = null;
+	let startX = 0;
+	let startY = 0;
+	const clear = (): void => {
+		if (timer !== null) {
+			el.win.clearTimeout(timer);
+			timer = null;
+		}
+	};
+	component.registerDomEvent(el, "touchstart", (evt: TouchEvent) => {
+		const touch = evt.touches[0];
+		if (!touch) {
+			return;
+		}
+		startX = touch.clientX;
+		startY = touch.clientY;
+		clear();
+		timer = el.win.setTimeout(() => {
+			timer = null;
+			onTrigger(startX, startY);
+		}, 500);
+	});
+	component.registerDomEvent(el, "touchmove", (evt: TouchEvent) => {
+		const touch = evt.touches[0];
+		if (!touch) {
+			return;
+		}
+		if (
+			Math.abs(touch.clientX - startX) > 10 ||
+			Math.abs(touch.clientY - startY) > 10
+		) {
+			clear();
+		}
+	});
+	component.registerDomEvent(el, "touchend", clear);
+	component.registerDomEvent(el, "touchcancel", clear);
+}
+
 /** Format a date as a `YYYY-MM-DD` key using local time. */
 export function toDateKey(date: Date): string {
 	const year = date.getFullYear();
