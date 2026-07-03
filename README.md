@@ -6,8 +6,7 @@
 ![GitHub license](https://img.shields.io/github/license/JamesCliffordSpratt/obsidian-habits)
 ![Obsidian min version](https://img.shields.io/badge/Obsidian-1.7.2%2B-483699)
 
-<!-- Add a screenshot or short GIF of the dashboard here — it's the single
-     biggest driver of installs on the community plugin page. -->
+![Recording habits on the dashboard](images/habits-renderer.gif)
 
 ## ✨ Features at a glance
 
@@ -33,6 +32,8 @@
    ````
 
 3. Log your progress from the dashboard, or open the sidebar panel (ribbon icon or **Habits: Open panel**) to tick things off as you go.
+
+![Adding a habit](images/add-habit.gif)
 
 ## 📓 Your data stays yours
 
@@ -64,9 +65,17 @@ Cards for each habit sit in a swipeable carousel. Completing a habit plays a cel
 
 Embedded in a **daily note**? The dashboard follows that note's date, so browsing yesterday's note shows yesterday's habits. The dashboard also live-updates whenever your habit notes or settings change — even from another pane or device sync.
 
+## 📌 The sidebar panel
+
+Open the panel from the ribbon icon or the **Open panel** command to log today's habits from anywhere: one compact row per habit with tap-to-check toggles, steppers, and slim progress bars, plus a running done/total count for the day.
+
+![Logging habits from the sidebar panel](images/habits-side-panel.gif)
+
 ## 📈 Stats and reports
 
 The chart button opens the stats view: completion summary tiles, streaks, perfect days, goal progress, and a heatmap per habit over the last week or month (rolling or calendar).
+
+![Browsing the stats view](images/stats-page.gif)
 
 From there, the download button opens the **PDF export** dialog:
 
@@ -74,6 +83,8 @@ From there, the download button opens the **PDF export** dialog:
 - **Range** — this week, last 7 days, this month, last 30 days, or any custom range up to 92 days
 - **Layout** — portrait or landscape, comfortable or compact, monochrome for ink-friendly printing
 - **Live preview** — a to-scale A4 preview updates as you tweak; click it to inspect at full size. What you see is exactly what prints.
+
+![Building a PDF report](images/habits-report.gif)
 
 ## 📊 Habit pages
 
