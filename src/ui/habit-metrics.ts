@@ -1,4 +1,4 @@
-import { MarkdownRenderChild, setIcon } from "obsidian";
+import { App, debounce, MarkdownRenderChild, setIcon } from "obsidian";
 import {
 	BarController,
 	BarElement,
@@ -45,10 +45,14 @@ const WEEKLY_WEEKS = 12;
  */
 export class HabitMetrics extends MarkdownRenderChild {
 	private charts: Chart[] = [];
+	/** Path of the habit note currently rendered, for live refresh. */
+	private watchedPath = "";
 
 	constructor(
+		private app: App,
 		private store: HabitStore,
 		private sourcePath: string,
+		private source: string,
 		root: HTMLElement,
 	) {
 		super(root);
@@ -56,14 +60,53 @@ export class HabitMetrics extends MarkdownRenderChild {
 
 	onload(): void {
 		this.containerEl.addClass("habits-metrics");
+		// Refresh when the rendered habit's note changes, so blocks that
+		// live outside the habit note (via `habit: <name>`) stay current.
+		const requestRender = debounce(() => this.render(), 250, true);
+		this.registerEvent(
+			this.app.metadataCache.on("changed", (file) => {
+				if (
+					this.watchedPath !== "" &&
+					file.path === this.watchedPath
+				) {
+					requestRender();
+				}
+			}),
+		);
+		this.render();
+	}
 
-		const habit = this.store
-			.getHabits()
-			.find((entry) => entry.path === this.sourcePath);
+	/** The habit named in the block source (`habit: <name>`), if any. */
+	private requestedName(): string {
+		const match = /^\s*habit\s*:\s*(.+?)\s*$/im.exec(this.source);
+		if (!match) {
+			return "";
+		}
+		return match[1].replace(/^["']|["']$/g, "");
+	}
+
+	private render(): void {
+		this.destroyCharts();
+		const root = this.containerEl;
+		root.empty();
+
+		const habits = this.store.getHabits();
+		const requested = this.requestedName();
+		const habit = requested
+			? habits.find(
+					(entry) =>
+						entry.name.toLowerCase() ===
+						requested.toLowerCase(),
+				)
+			: habits.find((entry) => entry.path === this.sourcePath);
+		this.watchedPath = habit?.path ?? "";
+
 		if (!habit) {
-			this.containerEl.createEl("p", {
+			root.createEl("p", {
 				cls: "habits-metrics-empty",
-				text: "Place this block inside a habit note to see its metrics.",
+				text: requested
+					? `No habit called "${requested}" was found.`
+					: 'Place this block inside a habit note, or point it at one with "habit: <name>".',
 			});
 			return;
 		}
@@ -119,6 +162,10 @@ export class HabitMetrics extends MarkdownRenderChild {
 	}
 
 	onunload(): void {
+		this.destroyCharts();
+	}
+
+	private destroyCharts(): void {
 		for (const chart of this.charts) {
 			chart.destroy();
 		}

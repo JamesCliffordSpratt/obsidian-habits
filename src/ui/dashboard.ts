@@ -590,11 +590,71 @@ export class HabitsDashboard extends MarkdownRenderChild {
 			try {
 				const overlay = await this.playCompletionAnimation(card);
 				await this.playCardDeparture(card, overlay);
+				const perfect = this.isPerfectDay();
+				this.reload();
+				if (perfect) {
+					await this.playPerfectAnimation();
+				}
 			} finally {
 				this.suppressAutoReload = false;
 			}
+			return;
 		}
 		this.reload();
+	}
+
+	/** True when every non-paused habit is complete for the selected day. */
+	private isPerfectDay(): boolean {
+		const active = this.habits.filter(
+			(habit) => !this.isPausedOnSelected(habit),
+		);
+		return (
+			active.length > 0 &&
+			active.every((habit) => this.isComplete(habit))
+		);
+	}
+
+	/**
+	 * Celebration that spans the whole dashboard when the day hits 100%:
+	 * a soft glow, theme-coloured confetti, and "Perfect!" springing in.
+	 * Pointer-transparent, so it never blocks interaction.
+	 */
+	private async playPerfectAnimation(): Promise<void> {
+		const overlay = this.root.createDiv({
+			cls: "habits-perfect-overlay",
+		});
+		overlay.createDiv({ cls: "habits-perfect-glow" });
+
+		const confetti = overlay.createDiv({
+			cls: "habits-perfect-confetti",
+		});
+		const colors = [
+			"var(--color-green, var(--text-success))",
+			"var(--color-yellow, #e5b567)",
+			"var(--color-red, #e05d5d)",
+			"var(--color-blue, var(--interactive-accent))",
+			"var(--color-purple, #8a6fd6)",
+		];
+		for (let i = 0; i < 22; i++) {
+			const piece = confetti.createDiv({
+				cls: "habits-perfect-piece",
+			});
+			piece.setCssProps({
+				"--hc-color": colors[i % colors.length],
+				"--hc-x": `${Math.round((Math.random() - 0.5) * 320)}px`,
+				"--hc-my": `${Math.round(-30 - Math.random() * 70)}px`,
+				"--hc-y": `${Math.round(70 + Math.random() * 120)}px`,
+				"--hc-r": `${Math.round((Math.random() - 0.5) * 540)}deg`,
+				"--hc-delay": `${Math.round(Math.random() * 180)}ms`,
+			});
+		}
+
+		overlay.createDiv({ cls: "habits-perfect-text", text: "Perfect!" });
+
+		await sleep(1600);
+		overlay.addClass("is-leaving");
+		await sleep(250);
+		overlay.remove();
 	}
 
 	/**

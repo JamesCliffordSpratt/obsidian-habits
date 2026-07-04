@@ -8,6 +8,7 @@ import {
 import { HabitsDashboard } from "./ui/dashboard";
 import { HabitMetrics } from "./ui/habit-metrics";
 import { HabitModal } from "./ui/habit-modal";
+import { HabitMetricsSuggest } from "./ui/metrics-suggest";
 import {
 	HABITS_PANEL_VIEW_TYPE,
 	HabitsPanelView,
@@ -39,11 +40,21 @@ export default class HabitsPlugin extends Plugin {
 
 		this.registerMarkdownCodeBlockProcessor(
 			"habit-metrics",
-			(_source, el, ctx) => {
+			(source, el, ctx) => {
 				ctx.addChild(
-					new HabitMetrics(this.store, ctx.sourcePath, el),
+					new HabitMetrics(
+						this.app,
+						this.store,
+						ctx.sourcePath,
+						source,
+						el,
+					),
 				);
 			},
+		);
+
+		this.registerEditorSuggest(
+			new HabitMetricsSuggest(this.app, this.store),
 		);
 
 		this.registerView(

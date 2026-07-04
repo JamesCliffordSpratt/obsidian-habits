@@ -97,6 +97,14 @@ Every habit note can chart its own history with a `habit-metrics` code block (ne
 
 Streak tiles, a 30-day activity chart with target line, and a 12-week completion trend — all in your theme's colours.
 
+The block also works in **any note**: name a habit and its metrics render right there — perfect for journal entries, weekly reviews, or project pages. As you type after `habit:`, your habits are suggested automatically.
+
+````markdown
+```habit-metrics
+habit: Journal
+```
+````
+
 ## ⏸️ Pausing and stopping
 
 - **Pause** a habit when life gets in the way. Paused days are skipped entirely: streaks survive, completion rates ignore them, and the card waits dimmed at the back of the carousel until you resume.

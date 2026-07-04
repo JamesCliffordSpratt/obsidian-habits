@@ -4,6 +4,7 @@
 
 .habits-dashboard {
 	--habits-accent: var(--interactive-accent);
+	position: relative;
 	border: 1px solid var(--background-modifier-border);
 	border-radius: var(--radius-m);
 	padding: 0.75rem;
@@ -438,6 +439,121 @@
 		flex-basis 0.3s ease-in-out 0.25s,
 		padding 0.3s ease-in-out 0.25s,
 		border-width 0.3s ease-in-out 0.25s;
+}
+
+/* Perfect day: glow, confetti and "Perfect!" spanning the dashboard when
+   every habit for the selected day is complete. Pointer-transparent. */
+
+.habits-perfect-overlay {
+	position: absolute;
+	inset: 0;
+	z-index: 10;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	overflow: hidden;
+	pointer-events: none;
+	border-radius: var(--radius-m);
+	opacity: 1;
+	transition: opacity 0.25s ease;
+}
+
+.habits-perfect-overlay.is-leaving {
+	opacity: 0;
+}
+
+.habits-perfect-glow {
+	position: absolute;
+	inset: 0;
+	background: radial-gradient(
+		ellipse at center,
+		color-mix(
+			in srgb,
+			var(--color-green, var(--interactive-accent)) 22%,
+			transparent
+		),
+		transparent 70%
+	);
+	animation: habits-perfect-glow 1.85s ease-out forwards;
+}
+
+@keyframes habits-perfect-glow {
+	0% {
+		opacity: 0;
+	}
+	25% {
+		opacity: 1;
+	}
+	100% {
+		opacity: 0.5;
+	}
+}
+
+.habits-perfect-text {
+	position: relative;
+	font-size: clamp(2rem, 8vw, 3.2rem);
+	font-weight: 800;
+	letter-spacing: 0.02em;
+	line-height: 1;
+	background: linear-gradient(
+		120deg,
+		var(--color-green, var(--text-success)),
+		var(--interactive-accent)
+	);
+	-webkit-background-clip: text;
+	background-clip: text;
+	-webkit-text-fill-color: transparent;
+	animation: habits-perfect-pop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes habits-perfect-pop {
+	0% {
+		transform: scale(0.3) rotate(-6deg);
+		opacity: 0;
+	}
+	60% {
+		opacity: 1;
+	}
+	100% {
+		transform: scale(1) rotate(0deg);
+		opacity: 1;
+	}
+}
+
+.habits-perfect-confetti {
+	position: absolute;
+	inset: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.habits-perfect-piece {
+	position: absolute;
+	width: 7px;
+	height: 11px;
+	border-radius: 1px;
+	background: var(--hc-color, var(--interactive-accent));
+	opacity: 0;
+	animation: habits-perfect-confetti 1.4s ease-out var(--hc-delay, 0ms)
+		forwards;
+}
+
+@keyframes habits-perfect-confetti {
+	0% {
+		transform: translate(0, 0) rotate(0deg);
+		opacity: 1;
+	}
+	30% {
+		transform: translate(calc(var(--hc-x) * 0.5), var(--hc-my))
+			rotate(calc(var(--hc-r) * 0.5));
+		opacity: 1;
+	}
+	100% {
+		transform: translate(var(--hc-x), var(--hc-y))
+			rotate(var(--hc-r));
+		opacity: 0;
+	}
 }
 
 /* New-habit modal: live preview and icon picker */
