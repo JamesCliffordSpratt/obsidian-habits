@@ -23,9 +23,13 @@
 - 🌍 **In your language** — available in English, Spanish, French, German, and Simplified Chinese
 - 🎨 **Theme native** — every colour comes from your theme; custom accents and icons per habit
 
+## 📥 Installation
+
+Habits is available in the community plugin browser: open **Settings → Community plugins → Browse**, search for "Habits", then install and enable. ([BRAT](https://github.com/TfTHacker/obsidian42-brat) and manual installation from the [release assets](https://github.com/JamesCliffordSpratt/obsidian-habits/releases) work too.)
+
 ## 🚀 Quick start
 
-1. Enable the plugin, then run the command **Habits: Create habit** and define your first habit.
+1. Run the command **Habits: Create habit** and define your first habit.
 2. Run **Habits: Insert dashboard** in any note (your homepage, or your daily-note template) to place the tracker:
 
    ````markdown
