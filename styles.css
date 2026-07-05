@@ -224,8 +224,13 @@
 	background: var(--background-modifier-hover);
 }
 
-.habits-card-lip.has-comment {
+/* Days with a comment: accent-tinted, lightly filled speech bubble. */
+.habits-dashboard button.habits-card-lip.has-comment {
 	color: var(--habits-accent);
+}
+
+.habits-dashboard button.habits-card-lip.has-comment .svg-icon {
+	fill: color-mix(in srgb, var(--habits-accent) 30%, transparent);
 }
 
 .habits-card-lip-icon {
