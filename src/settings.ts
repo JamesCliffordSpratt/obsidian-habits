@@ -53,6 +53,8 @@ export interface HabitsPluginSettings {
 	 * contains a date), open it on that note's date instead of today.
 	 */
 	followDailyNoteDate: boolean;
+	/** Show the comment flap on dashboard cards. */
+	enableComments: boolean;
 }
 
 export const DEFAULT_SETTINGS: HabitsPluginSettings = {
@@ -60,6 +62,7 @@ export const DEFAULT_SETTINGS: HabitsPluginSettings = {
 	cardsPerView: 4,
 	mobileCardsPerView: 2,
 	followDailyNoteDate: true,
+	enableComments: true,
 };
 
 /** Settings tab shown under Settings → Community plugins → Habits. */
@@ -106,6 +109,22 @@ export class HabitsSettingTab extends PluginSettingTab {
 					.setValue(this.plugin.settings.followDailyNoteDate)
 					.onChange(async (value) => {
 						this.plugin.settings.followDailyNoteDate = value;
+						await this.plugin.saveSettings();
+					}),
+			);
+
+		new Setting(containerEl)
+			.setName(t("Comments on cards"))
+			.setDesc(
+				t(
+					"Show a comment flap on dashboard cards for jotting a note about any day.",
+				),
+			)
+			.addToggle((toggle) =>
+				toggle
+					.setValue(this.plugin.settings.enableComments)
+					.onChange(async (value) => {
+						this.plugin.settings.enableComments = value;
 						await this.plugin.saveSettings();
 					}),
 			);

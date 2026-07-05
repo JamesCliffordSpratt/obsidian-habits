@@ -47,6 +47,8 @@ const PX = 2.2;
 const MARGIN = 14;
 /** Longest allowed custom range, in days. */
 const MAX_CUSTOM_DAYS = 92;
+/** Most comments listed per habit before "+n more". */
+const MAX_EXPORT_COMMENTS = 12;
 
 /**
  * Text drawn into the exported document (and its preview). jsPDF's
@@ -76,6 +78,7 @@ interface ExportOptions {
 	includeTrend: boolean;
 	includeGrid: boolean;
 	includeGoals: boolean;
+	includeComments: boolean;
 	orientation: "portrait" | "landscape";
 	density: "comfortable" | "compact";
 	monochrome: boolean;
@@ -137,6 +140,7 @@ export class ExportModal extends Modal {
 		includeTrend: true,
 		includeGrid: true,
 		includeGoals: true,
+		includeComments: true,
 		orientation: "portrait",
 		density: "comfortable",
 		monochrome: false,
@@ -241,6 +245,7 @@ export class ExportModal extends Modal {
 		this.contentToggle(root, t("Completion trend chart"), "includeTrend");
 		this.contentToggle(root, t("Daily grids"), "includeGrid");
 		this.contentToggle(root, t("Goal progress"), "includeGoals");
+		this.contentToggle(root, t("Comments"), "includeComments");
 
 		new Setting(root).setName(t("Layout")).setHeading();
 		new Setting(root)
@@ -293,7 +298,12 @@ export class ExportModal extends Modal {
 	private contentToggle(
 		root: HTMLElement,
 		name: string,
-		key: "includeSummary" | "includeTrend" | "includeGrid" | "includeGoals",
+		key:
+			| "includeSummary"
+			| "includeTrend"
+			| "includeGrid"
+			| "includeGoals"
+			| "includeComments",
 	): void {
 		new Setting(root).setName(name).addToggle((toggle) =>
 			toggle.setValue(this.options[key]).onChange((value) => {
@@ -441,6 +451,18 @@ export class ExportModal extends Modal {
 					this.goalOf(block.habit, ctx) > 0
 				) {
 					height += 6 * s;
+				}
+				if (this.options.includeComments) {
+					const count = this.commentsInRange(
+						block.habit,
+						ctx,
+					).length;
+					const lines =
+						Math.min(count, MAX_EXPORT_COMMENTS) +
+						(count > MAX_EXPORT_COMMENTS ? 1 : 0);
+					if (lines > 0) {
+						height += lines * 4.5 * s + 1;
+					}
 				}
 				return height;
 			}
@@ -852,6 +874,8 @@ export class ExportModal extends Modal {
 				);
 			}
 		}
+
+		this.renderCommentsHtml(el, habit, ctx, font);
 	}
 
 	private habitMetaLine(
@@ -951,6 +975,90 @@ export class ExportModal extends Modal {
 		);
 		new Notice(t('Exported to "{path}" in your vault.', { path }));
 		this.close();
+	}
+
+	/** Comments recorded inside the range, oldest first. */
+	private commentsInRange(
+		habit: HabitDefinition,
+		ctx: RenderCtx,
+	): { date: string; text: string }[] {
+		const startKey = toDateKey(ctx.range.start);
+		const endKey = toDateKey(ctx.range.end);
+		return Object.entries(habit.comments)
+			.filter(([key]) => key >= startKey && key <= endKey)
+			.sort(([a], [b]) => a.localeCompare(b))
+			.map(([date, text]) => ({ date, text }));
+	}
+
+	/** One-line-per-comment list under a habit's block (preview). */
+	private renderCommentsHtml(
+		el: HTMLElement,
+		habit: HabitDefinition,
+		ctx: RenderCtx,
+		font: (target: HTMLElement, pt: number) => void,
+	): void {
+		if (!this.options.includeComments) {
+			return;
+		}
+		const comments = this.commentsInRange(habit, ctx);
+		const shown = comments.slice(0, MAX_EXPORT_COMMENTS);
+		for (const comment of shown) {
+			const line = el.createDiv({ cls: "habits-export-comment" });
+			line.setCssProps({
+				"--hx-line-h": `${4.5 * ctx.s * PX}px`,
+			});
+			line.setText(`${comment.date} — ${comment.text}`);
+			font(line, 8);
+		}
+		if (comments.length > shown.length) {
+			const more = el.createDiv({ cls: "habits-export-comment" });
+			more.setCssProps({
+				"--hx-line-h": `${4.5 * ctx.s * PX}px`,
+			});
+			more.setText(
+				docT("+{n} more", { n: comments.length - shown.length }),
+			);
+			font(more, 8);
+		}
+	}
+
+	/** One-line-per-comment list under a habit's block (PDF). */
+	private drawCommentsPdf(
+		doc: jsPDF,
+		habit: HabitDefinition,
+		ctx: RenderCtx,
+		x: number,
+		startY: number,
+	): void {
+		if (!this.options.includeComments) {
+			return;
+		}
+		const comments = this.commentsInRange(habit, ctx);
+		if (comments.length === 0) {
+			return;
+		}
+		const s = ctx.s;
+		const shown = comments.slice(0, MAX_EXPORT_COMMENTS);
+		doc.setFont("helvetica", "normal");
+		doc.setFontSize(8 * s);
+		doc.setTextColor(85, 85, 85);
+		let y = startY;
+		for (const comment of shown) {
+			y += 4.5 * s;
+			const lines = doc.splitTextToSize(
+				`${comment.date} — ${comment.text}`,
+				ctx.contentW - 6,
+			) as string[];
+			doc.text(lines[0] ?? "", x + 4, y);
+		}
+		if (comments.length > shown.length) {
+			y += 4.5 * s;
+			doc.text(
+				docT("+{n} more", { n: comments.length - shown.length }),
+				x + 4,
+				y,
+			);
+		}
 	}
 
 	private drawBlockPdf(
@@ -1084,7 +1192,10 @@ export class ExportModal extends Modal {
 					x + 4,
 					cursorY + 4 * s,
 				);
+				cursorY += 6 * s;
 			}
 		}
+
+		this.drawCommentsPdf(doc, habit, ctx, x, cursorY);
 	}
 }

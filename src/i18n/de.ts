@@ -231,4 +231,14 @@ export const de: Record<string, string> = {
 	Blue: "Blau",
 	Purple: "Lila",
 	Pink: "Rosa",
+
+	// Comments
+	"Comments on cards": "Kommentare auf Karten",
+	"Show a comment flap on dashboard cards for jotting a note about any day.":
+		"Zeigt eine Kommentarlasche auf den Dashboard-Karten, um Notizen zu einzelnen Tagen festzuhalten.",
+	"Add comment": "Kommentar hinzufügen",
+	"Flip back": "Zurückdrehen",
+	"Add a comment for this day…": "Füge einen Kommentar für diesen Tag hinzu…",
+	Comments: "Kommentare",
+	"+{n} more": "+{n} weitere",
 };

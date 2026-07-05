@@ -69,6 +69,8 @@ export interface HabitDefinition {
 	 * - `timed`: the number of minutes logged that day.
 	 */
 	records: Record<string, number>;
+	/** Per-day comments keyed by `YYYY-MM-DD`. */
+	comments: Record<string, string>;
 }
 
 /** Options used when creating a new habit note. */

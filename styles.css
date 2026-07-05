@@ -124,6 +124,7 @@
 	position: relative;
 	overflow: hidden;
 	min-width: 0;
+	perspective: 1000px;
 	-webkit-user-select: none;
 	user-select: none;
 	-webkit-touch-callout: none;
@@ -139,6 +140,101 @@
 	border-left: 3px solid var(--habits-accent);
 	border-radius: var(--radius-m);
 	box-shadow: var(--shadow-s);
+}
+
+/* Comment flip: the card body lives in a 3D inner wrapper with a front
+   and back face; the lip along the bottom edge flips between them. */
+
+.habits-card-inner {
+	position: relative;
+	width: 100%;
+	flex: 1 1 auto;
+	transform-style: preserve-3d;
+	transition: transform 0.45s cubic-bezier(0.4, 0.2, 0.2, 1);
+}
+
+.habits-card.is-flipped .habits-card-inner {
+	transform: rotateY(180deg);
+}
+
+.habits-card-front,
+.habits-card-back {
+	-webkit-backface-visibility: hidden;
+	backface-visibility: hidden;
+}
+
+.habits-card-front {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 0.85rem;
+}
+
+.habits-card-back {
+	position: absolute;
+	inset: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0.4rem;
+	transform: rotateY(180deg);
+}
+
+.habits-card-back-title {
+	text-align: center;
+	font-size: var(--font-ui-smaller);
+	font-weight: var(--font-semibold);
+	color: var(--text-muted);
+}
+
+.habits-card .habits-comment-input {
+	flex: 1;
+	width: 100%;
+	min-height: 0;
+	resize: none;
+	padding: 0.4rem 0.5rem;
+	font-size: var(--font-ui-small);
+	font-family: inherit;
+	color: var(--text-normal);
+	background: var(--background-modifier-form-field);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: var(--radius-s);
+	-webkit-user-select: text;
+	user-select: text;
+}
+
+/* The comment lip along the bottom edge of the card. */
+.habits-dashboard button.habits-card-lip {
+	width: 100%;
+	margin-top: auto;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 0.2rem 0;
+	background: transparent;
+	border: none;
+	border-top: 1px solid var(--background-modifier-border);
+	border-radius: 0;
+	box-shadow: none;
+	color: var(--text-faint);
+	cursor: pointer;
+}
+
+.habits-dashboard button.habits-card-lip:hover {
+	color: var(--habits-accent);
+	background: var(--background-modifier-hover);
+}
+
+.habits-card-lip.has-comment {
+	color: var(--habits-accent);
+}
+
+.habits-card-lip-icon {
+	display: inline-flex;
+}
+
+.habits-card-lip-icon .svg-icon {
+	width: 0.95rem;
+	height: 0.95rem;
 }
 
 /* Hover: a gentle lift with a deeper shadow and an accent-tinted border.
@@ -1613,4 +1709,13 @@
 .habits-export-goal {
 	color: #6e6e6e;
 	margin-top: 3px;
+}
+
+.habits-export-comment {
+	height: var(--hx-line-h, 10px);
+	line-height: var(--hx-line-h, 10px);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	color: #555555;
 }

@@ -145,7 +145,11 @@ export class HabitsDashboard extends MarkdownRenderChild {
 			return;
 		}
 		const active = this.root.doc.activeElement;
-		if (active instanceof HTMLInputElement && this.root.contains(active)) {
+		if (
+			(active instanceof HTMLInputElement ||
+				active instanceof HTMLTextAreaElement) &&
+			this.root.contains(active)
+		) {
 			return;
 		}
 		this.reload();
@@ -480,6 +484,9 @@ export class HabitsDashboard extends MarkdownRenderChild {
 		}
 		setTooltip(card, t("Right-click or long-press for more options"));
 		this.registerDomEvent(card, "contextmenu", (evt: MouseEvent) => {
+			if (evt.target instanceof HTMLTextAreaElement) {
+				return;
+			}
 			evt.preventDefault();
 			this.showCardMenu(habit, card, evt.clientX, evt.clientY);
 		});
@@ -487,7 +494,10 @@ export class HabitsDashboard extends MarkdownRenderChild {
 			this.showCardMenu(habit, card, x, y);
 		});
 
-		const title = card.createDiv({ cls: "habits-card-title" });
+		const inner = card.createDiv({ cls: "habits-card-inner" });
+		const front = inner.createDiv({ cls: "habits-card-front" });
+
+		const title = front.createDiv({ cls: "habits-card-title" });
 		if (habit.icon) {
 			const iconEl = title.createSpan({ cls: "habits-card-icon" });
 			applyHabitIcon(iconEl, habit.icon);
@@ -506,25 +516,94 @@ export class HabitsDashboard extends MarkdownRenderChild {
 		});
 
 		if (this.isPausedOnSelected(habit)) {
-			this.renderPausedBody(card, habit);
-			return;
+			card.addClass("is-paused");
+			this.renderPausedBody(front, habit);
+		} else {
+			const body = front.createDiv({ cls: "habits-card-body" });
+			if (habit.type === "binary") {
+				this.renderBinaryControl(body, habit, card);
+			} else {
+				this.renderCounterControl(body, habit, card);
+			}
 		}
 
-		const body = card.createDiv({ cls: "habits-card-body" });
-		if (habit.type === "binary") {
-			this.renderBinaryControl(body, habit, card);
-		} else {
-			this.renderCounterControl(body, habit, card);
+		if (this.getSettings().enableComments) {
+			this.renderCommentBack(card, inner, habit);
 		}
+	}
+
+	/**
+	 * Back face of the card plus the comment "lip" along the bottom edge.
+	 * Clicking the lip flips the card over to a per-day comment editor;
+	 * comments are stored per selected date in the habit's frontmatter.
+	 */
+	private renderCommentBack(
+		card: HTMLElement,
+		inner: HTMLElement,
+		habit: HabitDefinition,
+	): void {
+		const dateKey = toDateKey(this.selectedDate);
+
+		const back = inner.createDiv({ cls: "habits-card-back" });
+		back.createDiv({
+			cls: "habits-card-back-title",
+			text: friendlyDateLabel(this.selectedDate, new Date()),
+		});
+		const input = back.createEl("textarea", {
+			cls: "habits-comment-input",
+			attr: {
+				placeholder: t("Add a comment for this day…"),
+				"aria-label": t("Add comment"),
+			},
+		});
+		input.value = habit.comments[dateKey] ?? "";
+
+		const lip = card.createEl("button", {
+			cls: "habits-card-lip",
+			attr: { type: "button", "aria-label": t("Add comment") },
+		});
+		const lipIcon = lip.createSpan({ cls: "habits-card-lip-icon" });
+		setIcon(lipIcon, "message-square");
+		lip.toggleClass("has-comment", input.value.trim() !== "");
+
+		const save = async (): Promise<void> => {
+			const text = input.value.trim();
+			if (text === (habit.comments[dateKey] ?? "")) {
+				return;
+			}
+			if (text) {
+				habit.comments[dateKey] = text;
+			} else {
+				delete habit.comments[dateKey];
+			}
+			lip.toggleClass("has-comment", text !== "");
+			await this.store.setComment(habit, dateKey, text);
+		};
+
+		this.registerDomEvent(lip, "click", () => {
+			if (card.hasClass("is-flipped")) {
+				card.removeClass("is-flipped");
+				setIcon(lipIcon, "message-square");
+				lip.setAttr("aria-label", t("Add comment"));
+				void save();
+			} else {
+				card.addClass("is-flipped");
+				setIcon(lipIcon, "rotate-ccw");
+				lip.setAttr("aria-label", t("Flip back"));
+				input.focus();
+			}
+		});
+		this.registerDomEvent(input, "blur", () => {
+			void save();
+		});
 	}
 
 	/** Body shown instead of controls when the habit is paused. */
 	private renderPausedBody(
-		card: HTMLElement,
+		container: HTMLElement,
 		habit: HabitDefinition,
 	): void {
-		card.addClass("is-paused");
-		const body = card.createDiv({ cls: "habits-card-body" });
+		const body = container.createDiv({ cls: "habits-card-body" });
 		const badge = body.createDiv({ cls: "habits-paused-badge" });
 		const icon = badge.createSpan({ cls: "habits-paused-icon" });
 		setIcon(icon, "pause");

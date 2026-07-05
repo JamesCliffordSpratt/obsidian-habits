@@ -90,6 +90,7 @@ export class HabitStore {
 			stopped: fm.stopped === true,
 			stopDate: typeof fm.stopDate === "string" ? fm.stopDate : "",
 			records: this.readRecords(fm.records),
+			comments: this.readComments(fm.comments),
 		};
 	}
 
@@ -125,6 +126,21 @@ export class HabitStore {
 			}
 		}
 		return records;
+	}
+
+	/** Parse the frontmatter `comments` map, dropping empty entries. */
+	private readComments(raw: unknown): Record<string, string> {
+		const comments: Record<string, string> = {};
+		if (raw && typeof raw === "object") {
+			for (const [key, value] of Object.entries(
+				raw as Record<string, unknown>,
+			)) {
+				if (typeof value === "string" && value.trim() !== "") {
+					comments[key] = value;
+				}
+			}
+		}
+		return comments;
 	}
 
 	/** Parse the frontmatter `pauses` array, dropping malformed entries. */
@@ -212,6 +228,40 @@ export class HabitStore {
 				delete records[dateKey];
 			}
 			fm.records = records;
+		});
+	}
+
+	/** Save (or clear) the comment for a habit on the given day. */
+	async setComment(
+		habit: HabitDefinition,
+		dateKey: string,
+		text: string,
+	): Promise<void> {
+		const file = this.fileForHabit(habit);
+		if (!file) {
+			new Notice(
+				t('Could not find the note for "{name}".', {
+					name: habit.name,
+				}),
+			);
+			return;
+		}
+		await this.app.fileManager.processFrontMatter(file, (frontmatter) => {
+			const fm = frontmatter as Record<string, unknown>;
+			const comments =
+				fm.comments && typeof fm.comments === "object"
+					? (fm.comments as Record<string, string>)
+					: {};
+			if (text) {
+				comments[dateKey] = text;
+			} else {
+				delete comments[dateKey];
+			}
+			if (Object.keys(comments).length > 0) {
+				fm.comments = comments;
+			} else {
+				delete fm.comments;
+			}
 		});
 	}
 

@@ -225,4 +225,14 @@ export const zh: Record<string, string> = {
 	Blue: "蓝色",
 	Purple: "紫色",
 	Pink: "粉色",
+
+	// Comments
+	"Comments on cards": "卡片评论",
+	"Show a comment flap on dashboard cards for jotting a note about any day.":
+		"在面板卡片上显示评论翻页，可为任意一天记录备注。",
+	"Add comment": "添加评论",
+	"Flip back": "翻回正面",
+	"Add a comment for this day…": "为这一天添加评论…",
+	Comments: "评论",
+	"+{n} more": "还有 {n} 条",
 };
