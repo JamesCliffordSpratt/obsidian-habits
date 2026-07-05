@@ -23,12 +23,11 @@
 	"license": "MIT",
 	"dependencies": {
 		"chart.js": "^4.4.0",
-		"jspdf": "^2.5.2"
+		"jspdf": "^4.2.1"
 	},
 	"devDependencies": {
 		"@types/node": "^22.0.0",
 		"@typescript-eslint/parser": "^8.0.0",
-		"builtin-modules": "^4.0.0",
 		"esbuild": "^0.25.0",
 		"eslint": "^9.0.0",
 		"eslint-plugin-obsidianmd": "^0.3.0",
