@@ -279,9 +279,9 @@
 	color: var(--habits-accent);
 }
 
-/* The card name is a button that opens the habit's note. The button
-   shrink-wraps to its text; the inner span wraps up to two lines and
-   then ellipsizes. The tooltip always shows the full name. */
+/* The card name is a button that opens the habit's note. Names stay on
+   a single line and ellipsize when the card runs out of room; the
+   tooltip always shows the full name. */
 .habits-dashboard button.habits-card-name {
 	max-width: 100%;
 	min-width: 0;
@@ -300,13 +300,11 @@
 }
 
 .habits-card-name-text {
-	display: -webkit-box;
-	-webkit-box-orient: vertical;
-	-webkit-line-clamp: 2;
-	line-clamp: 2;
+	display: block;
+	max-width: 100%;
+	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
-	overflow-wrap: break-word;
 }
 
 .habits-dashboard button.habits-card-name:hover {
