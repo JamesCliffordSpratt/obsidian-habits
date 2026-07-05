@@ -510,7 +510,7 @@ export class HabitsDashboard extends MarkdownRenderChild {
 				"aria-label": t("Open the note for {name}", { name: habit.name }),
 			},
 		});
-		setTooltip(name, t("Open habit note"));
+		setTooltip(name, `${habit.name} — ${t("Open habit note")}`);
 		this.registerDomEvent(name, "click", () => {
 			void this.app.workspace.openLinkText(habit.path, "", false);
 		});
