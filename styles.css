@@ -269,7 +269,7 @@
 	gap: 0.3rem;
 	width: 100%;
 	min-width: 0;
-	font-size: var(--font-ui-medium);
+	font-size: calc(var(--font-ui-medium) + 2px);
 	font-weight: var(--font-semibold);
 	text-align: center;
 }
