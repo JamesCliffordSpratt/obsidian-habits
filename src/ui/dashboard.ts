@@ -33,6 +33,16 @@ import {
 
 const MOBILE_BREAKPOINT = 768;
 
+/** Longest habit name shown on a card before an explicit ellipsis. */
+const MAX_CARD_NAME_CHARS = 48;
+
+/** Truncate very long names with a visible ellipsis for card titles. */
+function cardDisplayName(name: string): string {
+	return name.length > MAX_CARD_NAME_CHARS
+		? `${name.slice(0, MAX_CARD_NAME_CHARS - 1).trimEnd()}…`
+		: name;
+}
+
 /**
  * Renders the interactive habits dashboard for a `habits` code block.
  *
@@ -504,11 +514,14 @@ export class HabitsDashboard extends MarkdownRenderChild {
 		}
 		const name = title.createEl("button", {
 			cls: "habits-card-name",
-			text: habit.name,
 			attr: {
 				type: "button",
 				"aria-label": t("Open the note for {name}", { name: habit.name }),
 			},
+		});
+		name.createSpan({
+			cls: "habits-card-name-text",
+			text: cardDisplayName(habit.name),
 		});
 		setTooltip(name, `${habit.name} — ${t("Open habit note")}`);
 		this.registerDomEvent(name, "click", () => {
