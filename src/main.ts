@@ -1,4 +1,5 @@
 import { Editor, Events, Plugin, type WorkspaceLeaf } from "obsidian";
+import { t } from "./i18n";
 import { HabitStore } from "./habit-store";
 import {
 	DEFAULT_SETTINGS,
@@ -68,13 +69,13 @@ export default class HabitsPlugin extends Plugin {
 				),
 		);
 
-		this.addRibbonIcon("list-checks", "Open habits panel", () => {
+		this.addRibbonIcon("list-checks", t("Open habits panel"), () => {
 			void this.activatePanel();
 		});
 
 		this.addCommand({
 			id: "open-panel",
-			name: "Open panel",
+			name: t("Open panel"),
 			callback: () => {
 				void this.activatePanel();
 			},
@@ -82,7 +83,7 @@ export default class HabitsPlugin extends Plugin {
 
 		this.addCommand({
 			id: "create-habit",
-			name: "Create habit",
+			name: t("Create habit"),
 			callback: () => {
 				new HabitModal(this.app, this.store, () => {
 					// The dashboard reloads itself when reopened.
@@ -92,7 +93,7 @@ export default class HabitsPlugin extends Plugin {
 
 		this.addCommand({
 			id: "insert-dashboard",
-			name: "Insert dashboard",
+			name: t("Insert dashboard"),
 			editorCallback: (editor: Editor) => {
 				editor.replaceSelection("```habits\n```\n");
 			},
@@ -100,7 +101,7 @@ export default class HabitsPlugin extends Plugin {
 
 		this.addCommand({
 			id: "insert-habit-metrics",
-			name: "Insert habit metrics",
+			name: t("Insert habit metrics"),
 			editorCallback: (editor: Editor) => {
 				editor.replaceSelection("```habit-metrics\n```\n");
 			},

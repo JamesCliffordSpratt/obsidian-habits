@@ -1,4 +1,5 @@
 import { App, debounce, MarkdownRenderChild, setIcon } from "obsidian";
+import { t } from "../i18n";
 import {
 	BarController,
 	BarElement,
@@ -105,8 +106,12 @@ export class HabitMetrics extends MarkdownRenderChild {
 			root.createEl("p", {
 				cls: "habits-metrics-empty",
 				text: requested
-					? `No habit called "${requested}" was found.`
-					: 'Place this block inside a habit note, or point it at one with "habit: <name>".',
+					? t('No habit called "{name}" was found.', {
+							name: requested,
+						})
+					: t(
+							'Place this block inside a habit note, or point it at one with "habit: <name>".',
+						),
 			});
 			return;
 		}
@@ -115,9 +120,11 @@ export class HabitMetrics extends MarkdownRenderChild {
 			this.renderBanner(
 				"circle-stop",
 				habit.stopDate
-					? `No longer tracked since ${habit.stopDate}. All history is kept.`
-					: "No longer tracked. All history is kept.",
-				"Resume tracking",
+					? t("No longer tracked since {date}. All history is kept.", {
+							date: habit.stopDate,
+						})
+					: t("No longer tracked. All history is kept."),
+				t("Resume tracking"),
 				() => this.store.restartHabit(habit),
 			);
 		} else if (habit.paused) {
@@ -125,9 +132,14 @@ export class HabitMetrics extends MarkdownRenderChild {
 			this.renderBanner(
 				"pause",
 				open
-					? `Paused since ${open.start}. Paused days don't count against streaks or stats.`
-					: "Paused. Paused days don't count against streaks or stats.",
-				"Resume habit",
+					? t(
+							"Paused since {date}. Paused days don't count against streaks or stats.",
+							{ date: open.start },
+						)
+					: t(
+							"Paused. Paused days don't count against streaks or stats.",
+						),
+				t("Resume habit"),
 				() => this.store.resumeHabit(habit),
 			);
 		}
@@ -195,16 +207,16 @@ export class HabitMetrics extends MarkdownRenderChild {
 		const tiles = [
 			{
 				value: String(currentStreak(habit, today)),
-				label: "Current streak",
+				label: t("Current streak"),
 			},
-			{ value: String(longestStreak(habit)), label: "Best streak" },
-			{ value: String(completedDays), label: "Days completed" },
+			{ value: String(longestStreak(habit)), label: t("Best streak") },
+			{ value: String(completedDays), label: t("Days completed") },
 			{
 				value:
 					recentDays > 0
 						? `${Math.round((recentHits / recentDays) * 100)}%`
 						: "–",
-				label: "30-day rate",
+				label: t("30-day rate"),
 			},
 		];
 
@@ -251,7 +263,7 @@ export class HabitMetrics extends MarkdownRenderChild {
 		const datasets: ChartDataset<"bar" | "line", number[]>[] = [
 			{
 				type: "bar",
-				label: habit.unit || "Logged",
+				label: habit.unit || t("Logged"),
 				data: values,
 				backgroundColor: colors,
 				borderRadius: 3,
@@ -260,7 +272,7 @@ export class HabitMetrics extends MarkdownRenderChild {
 		if (habit.type !== "binary" && habit.target > 0) {
 			datasets.push({
 				type: "line",
-				label: "Target",
+				label: t("Target"),
 				data: new Array(DAILY_DAYS).fill(habit.target) as number[],
 				borderColor: this.withAlpha(green, 0.7),
 				borderDash: [6, 4],
@@ -269,7 +281,7 @@ export class HabitMetrics extends MarkdownRenderChild {
 			});
 		}
 
-		this.createChart("Last 30 days", {
+		this.createChart(t("Last 30 days"), {
 			type: "bar",
 			data: { labels, datasets },
 			options: this.baseOptions(habit.type === "binary" ? 1 : undefined),
@@ -329,7 +341,7 @@ export class HabitMetrics extends MarkdownRenderChild {
 			) => `${String(value)}%`;
 		}
 
-		this.createChart("Weekly completion rate", {
+		this.createChart(t("Weekly completion rate"), {
 			type: "line",
 			data: {
 				labels,
