@@ -17,8 +17,10 @@
 - 📄 **Printable PDF reports** — pick your metrics, date range, and layout with a live A4 preview
 - 📌 **Sidebar quick-log panel** — check off today's habits from anywhere, sized for narrow panes
 - ⏸️ **Pause without penalty** — ill or travelling? Paused days never break streaks or drag down your stats
+- 💬 **Per-day comments** — flip any card over to jot down why a day went the way it did; comments can be included in PDF reports
 - 📅 **Daily-note aware** — a dashboard inside `2026-07-01.md` shows that day's habits automatically
 - 📱 **Mobile friendly** — responsive cards, long-press menus, and a configurable mobile layout
+- 🌍 **In your language** — available in English, Spanish, French, German, and Simplified Chinese
 - 🎨 **Theme native** — every colour comes from your theme; custom accents and icons per habit
 
 ## 🚀 Quick start
@@ -51,6 +53,8 @@ startDate: 2026-07-01
 weeklyTarget: 5
 records:
   2026-07-01: 5
+comments:
+  2026-07-01: Managed all eight glasses before lunch!
 pauses:
   - start: 2026-06-10
     end: 2026-06-14
@@ -64,6 +68,8 @@ No databases, no external services — delete the plugin and your history is sti
 Cards for each habit sit in a swipeable carousel. Completing a habit plays a celebration animation and the card glides to the back of the queue, keeping what's left front and centre. Click a card's name to open its note; right-click (or long-press on mobile) for editing, pausing, stopping, or removing.
 
 Embedded in a **daily note**? The dashboard follows that note's date, so browsing yesterday's note shows yesterday's habits. The dashboard also live-updates whenever your habit notes or settings change — even from another pane or device sync.
+
+Every card also has a **comment flap** along its bottom edge. Click it and the card flips over to a per-day comment box — perfect for noting why a habit was missed (or smashed). Days with a comment show an accent-tinted speech bubble, and comments follow the selected date, so each day keeps its own note.
 
 ## 📌 The sidebar panel
 
@@ -79,7 +85,7 @@ The chart button opens the stats view: completion summary tiles, streaks, perfec
 
 From there, the download button opens the **PDF export** dialog:
 
-- **Metrics** — summary tiles, completion trend chart, daily grids, goal progress
+- **Metrics** — summary tiles, completion trend chart, daily grids, goal progress, comments
 - **Range** — this week, last 7 days, this month, last 30 days, or any custom range up to 92 days
 - **Layout** — portrait or landscape, comfortable or compact, monochrome for ink-friendly printing
 - **Live preview** — a to-scale A4 preview updates as you tweak; click it to inspect at full size. What you see is exactly what prints.
@@ -128,6 +134,7 @@ habit: Journal
 | Follow daily note date | On | Dashboards in daily notes open on that note's date |
 | Cards per view | 4 | Carousel cards shown at once on wide screens (1–4) |
 | Cards per view on mobile | 2 | Carousel cards on phone-sized screens (1–2) |
+| Comments on cards | On | Show the comment flap on dashboard cards |
 
 ## 🛠️ Development
 
