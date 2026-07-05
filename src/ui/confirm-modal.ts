@@ -1,4 +1,5 @@
 import { App, Modal, Setting } from "obsidian";
+import { t } from "../i18n";
 
 /** Options for a simple confirm/cancel dialog. */
 export interface ConfirmOptions {
@@ -30,12 +31,12 @@ export class ConfirmModal extends Modal {
 		new Setting(contentEl)
 			.addButton((button) =>
 				button
-					.setButtonText(this.options.cancelText ?? "Cancel")
+					.setButtonText(this.options.cancelText ?? t("Cancel"))
 					.onClick(() => this.close()),
 			)
 			.addButton((button) => {
 				button
-					.setButtonText(this.options.confirmText ?? "Confirm")
+					.setButtonText(this.options.confirmText ?? t("Confirm"))
 					.onClick(async () => {
 						this.close();
 						await this.options.onConfirm();

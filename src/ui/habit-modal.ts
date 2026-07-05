@@ -15,6 +15,7 @@ import {
 	isLucideIcon,
 } from "./icon-suggest-modal";
 import { EmojiSuggestModal } from "./emoji-suggest-modal";
+import { t } from "../i18n";
 
 /**
  * Accent colours taken from the current theme's palette. Storing the CSS
@@ -159,12 +160,12 @@ export class HabitModal extends Modal {
 		contentEl.empty();
 
 		new Setting(contentEl)
-			.setName(this.editing ? "Edit habit" : "New habit")
+			.setName(this.editing ? t("Edit habit") : t("New habit"))
 			.setHeading();
 
 		this.renderPreview(contentEl);
 
-		new Setting(contentEl).setName("Name").addText((text) =>
+		new Setting(contentEl).setName(t("Name")).addText((text) =>
 			text
 				.setPlaceholder(this.currentExample().name)
 				.setValue(this.habitName)
@@ -175,15 +176,17 @@ export class HabitModal extends Modal {
 		);
 
 		new Setting(contentEl)
-			.setName("Type")
+			.setName(t("Type"))
 			.setDesc(
-				"Binary is done or not done. Repetition counts towards a target. Timed tracks minutes.",
+				t(
+					"Binary is done or not done. Repetition counts towards a target. Timed tracks minutes.",
+				),
 			)
 			.addDropdown((dropdown) =>
 				dropdown
-					.addOption("binary", "Binary")
-					.addOption("repetition", "Repetition")
-					.addOption("timed", "Timed")
+					.addOption("binary", t("Binary"))
+					.addOption("repetition", t("Repetition"))
+					.addOption("timed", t("Timed"))
 					.setValue(this.type)
 					.onChange((value) => {
 						this.type = value as HabitType;
@@ -195,8 +198,8 @@ export class HabitModal extends Modal {
 		if (this.type !== "binary") {
 			const targetName =
 				this.type === "timed"
-					? "Daily target (minutes)"
-					: "Daily target";
+					? t("Daily target (minutes)")
+					: t("Daily target");
 			new Setting(contentEl).setName(targetName).addText((text) => {
 				applyNumeric(text.inputEl, 1);
 				text
@@ -215,8 +218,8 @@ export class HabitModal extends Modal {
 
 			if (this.type === "repetition") {
 				new Setting(contentEl)
-					.setName("Unit")
-					.setDesc("Optional label shown next to the count.")
+					.setName(t("Unit"))
+					.setDesc(t("Optional label shown next to the count."))
 					.addText((text) =>
 						text
 							.setPlaceholder(this.currentExample().unit ?? "Cups")
@@ -231,8 +234,8 @@ export class HabitModal extends Modal {
 		this.renderTargets(contentEl);
 
 		new Setting(contentEl)
-			.setName("Icon")
-			.setDesc("Choose a Lucide icon or an emoji to represent this habit.")
+			.setName(t("Icon"))
+			.setDesc(t("Choose a Lucide icon or an emoji to represent this habit."))
 			.addButton((button) => {
 				this.iconButton = button;
 				this.updateIconButton();
@@ -246,8 +249,8 @@ export class HabitModal extends Modal {
 			})
 			.addButton((button) =>
 				button
-					.setButtonText("Emoji")
-					.setTooltip("Choose an emoji")
+					.setButtonText(t("Emoji"))
+					.setTooltip(t("Choose an emoji"))
 					.onClick(() => {
 						new EmojiSuggestModal(this.app, (emoji) => {
 							this.icon = emoji;
@@ -259,7 +262,7 @@ export class HabitModal extends Modal {
 			.addExtraButton((extra) =>
 				extra
 					.setIcon("x")
-					.setTooltip("Clear icon")
+					.setTooltip(t("Clear icon"))
 					.onClick(() => {
 						this.icon = "";
 						this.updateIconButton();
@@ -271,11 +274,11 @@ export class HabitModal extends Modal {
 
 		new Setting(contentEl)
 			.addButton((button) =>
-				button.setButtonText("Cancel").onClick(() => this.close()),
+				button.setButtonText(t("Cancel")).onClick(() => this.close()),
 			)
 			.addButton((button) =>
 				button
-					.setButtonText(this.editing ? "Save changes" : "Create habit")
+					.setButtonText(this.editing ? t("Save changes") : t("Create habit"))
 					.setCta()
 					.onClick(async () => {
 						const options = {
@@ -323,16 +326,18 @@ export class HabitModal extends Modal {
 		});
 		details.createEl("summary", {
 			cls: "habits-targets-summary",
-			text: "Targets (optional)",
+			text: t("Targets (optional)"),
 		});
 		details.createEl("p", {
 			cls: "habits-targets-intro",
-			text: "Set an optional weekly or monthly goal for how many days you complete this habit. For example, hitting your daily goal on all 7 days is a weekly target of 7. Turn on a perfect toggle to aim for every day of the period automatically, whatever its length.",
+			text: t(
+				"Set an optional weekly or monthly goal for how many days you complete this habit. For example, hitting your daily goal on all 7 days is a weekly target of 7. Turn on a perfect toggle to aim for every day of the period automatically, whatever its length.",
+			),
 		});
 
 		new Setting(details)
-			.setName("Perfect week")
-			.setDesc("Aim to complete this habit every day of the week.")
+			.setName(t("Perfect week"))
+			.setDesc(t("Aim to complete this habit every day of the week."))
 			.addToggle((toggle) =>
 				toggle.setValue(this.weeklyPerfect).onChange((value) => {
 					this.weeklyPerfect = value;
@@ -341,12 +346,12 @@ export class HabitModal extends Modal {
 			);
 		if (!this.weeklyPerfect) {
 			new Setting(details)
-				.setName("Weekly target")
-				.setDesc("Optional. Days to complete per week (max 7).")
+				.setName(t("Weekly target"))
+				.setDesc(t("Optional. Days to complete per week (max 7)."))
 				.addText((text) => {
 					applyNumeric(text.inputEl, 1, 7);
 					text
-						.setPlaceholder("None")
+						.setPlaceholder(t("None"))
 						.setValue(
 							this.weeklyTarget ? String(this.weeklyTarget) : "",
 						)
@@ -360,8 +365,8 @@ export class HabitModal extends Modal {
 				});
 		}
 		new Setting(details)
-			.setName("Perfect month")
-			.setDesc("Aim to complete this habit every day of the month.")
+			.setName(t("Perfect month"))
+			.setDesc(t("Aim to complete this habit every day of the month."))
 			.addToggle((toggle) =>
 				toggle.setValue(this.monthlyPerfect).onChange((value) => {
 					this.monthlyPerfect = value;
@@ -370,12 +375,12 @@ export class HabitModal extends Modal {
 			);
 		if (!this.monthlyPerfect) {
 			new Setting(details)
-				.setName("Monthly target")
-				.setDesc("Optional. Days to complete per month.")
+				.setName(t("Monthly target"))
+				.setDesc(t("Optional. Days to complete per month."))
 				.addText((text) => {
 					applyNumeric(text.inputEl, 1, 31);
 					text
-						.setPlaceholder("None")
+						.setPlaceholder(t("None"))
 						.setValue(
 							this.monthlyTarget ? String(this.monthlyTarget) : "",
 						)
@@ -403,8 +408,8 @@ export class HabitModal extends Modal {
 
 	private renderColorPicker(contentEl: HTMLElement): void {
 		const setting = new Setting(contentEl)
-			.setName("Colour")
-			.setDesc("Pick a colour from your theme, or choose a custom one.");
+			.setName(t("Colour"))
+			.setDesc(t("Pick a colour from your theme, or choose a custom one."));
 
 		const swatches = setting.controlEl.createDiv({
 			cls: "habits-swatches",
@@ -413,7 +418,7 @@ export class HabitModal extends Modal {
 		for (const swatch of THEME_COLORS) {
 			const el = swatches.createEl("button", {
 				cls: "habits-swatch",
-				attr: { type: "button", "aria-label": swatch.label },
+				attr: { type: "button", "aria-label": t(swatch.label) },
 			});
 			el.setCssProps({ "--habits-swatch": swatch.value });
 			el.addEventListener("click", () => {
@@ -458,7 +463,7 @@ export class HabitModal extends Modal {
 			});
 		}
 		if (this.previewNameEl) {
-			this.previewNameEl.setText(this.habitName || "Your habit");
+			this.previewNameEl.setText(this.habitName || t("Your habit"));
 		}
 	}
 
@@ -472,11 +477,11 @@ export class HabitModal extends Modal {
 		if (this.icon) {
 			applyHabitIcon(glyph, this.icon);
 			button.buttonEl.createSpan({
-				text: isLucideIcon(this.icon) ? iconLabel(this.icon) : "Emoji",
+				text: isLucideIcon(this.icon) ? iconLabel(this.icon) : t("Emoji"),
 			});
 		} else {
 			setIcon(glyph, "image-plus");
-			button.buttonEl.createSpan({ text: "Choose icon" });
+			button.buttonEl.createSpan({ text: t("Choose icon") });
 		}
 	}
 }

@@ -5,6 +5,7 @@ import {
 	getIconIds,
 	setIcon,
 } from "obsidian";
+import { t } from "../i18n";
 
 /**
  * Fuzzy-search modal for picking a built-in Lucide icon.
@@ -18,7 +19,7 @@ export class IconSuggestModal extends FuzzySuggestModal<string> {
 		private onChoose: (icon: string) => void,
 	) {
 		super(app);
-		this.setPlaceholder("Search icons…");
+		this.setPlaceholder(t("Search icons…"));
 		this.limit = 150;
 	}
 

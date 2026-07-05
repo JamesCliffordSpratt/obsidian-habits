@@ -7,6 +7,7 @@ import type {
 	NewHabitOptions,
 } from "./types";
 import { addDays, sanitizeFileName, toDateKey } from "./utils";
+import { t } from "./i18n";
 
 const HABIT_TYPES: readonly HabitType[] = ["binary", "repetition", "timed"];
 
@@ -191,7 +192,11 @@ export class HabitStore {
 	): Promise<void> {
 		const file = this.fileForHabit(habit);
 		if (!file) {
-			new Notice(`Could not find the note for "${habit.name}".`);
+			new Notice(
+				t('Could not find the note for "{name}".', {
+					name: habit.name,
+				}),
+			);
 			return;
 		}
 
@@ -214,7 +219,11 @@ export class HabitStore {
 	async pauseHabit(habit: HabitDefinition): Promise<void> {
 		const file = this.fileForHabit(habit);
 		if (!file) {
-			new Notice(`Could not find the note for "${habit.name}".`);
+			new Notice(
+				t('Could not find the note for "{name}".', {
+					name: habit.name,
+				}),
+			);
 			return;
 		}
 		await this.app.fileManager.processFrontMatter(file, (frontmatter) => {
@@ -226,14 +235,18 @@ export class HabitStore {
 			pauses.push({ start: toDateKey(new Date()), end: "" });
 			fm.pauses = this.serializePauses(pauses);
 		});
-		new Notice(`Paused "${habit.name}".`);
+		new Notice(t('Paused "{name}".', { name: habit.name }));
 	}
 
 	/** Resume a paused habit; the pause period stays excluded from stats. */
 	async resumeHabit(habit: HabitDefinition): Promise<void> {
 		const file = this.fileForHabit(habit);
 		if (!file) {
-			new Notice(`Could not find the note for "${habit.name}".`);
+			new Notice(
+				t('Could not find the note for "{name}".', {
+					name: habit.name,
+				}),
+			);
 			return;
 		}
 		await this.app.fileManager.processFrontMatter(file, (frontmatter) => {
@@ -245,14 +258,18 @@ export class HabitStore {
 				delete fm.pauses;
 			}
 		});
-		new Notice(`Resumed "${habit.name}".`);
+		new Notice(t('Resumed "{name}".', { name: habit.name }));
 	}
 
 	/** Stop tracking a habit. The note and every record are kept. */
 	async stopHabit(habit: HabitDefinition): Promise<void> {
 		const file = this.fileForHabit(habit);
 		if (!file) {
-			new Notice(`Could not find the note for "${habit.name}".`);
+			new Notice(
+				t('Could not find the note for "{name}".', {
+					name: habit.name,
+				}),
+			);
 			return;
 		}
 		await this.app.fileManager.processFrontMatter(file, (frontmatter) => {
@@ -267,7 +284,9 @@ export class HabitStore {
 			}
 		});
 		new Notice(
-			`Stopped tracking "${habit.name}". Its history is kept in the note.`,
+			t('Stopped tracking "{name}". Its history is kept in the note.', {
+				name: habit.name,
+			}),
 		);
 	}
 
@@ -275,7 +294,11 @@ export class HabitStore {
 	async restartHabit(habit: HabitDefinition): Promise<void> {
 		const file = this.fileForHabit(habit);
 		if (!file) {
-			new Notice(`Could not find the note for "${habit.name}".`);
+			new Notice(
+				t('Could not find the note for "{name}".', {
+					name: habit.name,
+				}),
+			);
 			return;
 		}
 		await this.app.fileManager.processFrontMatter(file, (frontmatter) => {
@@ -283,21 +306,25 @@ export class HabitStore {
 			delete fm.stopped;
 			delete fm.stopDate;
 		});
-		new Notice(`Resumed tracking "${habit.name}".`);
+		new Notice(t('Resumed tracking "{name}".', { name: habit.name }));
 	}
 
 	/** Create a new habit note and return the created file. */
 	async createHabit(options: NewHabitOptions): Promise<TFile | null> {
 		const cleanName = sanitizeFileName(options.name);
 		if (!cleanName) {
-			new Notice("Please enter a valid habit name.");
+			new Notice(t("Please enter a valid habit name."));
 			return null;
 		}
 
 		await this.ensureFolderExists();
 		const path = normalizePath(`${this.folderPath}/${cleanName}.md`);
 		if (this.app.vault.getAbstractFileByPath(path)) {
-			new Notice(`A habit called "${cleanName}" already exists.`);
+			new Notice(
+				t('A habit called "{name}" already exists.', {
+					name: cleanName,
+				}),
+			);
 			return null;
 		}
 
@@ -344,7 +371,7 @@ export class HabitStore {
 			fm.records = {};
 		});
 
-		new Notice(`Created habit "${cleanName}".`);
+		new Notice(t('Created habit "{name}".', { name: cleanName }));
 		return file;
 	}
 
@@ -355,20 +382,28 @@ export class HabitStore {
 	): Promise<TFile | null> {
 		let file = this.fileForHabit(habit);
 		if (!file) {
-			new Notice(`Could not find the note for "${habit.name}".`);
+			new Notice(
+				t('Could not find the note for "{name}".', {
+					name: habit.name,
+				}),
+			);
 			return null;
 		}
 
 		const cleanName = sanitizeFileName(options.name);
 		if (!cleanName) {
-			new Notice("Please enter a valid habit name.");
+			new Notice(t("Please enter a valid habit name."));
 			return null;
 		}
 
 		if (cleanName !== habit.name) {
 			const newPath = normalizePath(`${this.folderPath}/${cleanName}.md`);
 			if (this.app.vault.getAbstractFileByPath(newPath)) {
-				new Notice(`A habit called "${cleanName}" already exists.`);
+				new Notice(
+				t('A habit called "{name}" already exists.', {
+					name: cleanName,
+				}),
+			);
 				return null;
 			}
 			await this.app.fileManager.renameFile(file, newPath);
@@ -426,7 +461,7 @@ export class HabitStore {
 			}
 		});
 
-		new Notice(`Updated "${cleanName}".`);
+		new Notice(t('Updated "{name}".', { name: cleanName }));
 		return file;
 	}
 
@@ -434,10 +469,14 @@ export class HabitStore {
 	async deleteHabit(habit: HabitDefinition): Promise<void> {
 		const file = this.fileForHabit(habit);
 		if (!file) {
-			new Notice(`Could not find the note for "${habit.name}".`);
+			new Notice(
+				t('Could not find the note for "{name}".', {
+					name: habit.name,
+				}),
+			);
 			return;
 		}
 		await this.app.fileManager.trashFile(file);
-		new Notice(`Removed "${habit.name}".`);
+		new Notice(t('Removed "{name}".', { name: habit.name }));
 	}
 }

@@ -1,4 +1,5 @@
 import { setIcon } from "obsidian";
+import { t } from "../i18n";
 import type { HabitDefinition } from "../types";
 import { addDays, toDateKey } from "../utils";
 import { applyHabitIcon } from "./icon-suggest-modal";
@@ -43,11 +44,11 @@ export function renderStatsView(
 	const title =
 		mode === "rolling"
 			? period === "weekly"
-				? "Last 7 days"
-				: "Last 30 days"
+				? t("Last 7 days")
+				: t("Last 30 days")
 			: period === "weekly"
-				? "This week"
-				: "This month";
+				? t("This week")
+				: t("This month");
 	const subtitle =
 		mode === "calendar" && period === "monthly"
 			? today.toLocaleDateString(undefined, {
@@ -64,7 +65,7 @@ export function renderStatsView(
 	if (habits.length === 0) {
 		container.createDiv({
 			cls: "habits-empty",
-			text: "No habits to show stats for yet.",
+			text: t("No habits to show stats for yet."),
 		});
 		return;
 	}
@@ -99,12 +100,12 @@ export function renderStatsView(
 	});
 
 	const summary = container.createDiv({ cls: "habits-stats-summary" });
-	tile(summary, `${overallRate}%`, "Completion");
-	tile(summary, `${bestCurrent}`, "Best streak");
-	tile(summary, `${perfect}`, "Perfect days");
-	tile(summary, `${totalCompleted}`, "Completions");
+	tile(summary, `${overallRate}%`, t("Completion"));
+	tile(summary, `${bestCurrent}`, t("Best streak"));
+	tile(summary, `${perfect}`, t("Perfect days"));
+	tile(summary, `${totalCompleted}`, t("Completions"));
 	if (goalsTotal > 0) {
-		tile(summary, `${goalsMet}/${goalsTotal}`, "Goals met");
+		tile(summary, `${goalsMet}/${goalsTotal}`, t("Goals met"));
 	}
 
 	const list = container.createDiv({ cls: "habits-stats-list" });
@@ -148,11 +149,16 @@ export function renderStatsView(
 		const unit = habit.unit || (habit.type === "timed" ? "min" : "");
 		const totalText =
 			habit.type === "binary"
-				? `${stats.completed}/${stats.days} days`
-				: `${stats.total}${unit ? ` ${unit}` : ""} total`;
+				? t("{completed}/{days} days", {
+						completed: stats.completed,
+						days: stats.days,
+					})
+				: t("{total} total", {
+						total: `${stats.total}${unit ? ` ${unit}` : ""}`,
+					});
 		const meta = row.createDiv({ cls: "habits-stats-meta" });
 		meta.createSpan({
-			text: `${Math.round(stats.rate * 100)}% · ${totalText} · best `,
+			text: `${Math.round(stats.rate * 100)}% · ${totalText} · ${t("best")} `,
 		});
 		const bestFlame = meta.createSpan({ cls: "habits-stats-flame" });
 		setIcon(bestFlame, "flame");
@@ -171,14 +177,19 @@ export function renderStatsView(
 				.setCssProps({ "--habits-progress": `${pct}%` });
 			const goalName = isPerfect(habit)
 				? period === "weekly"
-					? "perfect week"
-					: "perfect month"
+					? t("perfect week")
+					: t("perfect month")
 				: period === "weekly"
-					? "weekly goal"
-					: "monthly goal";
+					? t("weekly goal")
+					: t("monthly goal");
 			row.createDiv({
 				cls: "habits-stats-goal-label",
-				text: `${progress}/${goal} days · ${goalName} · ${pct}%`,
+				text: t("{progress}/{goal} days · {label} · {pct}%", {
+					progress,
+					goal,
+					label: goalName,
+					pct,
+				}),
 			});
 		}
 	});

@@ -1,4 +1,5 @@
 import type { Component } from "obsidian";
+import { t } from "./i18n";
 
 /**
  * Invoke `onTrigger` when the user holds a touch on `el` for half a second
@@ -82,13 +83,13 @@ export function sanitizeFileName(name: string): string {
 /** Human-readable label for a date, e.g. "Today", "Yesterday" or a full date. */
 export function friendlyDateLabel(date: Date, today: Date): string {
 	if (isSameDay(date, today)) {
-		return "Today";
+		return t("Today");
 	}
 	if (isSameDay(date, addDays(today, -1))) {
-		return "Yesterday";
+		return t("Yesterday");
 	}
 	if (isSameDay(date, addDays(today, 1))) {
-		return "Tomorrow";
+		return t("Tomorrow");
 	}
 	return date.toLocaleDateString(undefined, {
 		weekday: "short",

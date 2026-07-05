@@ -2,11 +2,13 @@ import {
 	App,
 	debounce,
 	Modal,
+	moment,
 	Notice,
 	setIcon,
 	Setting,
 	setTooltip,
 } from "obsidian";
+import { t, tEn } from "../i18n";
 import {
 	CategoryScale,
 	Chart,
@@ -45,6 +47,18 @@ const PX = 2.2;
 const MARGIN = 14;
 /** Longest allowed custom range, in days. */
 const MAX_CUSTOM_DAYS = 92;
+
+/**
+ * Text drawn into the exported document (and its preview). jsPDF's
+ * built-in fonts cannot render CJK glyphs, so document content stays in
+ * English for Chinese locales while the surrounding UI is translated.
+ */
+function docT(
+	text: string,
+	vars?: Record<string, string | number>,
+): string {
+	return moment.locale().startsWith("zh") ? tEn(text, vars) : t(text, vars);
+}
 
 type ExportPeriod =
 	| "this-week"
@@ -115,7 +129,7 @@ function mixWithWhite(color: RGB, ratio: number): RGB {
  */
 export class ExportModal extends Modal {
 	private options: ExportOptions = {
-		title: "Habits report",
+		title: t("Habits report"),
 		period: "last-7",
 		customStart: toDateKey(addDays(new Date(), -6)),
 		customEnd: toDateKey(new Date()),
@@ -146,7 +160,7 @@ export class ExportModal extends Modal {
 		const { contentEl } = this;
 		contentEl.empty();
 
-		new Setting(contentEl).setName("Export stats").setHeading();
+		new Setting(contentEl).setName(t("Export stats")).setHeading();
 
 		const body = contentEl.createDiv({ cls: "habits-export-body" });
 		const controls = body.createDiv({ cls: "habits-export-controls" });
@@ -177,7 +191,7 @@ export class ExportModal extends Modal {
 
 	private buildControls(root: HTMLElement): void {
 		new Setting(root)
-			.setName("Title")
+			.setName(t("Title"))
 			.addText((text) =>
 				text.setValue(this.options.title).onChange((value) => {
 					this.options.title = value || "Habits report";
@@ -186,14 +200,14 @@ export class ExportModal extends Modal {
 			);
 
 		new Setting(root)
-			.setName("Date range")
+			.setName(t("Date range"))
 			.addDropdown((dropdown) =>
 				dropdown
-					.addOption("this-week", "This week")
-					.addOption("last-7", "Last 7 days")
-					.addOption("this-month", "This month")
-					.addOption("last-30", "Last 30 days")
-					.addOption("custom", "Custom range")
+					.addOption("this-week", t("This week"))
+					.addOption("last-7", t("Last 7 days"))
+					.addOption("this-month", t("This month"))
+					.addOption("last-30", t("Last 30 days"))
+					.addOption("custom", t("Custom range"))
 					.setValue(this.options.period)
 					.onChange((value) => {
 						this.options.period = value as ExportPeriod;
@@ -202,7 +216,7 @@ export class ExportModal extends Modal {
 					}),
 			);
 
-		const from = new Setting(root).setName("From").addText((text) => {
+		const from = new Setting(root).setName(t("From")).addText((text) => {
 			text.inputEl.type = "date";
 			text.setValue(this.options.customStart).onChange((value) => {
 				this.options.customStart = value;
@@ -210,8 +224,8 @@ export class ExportModal extends Modal {
 			});
 		});
 		const to = new Setting(root)
-			.setName("To")
-			.setDesc(`Up to ${MAX_CUSTOM_DAYS} days.`)
+			.setName(t("To"))
+			.setDesc(t("Up to {n} days.", { n: MAX_CUSTOM_DAYS }))
 			.addText((text) => {
 				text.inputEl.type = "date";
 				text.setValue(this.options.customEnd).onChange((value) => {
@@ -222,19 +236,19 @@ export class ExportModal extends Modal {
 		this.customSettings = [from, to];
 		this.toggleCustomSettings();
 
-		new Setting(root).setName("Content").setHeading();
-		this.contentToggle(root, "Summary tiles", "includeSummary");
-		this.contentToggle(root, "Completion trend chart", "includeTrend");
-		this.contentToggle(root, "Daily grids", "includeGrid");
-		this.contentToggle(root, "Goal progress", "includeGoals");
+		new Setting(root).setName(t("Content")).setHeading();
+		this.contentToggle(root, t("Summary tiles"), "includeSummary");
+		this.contentToggle(root, t("Completion trend chart"), "includeTrend");
+		this.contentToggle(root, t("Daily grids"), "includeGrid");
+		this.contentToggle(root, t("Goal progress"), "includeGoals");
 
-		new Setting(root).setName("Layout").setHeading();
+		new Setting(root).setName(t("Layout")).setHeading();
 		new Setting(root)
-			.setName("Orientation")
+			.setName(t("Orientation"))
 			.addDropdown((dropdown) =>
 				dropdown
-					.addOption("portrait", "Portrait")
-					.addOption("landscape", "Landscape")
+					.addOption("portrait", t("Portrait"))
+					.addOption("landscape", t("Landscape"))
 					.setValue(this.options.orientation)
 					.onChange((value) => {
 						this.options.orientation =
@@ -243,11 +257,11 @@ export class ExportModal extends Modal {
 					}),
 			);
 		new Setting(root)
-			.setName("Density")
+			.setName(t("Density"))
 			.addDropdown((dropdown) =>
 				dropdown
-					.addOption("comfortable", "Comfortable")
-					.addOption("compact", "Compact")
+					.addOption("comfortable", t("Comfortable"))
+					.addOption("compact", t("Compact"))
 					.setValue(this.options.density)
 					.onChange((value) => {
 						this.options.density =
@@ -256,8 +270,8 @@ export class ExportModal extends Modal {
 					}),
 			);
 		new Setting(root)
-			.setName("Monochrome")
-			.setDesc("Ink-friendly greys instead of accent colours.")
+			.setName(t("Monochrome"))
+			.setDesc(t("Ink-friendly greys instead of accent colours."))
 			.addToggle((toggle) =>
 				toggle
 					.setValue(this.options.monochrome)
@@ -270,7 +284,7 @@ export class ExportModal extends Modal {
 
 		new Setting(root).addButton((button) =>
 			button
-				.setButtonText("Export PDF")
+				.setButtonText(t("Export PDF"))
 				.setCta()
 				.onClick(() => void this.exportPdf()),
 		);
@@ -457,13 +471,13 @@ export class ExportModal extends Modal {
 			blocks.push({
 				kind: "summary",
 				tiles: [
-					{ value: `${rate}%`, label: "Completion" },
-					{ value: `${totalCompleted}`, label: "Completions" },
+					{ value: `${rate}%`, label: docT("Completion") },
+					{ value: `${totalCompleted}`, label: docT("Completions") },
 					{
 						value: `${perfectDays(this.habits, ctx.range, today)}`,
-						label: "Perfect days",
+						label: docT("Perfect days"),
 					},
-					{ value: `${best}`, label: "Best streak" },
+					{ value: `${best}`, label: docT("Best streak") },
 				],
 			});
 		}
@@ -610,7 +624,7 @@ export class ExportModal extends Modal {
 		if (this.habits.length === 0) {
 			root.createDiv({
 				cls: "habits-export-empty",
-				text: "No habits to export yet.",
+				text: t("No habits to export yet."),
 			});
 			return;
 		}
@@ -736,7 +750,10 @@ export class ExportModal extends Modal {
 			font(
 				el.createDiv({
 					cls: "habits-export-subtitle",
-					text: `${this.rangeLabel(ctx.range)} · exported ${new Date().toLocaleDateString()}`,
+					text: docT("{range} · exported {date}", {
+						range: this.rangeLabel(ctx.range),
+						date: new Date().toLocaleDateString(),
+					}),
 				}),
 				9,
 			);
@@ -769,7 +786,7 @@ export class ExportModal extends Modal {
 			font(
 				el.createDiv({
 					cls: "habits-export-section",
-					text: "Completion trend",
+					text: docT("Completion trend"),
 				}),
 				9,
 			);
@@ -790,7 +807,7 @@ export class ExportModal extends Modal {
 		font(
 			el.createDiv({
 				cls: "habits-export-habit-name",
-				text: habit.name + (habit.paused ? " (paused)" : ""),
+				text: habit.name + (habit.paused ? ` ${docT("(paused)")}` : ""),
 			}),
 			11,
 		);
@@ -826,7 +843,10 @@ export class ExportModal extends Modal {
 				font(
 					el.createDiv({
 						cls: "habits-export-goal",
-						text: `Goal: ${Math.min(stats.completed, goal)}/${goal} days met`,
+						text: docT("Goal: {completed}/{goal} days met", {
+						completed: Math.min(stats.completed, goal),
+						goal,
+					}),
 					}),
 					8,
 				);
@@ -841,9 +861,19 @@ export class ExportModal extends Modal {
 		const unit = habit.unit || (habit.type === "timed" ? "min" : "");
 		const total =
 			habit.type === "binary"
-				? `${stats.completed}/${stats.days} days`
-				: `${stats.total}${unit ? ` ${unit}` : ""} total`;
-		return `${Math.round(stats.rate * 100)}% · ${total} · streak ${stats.current} (best ${stats.best})`;
+				? docT("{completed}/{days} days", {
+						completed: stats.completed,
+						days: stats.days,
+					})
+				: docT("{total} total", {
+						total: `${stats.total}${unit ? ` ${unit}` : ""}`,
+					});
+		return docT("{rate}% · {total} · streak {current} (best {best})", {
+			rate: Math.round(stats.rate * 100),
+			total,
+			current: stats.current,
+			best: stats.best,
+		});
 	}
 
 	private cellStyle(
@@ -874,7 +904,7 @@ export class ExportModal extends Modal {
 
 	private async exportPdf(): Promise<void> {
 		if (this.habits.length === 0) {
-			new Notice("No habits to export yet.");
+			new Notice(t("No habits to export yet."));
 			return;
 		}
 		const range = this.computeRange();
@@ -919,7 +949,7 @@ export class ExportModal extends Modal {
 			path,
 			doc.output("arraybuffer"),
 		);
-		new Notice(`Exported to "${path}" in your vault.`);
+		new Notice(t('Exported to "{path}" in your vault.', { path }));
 		this.close();
 	}
 
@@ -941,7 +971,10 @@ export class ExportModal extends Modal {
 			doc.setFontSize(9 * s);
 			doc.setTextColor(MUTED.r, MUTED.g, MUTED.b);
 			doc.text(
-				`${this.rangeLabel(ctx.range)} · exported ${new Date().toLocaleDateString()}`,
+				docT("{range} · exported {date}", {
+					range: this.rangeLabel(ctx.range),
+					date: new Date().toLocaleDateString(),
+				}),
 				x,
 				y + 13 * s,
 			);
@@ -979,7 +1012,7 @@ export class ExportModal extends Modal {
 			doc.setFont("helvetica", "bold");
 			doc.setFontSize(9 * s);
 			doc.setTextColor(TEXT.r, TEXT.g, TEXT.b);
-			doc.text("Completion trend", x, y + 4 * s);
+			doc.text(docT("Completion trend"), x, y + 4 * s);
 			if (this.trendImage) {
 				doc.addImage(
 					this.trendImage,
@@ -1002,7 +1035,7 @@ export class ExportModal extends Modal {
 		doc.setFontSize(11 * s);
 		doc.setTextColor(TEXT.r, TEXT.g, TEXT.b);
 		doc.text(
-			habit.name + (habit.paused ? " (paused)" : ""),
+			habit.name + (habit.paused ? ` ${docT("(paused)")}` : ""),
 			x + 4,
 			y + 4.5 * s,
 		);
@@ -1044,7 +1077,10 @@ export class ExportModal extends Modal {
 				doc.setFontSize(8 * s);
 				doc.setTextColor(MUTED.r, MUTED.g, MUTED.b);
 				doc.text(
-					`Goal: ${Math.min(stats.completed, goal)}/${goal} days met`,
+					docT("Goal: {completed}/{goal} days met", {
+						completed: Math.min(stats.completed, goal),
+						goal,
+					}),
 					x + 4,
 					cursorY + 4 * s,
 				);

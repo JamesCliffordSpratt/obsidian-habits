@@ -13,6 +13,7 @@ import type { HabitsPluginSettings } from "../settings";
 import type { HabitDefinition } from "../types";
 import { isComplete, isPausedOn } from "../stats";
 import { registerLongPress, toDateKey } from "../utils";
+import { t } from "../i18n";
 import { HabitModal } from "./habit-modal";
 import { ConfirmModal } from "./confirm-modal";
 import { applyHabitIcon } from "./icon-suggest-modal";
@@ -45,7 +46,7 @@ export class HabitsPanelView extends ItemView {
 	}
 
 	getDisplayText(): string {
-		return "Habits";
+		return t("Habits");
 	}
 
 	getIcon(): string {
@@ -161,7 +162,7 @@ export class HabitsPanelView extends ItemView {
 
 		const header = root.createDiv({ cls: "habits-panel-header" });
 		const title = header.createDiv({ cls: "habits-panel-title" });
-		title.createSpan({ text: "Today" });
+		title.createSpan({ text: t("Today") });
 		title.createSpan({
 			cls: "habits-panel-date",
 			text: new Date().toLocaleDateString(undefined, {
@@ -181,12 +182,12 @@ export class HabitsPanelView extends ItemView {
 			const count = header.createDiv({ cls: "habits-panel-count" });
 			count.setText(`${doneCount}/${trackable.length}`);
 			count.toggleClass("is-all-done", doneCount === trackable.length);
-			setTooltip(count, "Habits completed today");
+			setTooltip(count, t("Habits completed today"));
 		}
 
 		const add = header.createEl("button", {
 			cls: "habits-icon-button habits-panel-add",
-			attr: { type: "button", "aria-label": "Add habit" },
+			attr: { type: "button", "aria-label": t("Add habit") },
 		});
 		setIcon(add, "plus");
 		this.registerDomEvent(add, "click", () => {
@@ -195,10 +196,10 @@ export class HabitsPanelView extends ItemView {
 
 		if (this.habits.length === 0) {
 			const empty = root.createDiv({ cls: "habits-panel-empty" });
-			empty.createEl("p", { text: "No habits yet." });
+			empty.createEl("p", { text: t("No habits yet.") });
 			const button = empty.createEl("button", {
 				cls: "mod-cta",
-				text: "Create habit",
+				text: t("Create habit"),
 				attr: { type: "button" },
 			});
 			this.registerDomEvent(button, "click", () => {
@@ -238,10 +239,10 @@ export class HabitsPanelView extends ItemView {
 			text: habit.name,
 			attr: {
 				type: "button",
-				"aria-label": `Open the note for ${habit.name}`,
+				"aria-label": t("Open the note for {name}", { name: habit.name }),
 			},
 		});
-		setTooltip(name, "Open habit note");
+		setTooltip(name, t("Open habit note"));
 		this.registerDomEvent(name, "click", () => {
 			void this.app.workspace.openLinkText(habit.path, "", false);
 		});
@@ -250,10 +251,10 @@ export class HabitsPanelView extends ItemView {
 			row.addClass("is-paused");
 			const resume = main.createEl("button", {
 				cls: "habits-icon-button habits-panel-mini",
-				attr: { type: "button", "aria-label": "Resume habit" },
+				attr: { type: "button", "aria-label": t("Resume habit") },
 			});
 			setIcon(resume, "play");
-			setTooltip(resume, "Resume habit");
+			setTooltip(resume, t("Resume habit"));
 			this.registerDomEvent(resume, "click", async () => {
 				await this.store.resumeHabit(habit);
 				this.reload();
@@ -269,7 +270,7 @@ export class HabitsPanelView extends ItemView {
 				cls: "habits-panel-toggle",
 				attr: {
 					type: "button",
-					"aria-label": done ? "Mark as not done" : "Mark as done",
+					"aria-label": done ? t("Mark as not done") : t("Mark as done"),
 					"aria-pressed": String(done),
 				},
 			});
@@ -285,16 +286,16 @@ export class HabitsPanelView extends ItemView {
 		const valueBtn = main.createEl("button", {
 			cls: "habits-panel-value",
 			text: `${value}/${habit.target}`,
-			attr: { type: "button", "aria-label": "Edit value" },
+			attr: { type: "button", "aria-label": t("Edit value") },
 		});
-		setTooltip(valueBtn, "Click to type a value");
+		setTooltip(valueBtn, t("Click to type a value"));
 		this.registerDomEvent(valueBtn, "click", () => {
 			this.editRowValue(habit, row, valueBtn);
 		});
 
 		const minus = main.createEl("button", {
 			cls: "habits-icon-button habits-panel-mini",
-			attr: { type: "button", "aria-label": "Decrease by 1" },
+			attr: { type: "button", "aria-label": t("Decrease by 1") },
 		});
 		setIcon(minus, "minus");
 		this.registerDomEvent(minus, "click", async () => {
@@ -309,7 +310,7 @@ export class HabitsPanelView extends ItemView {
 					text: `+${step}`,
 					attr: {
 						type: "button",
-						"aria-label": `Increase by ${step}`,
+						"aria-label": t("Increase by {n}", { n: step }),
 					},
 				});
 				this.registerDomEvent(btn, "click", async () => {
@@ -319,7 +320,7 @@ export class HabitsPanelView extends ItemView {
 		} else {
 			const plus = main.createEl("button", {
 				cls: "habits-icon-button habits-panel-mini",
-				attr: { type: "button", "aria-label": "Increase by 1" },
+				attr: { type: "button", "aria-label": t("Increase by 1") },
 			});
 			setIcon(plus, "plus");
 			this.registerDomEvent(plus, "click", async () => {
@@ -354,7 +355,7 @@ export class HabitsPanelView extends ItemView {
 				min: "0",
 				step: "1",
 				inputmode: "numeric",
-				"aria-label": "Value",
+				"aria-label": t("Value"),
 			},
 		});
 		input.value = String(this.valueOf(habit));
@@ -441,7 +442,7 @@ export class HabitsPanelView extends ItemView {
 		const menu = new Menu();
 		menu.addItem((item) =>
 			item
-				.setTitle("Open note")
+				.setTitle(t("Open note"))
 				.setIcon("file-text")
 				.onClick(() => {
 					void this.app.workspace.openLinkText(
@@ -453,7 +454,7 @@ export class HabitsPanelView extends ItemView {
 		);
 		menu.addItem((item) =>
 			item
-				.setTitle("Edit habit")
+				.setTitle(t("Edit habit"))
 				.setIcon("pencil")
 				.onClick(() => {
 					new HabitModal(
@@ -467,7 +468,7 @@ export class HabitsPanelView extends ItemView {
 		if (habit.paused) {
 			menu.addItem((item) =>
 				item
-					.setTitle("Resume habit")
+					.setTitle(t("Resume habit"))
 					.setIcon("play")
 					.onClick(async () => {
 						await this.store.resumeHabit(habit);
@@ -477,7 +478,7 @@ export class HabitsPanelView extends ItemView {
 		} else {
 			menu.addItem((item) =>
 				item
-					.setTitle("Pause habit")
+					.setTitle(t("Pause habit"))
 					.setIcon("pause")
 					.onClick(async () => {
 						await this.store.pauseHabit(habit);
@@ -487,13 +488,16 @@ export class HabitsPanelView extends ItemView {
 		}
 		menu.addItem((item) =>
 			item
-				.setTitle("Stop tracking")
+				.setTitle(t("Stop tracking"))
 				.setIcon("circle-stop")
 				.onClick(() => {
 					new ConfirmModal(this.app, {
-						title: "Stop tracking",
-						message: `Stop tracking "${habit.name}"? It leaves the dashboard and stats, but its note and full history are kept. You can resume tracking any time from the note's metrics view.`,
-						confirmText: "Stop tracking",
+						title: t("Stop tracking"),
+						message: t(
+							'Stop tracking "{name}"? It leaves the dashboard and stats, but its note and full history are kept. You can resume tracking any time from the note\'s metrics view.',
+							{ name: habit.name },
+						),
+						confirmText: t("Stop tracking"),
 						onConfirm: async () => {
 							await this.store.stopHabit(habit);
 							this.reload();
@@ -503,13 +507,16 @@ export class HabitsPanelView extends ItemView {
 		);
 		menu.addItem((item) =>
 			item
-				.setTitle("Remove habit")
+				.setTitle(t("Remove habit"))
 				.setIcon("trash")
 				.onClick(() => {
 					new ConfirmModal(this.app, {
-						title: "Remove habit",
-						message: `Remove "${habit.name}"? Its note will be moved to the trash.`,
-						confirmText: "Remove",
+						title: t("Remove habit"),
+						message: t(
+							'Remove "{name}"? Its note will be moved to the trash.',
+							{ name: habit.name },
+						),
+						confirmText: t("Remove"),
 						danger: true,
 						onConfirm: async () => {
 							await this.store.deleteHabit(habit);

@@ -1,4 +1,5 @@
 import { App, FuzzyMatch, FuzzySuggestModal } from "obsidian";
+import { t } from "../i18n";
 
 /** A selectable emoji with a searchable name and keywords. */
 interface EmojiEntry {
@@ -114,7 +115,7 @@ export class EmojiSuggestModal extends FuzzySuggestModal<EmojiEntry> {
 		private onChoose: (emoji: string) => void,
 	) {
 		super(app);
-		this.setPlaceholder("Search emojis…");
+		this.setPlaceholder(t("Search emojis…"));
 		this.limit = 100;
 	}
 

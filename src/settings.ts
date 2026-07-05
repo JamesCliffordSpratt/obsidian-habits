@@ -5,6 +5,7 @@ import {
 	Setting,
 	TFolder,
 } from "obsidian";
+import { t } from "./i18n";
 import type HabitsPlugin from "./main";
 
 /** Suggests matching vault folders while typing in a folder field. */
@@ -75,9 +76,11 @@ export class HabitsSettingTab extends PluginSettingTab {
 		containerEl.empty();
 
 		new Setting(containerEl)
-			.setName("Habits folder")
+			.setName(t("Habits folder"))
 			.setDesc(
-				"Folder where each habit is stored as its own note. It is created automatically if it does not exist.",
+				t(
+					"Folder where each habit is stored as its own note. It is created automatically if it does not exist.",
+				),
 			)
 			.addText((text) => {
 				text
@@ -92,9 +95,11 @@ export class HabitsSettingTab extends PluginSettingTab {
 			});
 
 		new Setting(containerEl)
-			.setName("Follow daily note date")
+			.setName(t("Follow daily note date"))
 			.setDesc(
-				"When a dashboard is embedded in a daily note (a note whose name contains a date like 2026-07-01), open it on that note's date instead of today.",
+				t(
+					"When a dashboard is embedded in a daily note (a note whose name contains a date like 2026-07-01), open it on that note's date instead of today.",
+				),
 			)
 			.addToggle((toggle) =>
 				toggle
@@ -106,9 +111,11 @@ export class HabitsSettingTab extends PluginSettingTab {
 			);
 
 		new Setting(containerEl)
-			.setName("Cards per view")
+			.setName(t("Cards per view"))
 			.setDesc(
-				"How many habit cards the carousel shows at once on wider screens.",
+				t(
+					"How many habit cards the carousel shows at once on wider screens.",
+				),
 			)
 			.addDropdown((dropdown) =>
 				dropdown
@@ -124,9 +131,11 @@ export class HabitsSettingTab extends PluginSettingTab {
 			);
 
 		new Setting(containerEl)
-			.setName("Cards per view on mobile")
+			.setName(t("Cards per view on mobile"))
 			.setDesc(
-				"How many habit cards the carousel shows at once on phone-sized screens.",
+				t(
+					"How many habit cards the carousel shows at once on phone-sized screens.",
+				),
 			)
 			.addDropdown((dropdown) =>
 				dropdown

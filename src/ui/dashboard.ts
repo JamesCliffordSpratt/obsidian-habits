@@ -15,6 +15,7 @@ import type { HabitDefinition } from "../types";
 import { HabitModal } from "./habit-modal";
 import { ConfirmModal } from "./confirm-modal";
 import { ExportModal } from "./export-modal";
+import { t } from "../i18n";
 import { renderStatsView } from "./stats-view";
 import {
 	isPausedOn,
@@ -192,7 +193,7 @@ export class HabitsDashboard extends MarkdownRenderChild {
 
 		const home = header.createEl("button", {
 			cls: "habits-icon-button habits-header-left",
-			attr: { type: "button", "aria-label": "Back to habits" },
+			attr: { type: "button", "aria-label": t("Back to habits") },
 		});
 		setIcon(home, "home");
 		this.registerDomEvent(home, "click", () => {
@@ -202,8 +203,8 @@ export class HabitsDashboard extends MarkdownRenderChild {
 
 		const tabs = header.createDiv({ cls: "habits-stats-tabs" });
 		const periods: { id: StatsPeriod; label: string }[] = [
-			{ id: "weekly", label: "Weekly" },
-			{ id: "monthly", label: "Monthly" },
+			{ id: "weekly", label: t("Weekly") },
+			{ id: "monthly", label: t("Monthly") },
 		];
 		for (const entry of periods) {
 			const tab = tabs.createEl("button", {
@@ -220,7 +221,7 @@ export class HabitsDashboard extends MarkdownRenderChild {
 
 		const download = header.createEl("button", {
 			cls: "habits-icon-button habits-header-right",
-			attr: { type: "button", "aria-label": "Export stats" },
+			attr: { type: "button", "aria-label": t("Export stats") },
 		});
 		setIcon(download, "download");
 		this.registerDomEvent(download, "click", () => {
@@ -233,8 +234,8 @@ export class HabitsDashboard extends MarkdownRenderChild {
 		const wrap = this.root.createDiv({ cls: "habits-range-toggle" });
 		const weekly = this.statsPeriod === "weekly";
 		const options: { id: StatsRangeMode; label: string }[] = [
-			{ id: "rolling", label: weekly ? "Last 7 days" : "Last 30 days" },
-			{ id: "calendar", label: weekly ? "This week" : "This month" },
+			{ id: "rolling", label: weekly ? t("Last 7 days") : t("Last 30 days") },
+			{ id: "calendar", label: weekly ? t("This week") : t("This month") },
 		];
 		for (const option of options) {
 			const btn = wrap.createEl("button", {
@@ -255,7 +256,7 @@ export class HabitsDashboard extends MarkdownRenderChild {
 
 		const statsBtn = header.createEl("button", {
 			cls: "habits-icon-button habits-header-left",
-			attr: { type: "button", "aria-label": "View stats" },
+			attr: { type: "button", "aria-label": t("View stats") },
 		});
 		setIcon(statsBtn, "chart-column-increasing");
 		this.registerDomEvent(statsBtn, "click", () => {
@@ -267,7 +268,7 @@ export class HabitsDashboard extends MarkdownRenderChild {
 
 		const prev = nav.createEl("button", {
 			cls: "habits-icon-button",
-			attr: { type: "button", "aria-label": "Previous day" },
+			attr: { type: "button", "aria-label": t("Previous day") },
 		});
 		setIcon(prev, "chevron-left");
 		this.registerDomEvent(prev, "click", () => {
@@ -281,7 +282,7 @@ export class HabitsDashboard extends MarkdownRenderChild {
 		const dateButton = dateDisplay.createEl("button", {
 			cls: "habits-date-label",
 			text: friendlyDateLabel(this.selectedDate, new Date()),
-			attr: { type: "button", "aria-label": "Choose a date" },
+			attr: { type: "button", "aria-label": t("Choose a date") },
 		});
 		const dateInput = dateDisplay.createEl("input", {
 			cls: "habits-date-input",
@@ -306,7 +307,7 @@ export class HabitsDashboard extends MarkdownRenderChild {
 
 		const next = nav.createEl("button", {
 			cls: "habits-icon-button",
-			attr: { type: "button", "aria-label": "Next day" },
+			attr: { type: "button", "aria-label": t("Next day") },
 		});
 		setIcon(next, "chevron-right");
 		this.registerDomEvent(next, "click", () => {
@@ -316,7 +317,7 @@ export class HabitsDashboard extends MarkdownRenderChild {
 
 		const add = header.createEl("button", {
 			cls: "habits-icon-button habits-header-right",
-			attr: { type: "button", "aria-label": "Add habit" },
+			attr: { type: "button", "aria-label": t("Add habit") },
 		});
 		setIcon(add, "plus");
 		this.registerDomEvent(add, "click", () => this.openCreateModal());
@@ -325,11 +326,11 @@ export class HabitsDashboard extends MarkdownRenderChild {
 	private renderEmptyState(): void {
 		const empty = this.root.createDiv({ cls: "habits-empty" });
 		empty.createEl("p", {
-			text: "No habits yet. Create your first habit to get started.",
+			text: t("No habits yet. Create your first habit to get started."),
 		});
 		const button = empty.createEl("button", {
 			cls: "mod-cta",
-			text: "Create habit",
+			text: t("Create habit"),
 			attr: { type: "button" },
 		});
 		this.registerDomEvent(button, "click", () => this.openCreateModal());
@@ -370,7 +371,7 @@ export class HabitsDashboard extends MarkdownRenderChild {
 
 		const prev = controls.createEl("button", {
 			cls: "habits-icon-button habits-carousel-prev",
-			attr: { type: "button", "aria-label": "Previous" },
+			attr: { type: "button", "aria-label": t("Previous") },
 		});
 		setIcon(prev, "chevron-left");
 		this.registerDomEvent(prev, "click", () => this.move(-1));
@@ -382,7 +383,7 @@ export class HabitsDashboard extends MarkdownRenderChild {
 					cls: "habits-dot",
 					attr: {
 						type: "button",
-						"aria-label": `Go to position ${i + 1}`,
+						"aria-label": t("Go to position {n}", { n: i + 1 }),
 					},
 				});
 				this.registerDomEvent(dot, "click", () => {
@@ -396,7 +397,7 @@ export class HabitsDashboard extends MarkdownRenderChild {
 
 		const next = controls.createEl("button", {
 			cls: "habits-icon-button habits-carousel-next",
-			attr: { type: "button", "aria-label": "Next" },
+			attr: { type: "button", "aria-label": t("Next") },
 		});
 		setIcon(next, "chevron-right");
 		this.registerDomEvent(next, "click", () => this.move(1));
@@ -477,7 +478,7 @@ export class HabitsDashboard extends MarkdownRenderChild {
 		if (habit.color) {
 			card.setCssProps({ "--habits-accent": habit.color });
 		}
-		setTooltip(card, "Right-click or long-press for more options");
+		setTooltip(card, t("Right-click or long-press for more options"));
 		this.registerDomEvent(card, "contextmenu", (evt: MouseEvent) => {
 			evt.preventDefault();
 			this.showCardMenu(habit, card, evt.clientX, evt.clientY);
@@ -496,10 +497,10 @@ export class HabitsDashboard extends MarkdownRenderChild {
 			text: habit.name,
 			attr: {
 				type: "button",
-				"aria-label": `Open the note for ${habit.name}`,
+				"aria-label": t("Open the note for {name}", { name: habit.name }),
 			},
 		});
-		setTooltip(name, "Open habit note");
+		setTooltip(name, t("Open habit note"));
 		this.registerDomEvent(name, "click", () => {
 			void this.app.workspace.openLinkText(habit.path, "", false);
 		});
@@ -527,18 +528,20 @@ export class HabitsDashboard extends MarkdownRenderChild {
 		const badge = body.createDiv({ cls: "habits-paused-badge" });
 		const icon = badge.createSpan({ cls: "habits-paused-icon" });
 		setIcon(icon, "pause");
-		badge.createSpan({ text: "Paused" });
+		badge.createSpan({ text: t("Paused") });
 
 		const openPause = habit.pauses.find((pause) => pause.end === "");
 		const started = openPause ? fromDateKey(openPause.start) : null;
 		body.createDiv({
 			cls: "habits-paused-note",
 			text: started
-				? `Since ${started.toLocaleDateString(undefined, {
-						day: "numeric",
-						month: "short",
-					})} · right-click to resume`
-				: "Paused on this day",
+				? t("Since {date} · right-click to resume", {
+						date: started.toLocaleDateString(undefined, {
+							day: "numeric",
+							month: "short",
+						}),
+					})
+				: t("Paused on this day"),
 		});
 	}
 
@@ -649,7 +652,7 @@ export class HabitsDashboard extends MarkdownRenderChild {
 			});
 		}
 
-		overlay.createDiv({ cls: "habits-perfect-text", text: "Perfect!" });
+		overlay.createDiv({ cls: "habits-perfect-text", text: t("Perfect!") });
 
 		await sleep(1600);
 		overlay.addClass("is-leaving");
@@ -739,7 +742,7 @@ export class HabitsDashboard extends MarkdownRenderChild {
 				min: "0",
 				step: "1",
 				inputmode: "numeric",
-				"aria-label": "Value",
+				"aria-label": t("Value"),
 			},
 		});
 		input.value = String(this.currentValue(habit));
@@ -787,7 +790,7 @@ export class HabitsDashboard extends MarkdownRenderChild {
 			cls: "habits-binary-toggle",
 			attr: {
 				type: "button",
-				"aria-label": done ? "Mark as not done" : "Mark as done",
+				"aria-label": done ? t("Mark as not done") : t("Mark as done"),
 				"aria-pressed": String(done),
 			},
 		});
@@ -795,7 +798,7 @@ export class HabitsDashboard extends MarkdownRenderChild {
 		setIcon(button, done ? "check" : "circle");
 		button.createSpan({
 			cls: "habits-binary-label",
-			text: done ? "Done" : "Not done",
+			text: done ? t("Done") : t("Not done"),
 		});
 
 		this.registerDomEvent(button, "click", async () => {
@@ -823,7 +826,7 @@ export class HabitsDashboard extends MarkdownRenderChild {
 			text: String(value),
 			attr: {
 				type: "button",
-				"aria-label": "Edit value",
+				"aria-label": t("Edit value"),
 			},
 		});
 		readout.createSpan({ cls: "habits-target", text: targetText });
@@ -847,7 +850,7 @@ export class HabitsDashboard extends MarkdownRenderChild {
 
 		const minus = buttons.createEl("button", {
 			cls: "habits-icon-button",
-			attr: { type: "button", "aria-label": "Decrease by 1" },
+			attr: { type: "button", "aria-label": t("Decrease by 1") },
 		});
 		setIcon(minus, "minus");
 		this.registerDomEvent(minus, "click", async () => {
@@ -869,7 +872,7 @@ export class HabitsDashboard extends MarkdownRenderChild {
 					text: `+${step}`,
 					attr: {
 						type: "button",
-						"aria-label": `Increase by ${step}`,
+						"aria-label": t("Increase by {n}", { n: step }),
 					},
 				});
 				this.registerDomEvent(btn, "click", () => {
@@ -879,7 +882,7 @@ export class HabitsDashboard extends MarkdownRenderChild {
 		} else {
 			const plus = buttons.createEl("button", {
 				cls: "habits-icon-button",
-				attr: { type: "button", "aria-label": "Increase by 1" },
+				attr: { type: "button", "aria-label": t("Increase by 1") },
 			});
 			setIcon(plus, "plus");
 			this.registerDomEvent(plus, "click", () => {
@@ -905,7 +908,7 @@ export class HabitsDashboard extends MarkdownRenderChild {
 		const menu = new Menu();
 		menu.addItem((item) =>
 			item
-				.setTitle("Edit habit")
+				.setTitle(t("Edit habit"))
 				.setIcon("pencil")
 				.onClick(() => {
 					new HabitModal(
@@ -919,7 +922,7 @@ export class HabitsDashboard extends MarkdownRenderChild {
 		if (habit.paused) {
 			menu.addItem((item) =>
 				item
-					.setTitle("Resume habit")
+					.setTitle(t("Resume habit"))
 					.setIcon("play")
 					.onClick(async () => {
 						await this.store.resumeHabit(habit);
@@ -929,7 +932,7 @@ export class HabitsDashboard extends MarkdownRenderChild {
 		} else {
 			menu.addItem((item) =>
 				item
-					.setTitle("Pause habit")
+					.setTitle(t("Pause habit"))
 					.setIcon("pause")
 					.onClick(async () => {
 						this.suppressAutoReload = true;
@@ -947,13 +950,13 @@ export class HabitsDashboard extends MarkdownRenderChild {
 		}
 		menu.addItem((item) =>
 			item
-				.setTitle("Stop tracking")
+				.setTitle(t("Stop tracking"))
 				.setIcon("circle-stop")
 				.onClick(() => this.confirmStop(habit)),
 		);
 		menu.addItem((item) =>
 			item
-				.setTitle("Remove habit")
+				.setTitle(t("Remove habit"))
 				.setIcon("trash")
 				.onClick(() => this.confirmRemove(habit)),
 		);
@@ -962,9 +965,12 @@ export class HabitsDashboard extends MarkdownRenderChild {
 
 	private confirmStop(habit: HabitDefinition): void {
 		new ConfirmModal(this.app, {
-			title: "Stop tracking",
-			message: `Stop tracking "${habit.name}"? It leaves the dashboard and stats, but its note and full history are kept. You can resume tracking any time from the note's metrics view.`,
-			confirmText: "Stop tracking",
+			title: t("Stop tracking"),
+			message: t(
+				'Stop tracking "{name}"? It leaves the dashboard and stats, but its note and full history are kept. You can resume tracking any time from the note\'s metrics view.',
+				{ name: habit.name },
+			),
+			confirmText: t("Stop tracking"),
 			onConfirm: async () => {
 				await this.store.stopHabit(habit);
 				this.reload();
@@ -974,9 +980,11 @@ export class HabitsDashboard extends MarkdownRenderChild {
 
 	private confirmRemove(habit: HabitDefinition): void {
 		new ConfirmModal(this.app, {
-			title: "Remove habit",
-			message: `Remove "${habit.name}"? Its note will be moved to the trash.`,
-			confirmText: "Remove",
+			title: t("Remove habit"),
+			message: t('Remove "{name}"? Its note will be moved to the trash.', {
+				name: habit.name,
+			}),
+			confirmText: t("Remove"),
 			danger: true,
 			onConfirm: async () => {
 				await this.store.deleteHabit(habit);
@@ -988,7 +996,7 @@ export class HabitsDashboard extends MarkdownRenderChild {
 	/** Open the modal for creating a brand-new habit. */
 	private openCreateModal(): void {
 		new HabitModal(this.app, this.store, () => {
-			new Notice("Habit added to the dashboard.");
+			new Notice(t("Habit added to the dashboard."));
 			this.reload();
 		}).open();
 	}
