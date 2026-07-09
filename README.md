@@ -78,6 +78,8 @@ Every habit has a **frequency**, chosen when you create or edit it:
 
 Weekly and monthly cards surface only on their due date in both the dashboard and the sidebar panel, so your list stays focused on what's actually due. Their **streaks and stats count periods, not days**: a weekly habit's streak is the number of consecutive weeks you completed it, and a monthly habit's is consecutive months. Days a habit isn't due don't count against its completion rate. To log a due date you missed, use the dashboard's date arrows to step back to it.
 
+The charts on a weekly or monthly habit's page adapt too: instead of a 30-day grid, the activity chart plots each recent **due date** (labelled with the date it lands on), and a rolling completion-rate line shows the trend across periods. The summary tiles relabel accordingly — "Weeks completed" or "Months completed" rather than "Days completed".
+
 ## 🎠 The dashboard
 
 Cards for each habit sit in a swipeable carousel. Completing a habit plays a celebration animation and the card glides to the back of the queue, keeping what's left front and centre. Click a card's name to open its note; right-click (or long-press on mobile) for editing, pausing, stopping, or removing.

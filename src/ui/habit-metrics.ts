@@ -15,7 +15,7 @@ import {
 	type ChartDataset,
 } from "chart.js";
 import type { HabitStore } from "../habit-store";
-import type { HabitDefinition } from "../types";
+import type { HabitDefinition, HabitFrequency } from "../types";
 import {
 	currentStreak,
 	isComplete,
@@ -23,7 +23,7 @@ import {
 	isPausedOn,
 	longestStreak,
 } from "../stats";
-import { addDays, toDateKey } from "../utils";
+import { addDays, fromDateKey, toDateKey } from "../utils";
 
 Chart.register(
 	BarController,
@@ -39,6 +39,24 @@ Chart.register(
 
 const DAILY_DAYS = 30;
 const WEEKLY_WEEKS = 12;
+
+/**
+ * How many recent due dates to plot for weekly and monthly habits. Daily
+ * habits keep their own 30-day and 12-week charts; the value is also used as
+ * the sample size for each habit's recent completion rate.
+ */
+const RECENT_POINTS: Record<HabitFrequency, number> = {
+	daily: 30,
+	weekly: 16,
+	monthly: 12,
+};
+
+/** Trailing window, in due periods, for the rolling completion-rate line. */
+const ROLLING_WINDOW: Record<HabitFrequency, number> = {
+	daily: 7,
+	weekly: 4,
+	monthly: 3,
+};
 
 /**
  * Renders the metrics view for a `habit-metrics` code block placed inside a
@@ -146,8 +164,13 @@ export class HabitMetrics extends MarkdownRenderChild {
 		}
 
 		this.renderSummary(habit);
-		this.renderDailyChart(habit);
-		this.renderWeeklyChart(habit);
+		if (habit.frequency === "daily") {
+			this.renderDailyChart(habit);
+			this.renderWeeklyChart(habit);
+		} else {
+			this.renderDueActivityChart(habit);
+			this.renderDueRateChart(habit);
+		}
 	}
 
 	/** Status banner with a resume action for paused or stopped habits. */
@@ -188,25 +211,41 @@ export class HabitMetrics extends MarkdownRenderChild {
 	/** Summary tiles: streaks, lifetime completions and the 30-day rate. */
 	private renderSummary(habit: HabitDefinition): void {
 		const today = new Date();
-		const completedDays = Object.keys(habit.records).filter((key) =>
-			isComplete(habit, key),
-		).length;
+		const completedDays = Object.keys(habit.records).filter((key) => {
+			const date = fromDateKey(key);
+			return (
+				date !== null && isDue(habit, date) && isComplete(habit, key)
+			);
+		}).length;
 
-		let recentDays = 0;
+		// Rate is measured over the habit's recent due dates, so a weekly or
+		// monthly habit isn't penalised for the days it isn't due.
+		const recentDates = this.recentDueDates(
+			habit,
+			RECENT_POINTS[habit.frequency],
+			today,
+		);
+		let recentDue = 0;
 		let recentHits = 0;
-		for (let i = 0; i < DAILY_DAYS; i++) {
-			const day = addDays(today, -i);
-			const key = toDateKey(day);
-			// Only days the habit is actually due count towards its rate, so a
-			// weekly or monthly habit isn't penalised for its off days.
-			if (!isDue(habit, day) || isPausedOn(habit, key)) {
+		for (const date of recentDates) {
+			const key = toDateKey(date);
+			if (isPausedOn(habit, key)) {
 				continue;
 			}
-			recentDays++;
+			recentDue++;
 			if (isComplete(habit, key)) {
 				recentHits++;
 			}
 		}
+
+		const completedLabel =
+			habit.frequency === "weekly"
+				? t("Weeks completed")
+				: habit.frequency === "monthly"
+					? t("Months completed")
+					: t("Days completed");
+		const rateLabel =
+			habit.frequency === "daily" ? t("30-day rate") : t("Recent rate");
 
 		const tiles = [
 			{
@@ -214,13 +253,13 @@ export class HabitMetrics extends MarkdownRenderChild {
 				label: t("Current streak"),
 			},
 			{ value: String(longestStreak(habit)), label: t("Best streak") },
-			{ value: String(completedDays), label: t("Days completed") },
+			{ value: String(completedDays), label: completedLabel },
 			{
 				value:
-					recentDays > 0
-						? `${Math.round((recentHits / recentDays) * 100)}%`
+					recentDue > 0
+						? `${Math.round((recentHits / recentDue) * 100)}%`
 						: "–",
-				label: t("30-day rate"),
+				label: rateLabel,
 			},
 		];
 
@@ -346,6 +385,182 @@ export class HabitMetrics extends MarkdownRenderChild {
 		}
 
 		this.createChart(t("Weekly completion rate"), {
+			type: "line",
+			data: {
+				labels,
+				datasets: [
+					{
+						type: "line",
+						label: "Completion",
+						data: rates,
+						borderColor: accent,
+						backgroundColor: this.withAlpha(accent, 0.18),
+						fill: true,
+						tension: 0.3,
+						pointRadius: 3,
+						pointBackgroundColor: accent,
+					},
+				],
+			},
+			options,
+		});
+	}
+
+	/** The last `count` due dates on or before `end`, oldest first. */
+	private recentDueDates(
+		habit: HabitDefinition,
+		count: number,
+		end: Date,
+	): Date[] {
+		const dates: Date[] = [];
+		let cursor = new Date(
+			end.getFullYear(),
+			end.getMonth(),
+			end.getDate(),
+		);
+		// Guard against pathological loops on a brand-new habit.
+		const maxScan = 366 * 10;
+		let scanned = 0;
+		while (dates.length < count && scanned < maxScan) {
+			if (isDue(habit, cursor)) {
+				dates.push(new Date(cursor));
+			}
+			cursor = addDays(cursor, -1);
+			scanned++;
+		}
+		return dates.reverse();
+	}
+
+	/**
+	 * Bar chart of the most recent due dates for a weekly or monthly habit,
+	 * labelled with the actual date each one falls on. Complete periods show
+	 * in theme green; a dashed line marks the target for counted/timed habits.
+	 */
+	private renderDueActivityChart(habit: HabitDefinition): void {
+		const today = new Date();
+		const dates = this.recentDueDates(
+			habit,
+			RECENT_POINTS[habit.frequency],
+			today,
+		);
+		const accent = this.resolveColor(
+			habit.color,
+			"var(--interactive-accent)",
+		);
+		const green = this.resolveColor(
+			"",
+			"var(--color-green, var(--text-success))",
+		);
+
+		const labels: string[] = [];
+		const values: number[] = [];
+		const colors: string[] = [];
+		for (const date of dates) {
+			const key = toDateKey(date);
+			labels.push(
+				date.toLocaleDateString(undefined, {
+					day: "numeric",
+					month: "short",
+				}),
+			);
+			values.push(habit.records[key] ?? 0);
+			colors.push(
+				isComplete(habit, key)
+					? green
+					: this.withAlpha(accent, 0.45),
+			);
+		}
+
+		const datasets: ChartDataset<"bar" | "line", number[]>[] = [
+			{
+				type: "bar",
+				label: habit.unit || t("Logged"),
+				data: values,
+				backgroundColor: colors,
+				borderRadius: 3,
+			},
+		];
+		if (habit.type !== "binary" && habit.target > 0) {
+			datasets.push({
+				type: "line",
+				label: t("Target"),
+				data: new Array(dates.length).fill(habit.target) as number[],
+				borderColor: this.withAlpha(green, 0.7),
+				borderDash: [6, 4],
+				borderWidth: 1.5,
+				pointRadius: 0,
+			});
+		}
+
+		const title =
+			habit.frequency === "weekly"
+				? t("Weekly activity")
+				: t("Monthly activity");
+		this.createChart(title, {
+			type: "bar",
+			data: { labels, datasets },
+			options: this.baseOptions(habit.type === "binary" ? 1 : undefined),
+		});
+	}
+
+	/**
+	 * Line chart of a rolling completion rate over recent due periods, so a
+	 * weekly or monthly habit shows a smooth trend rather than a 0/100 zig-zag.
+	 */
+	private renderDueRateChart(habit: HabitDefinition): void {
+		const today = new Date();
+		const window = ROLLING_WINDOW[habit.frequency];
+		const dates = this.recentDueDates(
+			habit,
+			RECENT_POINTS[habit.frequency],
+			today,
+		);
+		const accent = this.resolveColor(
+			habit.color,
+			"var(--interactive-accent)",
+		);
+
+		const labels: string[] = [];
+		const rates: number[] = [];
+		for (let i = 0; i < dates.length; i++) {
+			labels.push(
+				dates[i].toLocaleDateString(undefined, {
+					day: "numeric",
+					month: "short",
+				}),
+			);
+			let considered = 0;
+			let completed = 0;
+			for (let j = Math.max(0, i - window + 1); j <= i; j++) {
+				const key = toDateKey(dates[j]);
+				if (isPausedOn(habit, key)) {
+					continue;
+				}
+				considered++;
+				if (isComplete(habit, key)) {
+					completed++;
+				}
+			}
+			rates.push(
+				considered > 0
+					? Math.round((completed / considered) * 100)
+					: 0,
+			);
+		}
+
+		const options = this.baseOptions(100);
+		const yTicks = options.scales?.y?.ticks;
+		if (yTicks) {
+			(yTicks as { callback?: (value: unknown) => string }).callback = (
+				value: unknown,
+			) => `${String(value)}%`;
+		}
+
+		const title =
+			habit.frequency === "weekly"
+				? t("{n}-week completion rate", { n: window })
+				: t("{n}-month completion rate", { n: window });
+		this.createChart(title, {
 			type: "line",
 			data: {
 				labels,
