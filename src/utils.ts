@@ -99,6 +99,11 @@ export function friendlyDateLabel(date: Date, today: Date): string {
 	});
 }
 
+/** Number of days in the given month (`month` is 0-based, as in `Date`). */
+export function daysInMonth(year: number, month: number): number {
+	return new Date(year, month + 1, 0).getDate();
+}
+
 /** Parse a `YYYY-MM-DD` key into a local date, or null if malformed. */
 export function fromDateKey(key: string): Date | null {
 	const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(key);

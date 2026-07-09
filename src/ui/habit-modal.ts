@@ -7,7 +7,7 @@ import {
 	setIcon,
 } from "obsidian";
 import type { HabitStore } from "../habit-store";
-import type { HabitDefinition, HabitType } from "../types";
+import type { HabitDefinition, HabitFrequency, HabitType } from "../types";
 import {
 	applyHabitIcon,
 	IconSuggestModal,
@@ -32,6 +32,21 @@ const THEME_COLORS: readonly { label: string; value: string }[] = [
 	{ label: "Blue", value: "var(--color-blue)" },
 	{ label: "Purple", value: "var(--color-purple)" },
 	{ label: "Pink", value: "var(--color-pink)" },
+];
+
+/**
+ * Weekdays offered for weekly habits, ordered Monday-first for familiarity.
+ * Values are JavaScript `getDay` numbers (`0` = Sunday) so they map directly
+ * onto `Date.getDay()` when checking whether a habit is due.
+ */
+const WEEKDAYS: readonly { label: string; value: number }[] = [
+	{ label: "Monday", value: 1 },
+	{ label: "Tuesday", value: 2 },
+	{ label: "Wednesday", value: 3 },
+	{ label: "Thursday", value: 4 },
+	{ label: "Friday", value: 5 },
+	{ label: "Saturday", value: 6 },
+	{ label: "Sunday", value: 0 },
 ];
 
 /** A placeholder example shown to hint at how a habit type is used. */
@@ -103,6 +118,9 @@ function applyNumeric(
 export class HabitModal extends Modal {
 	private habitName = "";
 	private type: HabitType = "binary";
+	private frequency: HabitFrequency = "daily";
+	private weekday = new Date().getDay();
+	private monthDay = new Date().getDate();
 	private target = 1;
 	private unit = "";
 	private weeklyTarget = 0;
@@ -132,6 +150,12 @@ export class HabitModal extends Modal {
 		if (editing) {
 			this.habitName = editing.name;
 			this.type = editing.type;
+			this.frequency = editing.frequency;
+			if (editing.frequency === "weekly") {
+				this.weekday = editing.weekday;
+			} else if (editing.frequency === "monthly") {
+				this.monthDay = editing.monthDay;
+			}
 			this.target = editing.target || 1;
 			this.unit = editing.unit;
 			this.weeklyTarget = editing.weeklyTarget || 0;
@@ -231,7 +255,14 @@ export class HabitModal extends Modal {
 			}
 		}
 
-		this.renderTargets(contentEl);
+		this.renderFrequency(contentEl);
+
+		// Weekly and monthly goals count days completed within a period, which
+		// only makes sense for a daily habit; a weekly/monthly habit is due at
+		// most once per period.
+		if (this.frequency === "daily") {
+			this.renderTargets(contentEl);
+		}
 
 		new Setting(contentEl)
 			.setName(t("Icon"))
@@ -284,6 +315,9 @@ export class HabitModal extends Modal {
 						const options = {
 							name: this.habitName,
 							type: this.type,
+							frequency: this.frequency,
+							weekday: this.weekday,
+							monthDay: this.monthDay,
 							target: this.target,
 							unit: this.unit,
 							weeklyTarget: this.weeklyTarget,
@@ -315,6 +349,67 @@ export class HabitModal extends Modal {
 	private currentExample(): HabitExample {
 		const list = EXAMPLES[this.type];
 		return list[this.exampleIndex % list.length];
+	}
+
+	/**
+	 * Frequency picker: daily, weekly (with a weekday) or monthly (with a day
+	 * of the month). Weekly and monthly habits only surface on their due date.
+	 */
+	private renderFrequency(contentEl: HTMLElement): void {
+		new Setting(contentEl)
+			.setName(t("Frequency"))
+			.setDesc(
+				t(
+					"How often this habit is due. Weekly and monthly habits only appear on their due date.",
+				),
+			)
+			.addDropdown((dropdown) =>
+				dropdown
+					.addOption("daily", t("Daily"))
+					.addOption("weekly", t("Weekly"))
+					.addOption("monthly", t("Monthly"))
+					.setValue(this.frequency)
+					.onChange((value) => {
+						this.frequency = value as HabitFrequency;
+						this.build();
+					}),
+			);
+
+		if (this.frequency === "weekly") {
+			new Setting(contentEl)
+				.setName(t("Day of week"))
+				.setDesc(t("The weekday this habit is due on."))
+				.addDropdown((dropdown) => {
+					for (const day of WEEKDAYS) {
+						dropdown.addOption(String(day.value), t(day.label));
+					}
+					dropdown
+						.setValue(String(this.weekday))
+						.onChange((value) => {
+							this.weekday = Number(value);
+						});
+				});
+		}
+
+		if (this.frequency === "monthly") {
+			new Setting(contentEl)
+				.setName(t("Day of month"))
+				.setDesc(
+					t(
+						"The day of the month this habit is due. In shorter months it falls due on the last day, so 31 always lands on the final day of the month.",
+					),
+				)
+				.addDropdown((dropdown) => {
+					for (let day = 1; day <= 31; day++) {
+						dropdown.addOption(String(day), String(day));
+					}
+					dropdown
+						.setValue(String(this.monthDay))
+						.onChange((value) => {
+							this.monthDay = Number(value);
+						});
+				});
+		}
 	}
 
 	/** Collapsible, optional weekly/monthly targets section. */

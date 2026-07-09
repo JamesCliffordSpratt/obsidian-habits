@@ -7,6 +7,7 @@ import {
 	getStatsRange,
 	habitStats,
 	isComplete,
+	isDue,
 	isPausedOn,
 	perfectDays,
 	rangeLength,
@@ -134,7 +135,9 @@ export function renderStatsView(
 			const key = toDateKey(date);
 			const value = habit.records[key] ?? 0;
 			const cell = heatmap.createDiv({ cls: "habits-stats-cell" });
-			if (key > todayKey) {
+			if (!isDue(habit, date)) {
+				cell.addClass("is-notdue");
+			} else if (key > todayKey) {
 				cell.addClass("is-future");
 			} else if (isPausedOn(habit, key)) {
 				cell.addClass("is-paused");

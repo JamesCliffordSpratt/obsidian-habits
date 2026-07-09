@@ -2,6 +2,7 @@ import { App, normalizePath, Notice, TFile, TFolder } from "obsidian";
 import type { HabitsPluginSettings } from "./settings";
 import type {
 	HabitDefinition,
+	HabitFrequency,
 	HabitPause,
 	HabitType,
 	NewHabitOptions,
@@ -10,11 +11,23 @@ import { addDays, sanitizeFileName, toDateKey } from "./utils";
 import { t } from "./i18n";
 
 const HABIT_TYPES: readonly HabitType[] = ["binary", "repetition", "timed"];
+const HABIT_FREQUENCIES: readonly HabitFrequency[] = [
+	"daily",
+	"weekly",
+	"monthly",
+];
 
 function isHabitType(value: unknown): value is HabitType {
 	return (
 		typeof value === "string" &&
 		(HABIT_TYPES as readonly string[]).includes(value)
+	);
+}
+
+function isHabitFrequency(value: unknown): value is HabitFrequency {
+	return (
+		typeof value === "string" &&
+		(HABIT_FREQUENCIES as readonly string[]).includes(value)
 	);
 }
 
@@ -76,6 +89,11 @@ export class HabitStore {
 			path: file.path,
 			name: file.basename,
 			type: fm.type,
+			frequency: isHabitFrequency(fm.frequency)
+				? fm.frequency
+				: "daily",
+			weekday: this.clampInt(this.readNumber(fm.weekday, 1), 0, 6),
+			monthDay: this.clampInt(this.readNumber(fm.monthDay, 1), 1, 31),
 			target: this.readNumber(fm.target, 1),
 			unit: typeof fm.unit === "string" ? fm.unit : "",
 			weeklyTarget: this.readNumber(fm.weeklyTarget, 0),
@@ -105,6 +123,11 @@ export class HabitStore {
 			}
 		}
 		return fallback;
+	}
+
+	/** Round to a whole number and constrain it to an inclusive range. */
+	private clampInt(value: number, min: number, max: number): number {
+		return Math.min(max, Math.max(min, Math.round(value)));
 	}
 
 	private readRecords(raw: unknown): Record<string, number> {
@@ -189,6 +212,30 @@ export class HabitStore {
 				? { start: pause.start }
 				: { start: pause.start, end: pause.end },
 		);
+	}
+
+	/**
+	 * Write the frequency fields to frontmatter, keeping it tidy: daily habits
+	 * store nothing (it is the default), and only the field relevant to the
+	 * chosen frequency is kept so stale keys never linger after a change.
+	 */
+	private writeFrequency(
+		fm: Record<string, unknown>,
+		options: NewHabitOptions,
+	): void {
+		if (options.frequency === "weekly") {
+			fm.frequency = "weekly";
+			fm.weekday = this.clampInt(options.weekday, 0, 6);
+			delete fm.monthDay;
+		} else if (options.frequency === "monthly") {
+			fm.frequency = "monthly";
+			fm.monthDay = this.clampInt(options.monthDay, 1, 31);
+			delete fm.weekday;
+		} else {
+			delete fm.frequency;
+			delete fm.weekday;
+			delete fm.monthDay;
+		}
 	}
 
 	private fileForHabit(habit: HabitDefinition): TFile | null {
@@ -395,6 +442,7 @@ export class HabitStore {
 			const fm = frontmatter as Record<string, unknown>;
 			fm.habit = true;
 			fm.type = options.type;
+			this.writeFrequency(fm, options);
 			if (options.type !== "binary") {
 				fm.target = options.target;
 			}
@@ -467,6 +515,7 @@ export class HabitStore {
 			const fm = frontmatter as Record<string, unknown>;
 			fm.habit = true;
 			fm.type = options.type;
+			this.writeFrequency(fm, options);
 			if (options.type === "binary") {
 				delete fm.target;
 			} else {

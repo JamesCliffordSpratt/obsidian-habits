@@ -19,6 +19,7 @@ import type { HabitDefinition } from "../types";
 import {
 	currentStreak,
 	isComplete,
+	isDue,
 	isPausedOn,
 	longestStreak,
 } from "../stats";
@@ -194,8 +195,11 @@ export class HabitMetrics extends MarkdownRenderChild {
 		let recentDays = 0;
 		let recentHits = 0;
 		for (let i = 0; i < DAILY_DAYS; i++) {
-			const key = toDateKey(addDays(today, -i));
-			if (isPausedOn(habit, key)) {
+			const day = addDays(today, -i);
+			const key = toDateKey(day);
+			// Only days the habit is actually due count towards its rate, so a
+			// weekly or monthly habit isn't penalised for its off days.
+			if (!isDue(habit, day) || isPausedOn(habit, key)) {
 				continue;
 			}
 			recentDays++;

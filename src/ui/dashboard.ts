@@ -18,6 +18,7 @@ import { ExportModal } from "./export-modal";
 import { t } from "../i18n";
 import { renderStatsView } from "./stats-view";
 import {
+	isDue,
 	isPausedOn,
 	type StatsPeriod,
 	type StatsRangeMode,
@@ -188,6 +189,11 @@ export class HabitsDashboard extends MarkdownRenderChild {
 			return;
 		}
 
+		if (this.orderedHabits().length === 0) {
+			this.renderNothingDueState();
+			return;
+		}
+
 		this.renderCarousel();
 	}
 
@@ -338,6 +344,14 @@ export class HabitsDashboard extends MarkdownRenderChild {
 			attr: { type: "button" },
 		});
 		this.registerDomEvent(button, "click", () => this.openCreateModal());
+	}
+
+	/** Shown when habits exist but none of them fall due on the selected day. */
+	private renderNothingDueState(): void {
+		const empty = this.root.createDiv({ cls: "habits-empty" });
+		empty.createEl("p", {
+			text: t("No habits are due on this day."),
+		});
 	}
 
 	private renderCarousel(): void {
@@ -518,6 +532,14 @@ export class HabitsDashboard extends MarkdownRenderChild {
 			void this.app.workspace.openLinkText(habit.path, "", false);
 		});
 
+		const frequencyLabel = this.frequencyLabel(habit);
+		if (frequencyLabel) {
+			front.createDiv({
+				cls: "habits-card-frequency",
+				text: frequencyLabel,
+			});
+		}
+
 		if (this.isPausedOnSelected(habit)) {
 			card.addClass("is-paused");
 			this.renderPausedBody(front, habit);
@@ -627,6 +649,23 @@ export class HabitsDashboard extends MarkdownRenderChild {
 		});
 	}
 
+	/** A short "due" descriptor for weekly/monthly cards; empty for daily. */
+	private frequencyLabel(habit: HabitDefinition): string {
+		if (habit.frequency === "weekly") {
+			const ref = new Date();
+			ref.setDate(
+				ref.getDate() + ((habit.weekday - ref.getDay() + 7) % 7),
+			);
+			return t("Every {day}", {
+				day: ref.toLocaleDateString(undefined, { weekday: "long" }),
+			});
+		}
+		if (habit.frequency === "monthly") {
+			return t("Monthly · day {day}", { day: habit.monthDay });
+		}
+		return "";
+	}
+
 	private currentValue(habit: HabitDefinition): number {
 		return habit.records[toDateKey(this.selectedDate)] ?? 0;
 	}
@@ -645,18 +684,25 @@ export class HabitsDashboard extends MarkdownRenderChild {
 		return isPausedOn(habit, toDateKey(this.selectedDate));
 	}
 
+	/** Whether the habit is due on the currently selected day. */
+	private isDueOnSelected(habit: HabitDefinition): boolean {
+		return isDue(habit, this.selectedDate);
+	}
+
 	/**
 	 * Carousel order for the selected day: incomplete habits first (in store
 	 * order), then completed habits, with paused habits parked at the end.
+	 * Weekly and monthly habits appear only on the days they are due.
 	 */
 	private orderedHabits(): HabitDefinition[] {
-		const active = this.habits.filter(
-			(habit) => !this.isPausedOnSelected(habit),
+		const due = this.habits.filter((habit) =>
+			this.isDueOnSelected(habit),
 		);
+		const active = due.filter((habit) => !this.isPausedOnSelected(habit));
 		return [
 			...active.filter((habit) => !this.isComplete(habit)),
 			...active.filter((habit) => this.isComplete(habit)),
-			...this.habits.filter((habit) => this.isPausedOnSelected(habit)),
+			...due.filter((habit) => this.isPausedOnSelected(habit)),
 		];
 	}
 
@@ -688,10 +734,12 @@ export class HabitsDashboard extends MarkdownRenderChild {
 		this.reload();
 	}
 
-	/** True when every non-paused habit is complete for the selected day. */
+	/** True when every due, non-paused habit is complete for the selected day. */
 	private isPerfectDay(): boolean {
 		const active = this.habits.filter(
-			(habit) => !this.isPausedOnSelected(habit),
+			(habit) =>
+				this.isDueOnSelected(habit) &&
+				!this.isPausedOnSelected(habit),
 		);
 		return (
 			active.length > 0 &&

@@ -312,6 +312,16 @@
 	text-decoration: underline;
 }
 
+/* "Every Monday" / "Monthly · day 15" caption on weekly and monthly cards. */
+.habits-card-frequency {
+	width: 100%;
+	margin-top: 0.15rem;
+	color: var(--text-muted);
+	font-size: var(--font-ui-small);
+	font-weight: var(--font-normal);
+	text-align: center;
+}
+
 .habits-card-body {
 	display: flex;
 	flex-direction: column;
@@ -981,6 +991,12 @@
 	background: transparent;
 	border: 1px solid var(--background-modifier-border);
 	opacity: 0.6;
+}
+
+/* Days a weekly/monthly habit is not due: faint, so due days stand out. */
+.habits-stats-cell.is-notdue {
+	background: transparent;
+	opacity: 0.25;
 }
 
 /* Stats per-habit goal progress */

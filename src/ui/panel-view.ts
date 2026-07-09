@@ -11,7 +11,7 @@ import {
 import type { HabitStore } from "../habit-store";
 import type { HabitsPluginSettings } from "../settings";
 import type { HabitDefinition } from "../types";
-import { isComplete, isPausedOn } from "../stats";
+import { isComplete, isDue, isPausedOn } from "../stats";
 import { registerLongPress, toDateKey } from "../utils";
 import { t } from "../i18n";
 import { HabitModal } from "./habit-modal";
@@ -144,15 +144,22 @@ export class HabitsPanelView extends ItemView {
 		return isPausedOn(habit, this.todayKey());
 	}
 
-	/** Incomplete first, completed next, paused parked at the end. */
+	/** Whether the habit is due today (daily habits always are). */
+	private isDueToday(habit: HabitDefinition): boolean {
+		return isDue(habit, new Date());
+	}
+
+	/**
+	 * Incomplete first, completed next, paused parked at the end. Weekly and
+	 * monthly habits are included only on the days they are due.
+	 */
 	private ordered(): HabitDefinition[] {
-		const active = this.habits.filter(
-			(habit) => !this.isPausedToday(habit),
-		);
+		const due = this.habits.filter((habit) => this.isDueToday(habit));
+		const active = due.filter((habit) => !this.isPausedToday(habit));
 		return [
 			...active.filter((habit) => !this.isDone(habit)),
 			...active.filter((habit) => this.isDone(habit)),
-			...this.habits.filter((habit) => this.isPausedToday(habit)),
+			...due.filter((habit) => this.isPausedToday(habit)),
 		];
 	}
 
@@ -173,7 +180,8 @@ export class HabitsPanelView extends ItemView {
 		});
 
 		const trackable = this.habits.filter(
-			(habit) => !this.isPausedToday(habit),
+			(habit) =>
+				this.isDueToday(habit) && !this.isPausedToday(habit),
 		);
 		const doneCount = trackable.filter((habit) =>
 			this.isDone(habit),
@@ -210,8 +218,15 @@ export class HabitsPanelView extends ItemView {
 			return;
 		}
 
+		const due = this.ordered();
+		if (due.length === 0) {
+			const none = root.createDiv({ cls: "habits-panel-empty" });
+			none.createEl("p", { text: t("Nothing due today.") });
+			return;
+		}
+
 		const list = root.createDiv({ cls: "habits-panel-list" });
-		for (const habit of this.ordered()) {
+		for (const habit of due) {
 			this.renderRow(list, habit);
 		}
 	}

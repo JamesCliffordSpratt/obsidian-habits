@@ -12,6 +12,7 @@
 
 - 🎠 **Carousel dashboard** — log your habits from any note with a `habits` code block, with satisfying completion animations
 - ✅ **Three habit types** — done/not-done, counted (8 cups of water), and timed (30 minutes of exercise, with +1/+5/+10 quick buttons)
+- 🗓️ **Daily, weekly, or monthly** — pick a frequency per habit; weekly and monthly habits appear only on their due day, and streaks count consecutive weeks or months
 - 🔥 **Streaks and statistics** — current and best streaks, completion rates, perfect days, weekly and monthly goals, per-habit heatmaps
 - 📊 **Charts on every habit page** — 30-day activity and 12-week trend charts rendered in your theme's colours
 - 📄 **Printable PDF reports** — pick your metrics, date range, and layout with a live A4 preview
@@ -66,6 +67,16 @@ pauses:
 ```
 
 No databases, no external services — delete the plugin and your history is still right there in your notes.
+
+## 🗓️ Daily, weekly, and monthly habits
+
+Every habit has a **frequency**, chosen when you create or edit it:
+
+- **Daily** — due every day (the default).
+- **Weekly** — due once a week on the weekday you pick. The card only appears on that day.
+- **Monthly** — due once a month on the day you pick. Months shorter than the chosen day fall due on their **last day**, so the 31st always lands on the final day of the month (28th or 29th in February, 30th in April, and so on) — you never miss a month.
+
+Weekly and monthly cards surface only on their due date in both the dashboard and the sidebar panel, so your list stays focused on what's actually due. Their **streaks and stats count periods, not days**: a weekly habit's streak is the number of consecutive weeks you completed it, and a monthly habit's is consecutive months. Days a habit isn't due don't count against its completion rate. To log a due date you missed, use the dashboard's date arrows to step back to it.
 
 ## 🎠 The dashboard
 

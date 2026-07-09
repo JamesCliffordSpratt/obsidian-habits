@@ -8,6 +8,15 @@
 export type HabitType = "binary" | "repetition" | "timed";
 
 /**
+ * How often a habit is due.
+ *
+ * - `daily`: due every day (the original behaviour).
+ * - `weekly`: due once a week, on a chosen weekday.
+ * - `monthly`: due once a month, on a chosen day of the month.
+ */
+export type HabitFrequency = "daily" | "weekly" | "monthly";
+
+/**
  * A period during which a habit was paused (inclusive of both ends).
  * An empty `end` means the pause is still ongoing.
  */
@@ -29,6 +38,20 @@ export interface HabitDefinition {
 	name: string;
 	/** The kind of habit. */
 	type: HabitType;
+	/** How often the habit is due. Defaults to `daily`. */
+	frequency: HabitFrequency;
+	/**
+	 * Day of the week a weekly habit is due, as a JavaScript `getDay` value
+	 * (`0` = Sunday … `6` = Saturday). Only meaningful when `frequency` is
+	 * `weekly`.
+	 */
+	weekday: number;
+	/**
+	 * Day of the month a monthly habit is due (`1`–`31`). Only meaningful when
+	 * `frequency` is `monthly`. In months shorter than the chosen day it is
+	 * clamped to the last day of that month (so `31` acts as "last day").
+	 */
+	monthDay: number;
 	/**
 	 * Daily target. For `repetition` this is a count; for `timed` it is a
 	 * number of minutes. Ignored for `binary`.
@@ -77,6 +100,9 @@ export interface HabitDefinition {
 export interface NewHabitOptions {
 	name: string;
 	type: HabitType;
+	frequency: HabitFrequency;
+	weekday: number;
+	monthDay: number;
 	target: number;
 	unit: string;
 	weeklyTarget: number;

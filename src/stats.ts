@@ -1,5 +1,5 @@
 import type { HabitDefinition } from "./types";
-import { addDays, fromDateKey, toDateKey } from "./utils";
+import { addDays, daysInMonth, fromDateKey, toDateKey } from "./utils";
 
 const MS_PER_DAY = 86_400_000;
 
@@ -56,6 +56,45 @@ export function getStatsRange(
 	return { start, end };
 }
 
+/**
+ * The day of the month a monthly habit falls due in the given month, clamped
+ * to the month's length. A habit set to the 31st therefore lands on the last
+ * day of shorter months (e.g. 28 or 29 in February) rather than being skipped.
+ */
+export function effectiveMonthDay(
+	year: number,
+	month: number,
+	monthDay: number,
+): number {
+	const length = daysInMonth(year, month);
+	return Math.min(Math.max(1, monthDay), length);
+}
+
+/**
+ * True when the habit is due on the given date.
+ *
+ * - `daily` habits are due every day.
+ * - `weekly` habits are due on their chosen weekday.
+ * - `monthly` habits are due on their chosen day of the month, clamped to the
+ *   month's last day when the month is shorter.
+ */
+export function isDue(habit: HabitDefinition, date: Date): boolean {
+	if (habit.frequency === "weekly") {
+		return date.getDay() === habit.weekday;
+	}
+	if (habit.frequency === "monthly") {
+		return (
+			date.getDate() ===
+			effectiveMonthDay(
+				date.getFullYear(),
+				date.getMonth(),
+				habit.monthDay,
+			)
+		);
+	}
+	return true;
+}
+
 /** True when a habit met its goal on the given day. */
 export function isComplete(habit: HabitDefinition, dateKey: string): boolean {
 	const value = habit.records[dateKey] ?? 0;
@@ -75,14 +114,23 @@ export function isPausedOn(habit: HabitDefinition, dateKey: string): boolean {
 }
 
 /**
- * Consecutive complete days ending today (or yesterday if today is blank).
- * Paused days are skipped entirely: they neither break nor extend a streak.
+ * Consecutive complete due periods ending with the most recent one.
+ *
+ * For daily habits every day is a period. For weekly and monthly habits only
+ * their due dates count, so the streak measures consecutive weeks or months
+ * completed. Paused due dates are skipped entirely (they neither break nor
+ * extend a streak), and the most recent due date may still be blank (e.g. a
+ * due date that is today) without breaking the streak.
  */
 export function currentStreak(habit: HabitDefinition, today: Date): number {
 	let cursor = startOfDay(today);
 	let streak = 0;
 	let graceUsed = false;
 	for (;;) {
+		if (!isDue(habit, cursor)) {
+			cursor = addDays(cursor, -1);
+			continue;
+		}
 		const key = toDateKey(cursor);
 		if (isPausedOn(habit, key)) {
 			cursor = addDays(cursor, -1);
@@ -91,7 +139,7 @@ export function currentStreak(habit: HabitDefinition, today: Date): number {
 		if (isComplete(habit, key)) {
 			streak++;
 		} else if (streak === 0 && !graceUsed) {
-			// The most recent active day may still be blank (e.g. today).
+			// The most recent due date may still be blank (e.g. today).
 			graceUsed = true;
 		} else {
 			break;
@@ -102,8 +150,9 @@ export function currentStreak(habit: HabitDefinition, today: Date): number {
 }
 
 /**
- * The longest run of consecutive complete days ever recorded. Paused days
- * inside a run do not break it.
+ * The longest run of consecutive complete due periods ever recorded. Days on
+ * which the habit is not due are ignored, and paused due dates inside a run do
+ * not break it.
  */
 export function longestStreak(habit: HabitDefinition): number {
 	const completedKeys = Object.keys(habit.records)
@@ -122,12 +171,14 @@ export function longestStreak(habit: HabitDefinition): number {
 	let run = 0;
 	let cursor = first;
 	while (cursor.getTime() <= last.getTime()) {
-		const key = toDateKey(cursor);
-		if (isComplete(habit, key)) {
-			run++;
-			best = Math.max(best, run);
-		} else if (!isPausedOn(habit, key)) {
-			run = 0;
+		if (isDue(habit, cursor)) {
+			const key = toDateKey(cursor);
+			if (isComplete(habit, key)) {
+				run++;
+				best = Math.max(best, run);
+			} else if (!isPausedOn(habit, key)) {
+				run = 0;
+			}
 		}
 		cursor = addDays(cursor, 1);
 	}
@@ -161,7 +212,7 @@ export function habitStats(
 	let cursor = new Date(range.start);
 	while (cursor.getTime() <= end) {
 		const key = toDateKey(cursor);
-		if (isPausedOn(habit, key)) {
+		if (!isDue(habit, cursor) || isPausedOn(habit, key)) {
 			cursor = addDays(cursor, 1);
 			continue;
 		}
@@ -208,7 +259,10 @@ export function perfectDays(
 	let cursor = new Date(range.start);
 	while (cursor.getTime() <= end) {
 		const key = toDateKey(cursor);
-		const active = habits.filter((habit) => !isPausedOn(habit, key));
+		const date = cursor;
+		const active = habits.filter(
+			(habit) => isDue(habit, date) && !isPausedOn(habit, key),
+		);
 		if (
 			active.length > 0 &&
 			active.every((habit) => isComplete(habit, key))
