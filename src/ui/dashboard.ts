@@ -18,8 +18,10 @@ import { ExportModal } from "./export-modal";
 import { t } from "../i18n";
 import { renderStatsView } from "./stats-view";
 import {
+	isComplete as isCompleteOn,
 	isDue,
 	isPausedOn,
+	limitOf,
 	type StatsPeriod,
 	type StatsRangeMode,
 } from "../stats";
@@ -53,6 +55,14 @@ export class HabitsDashboard extends MarkdownRenderChild {
 	private trackEl: HTMLElement | null = null;
 	/** Suppresses event-driven reloads while an animation sequence plays. */
 	private suppressAutoReload = false;
+	/**
+	 * Days whose current "perfect episode" has already been celebrated, so
+	 * confirming a clean limit habit can't replay the celebration on every
+	 * tap. An action that breaks the perfect day (a slip, un-doing a habit)
+	 * removes the day again, re-arming the celebration for when the day
+	 * becomes perfect once more.
+	 */
+	private celebratedDays = new Set<string>();
 
 	constructor(
 		private app: App,
@@ -545,7 +555,9 @@ export class HabitsDashboard extends MarkdownRenderChild {
 			this.renderPausedBody(front, habit);
 		} else {
 			const body = front.createDiv({ cls: "habits-card-body" });
-			if (habit.type === "binary") {
+			if (habit.goalDirection === "max" && habit.type === "binary") {
+				this.renderLimitBinaryControl(body, habit, card);
+			} else if (habit.type === "binary") {
 				this.renderBinaryControl(body, habit, card);
 			} else {
 				this.renderCounterControl(body, habit, card);
@@ -670,13 +682,13 @@ export class HabitsDashboard extends MarkdownRenderChild {
 		return habit.records[toDateKey(this.selectedDate)] ?? 0;
 	}
 
-	/** Whether the habit's goal is met for the selected day. */
+	/**
+	 * Whether the habit's goal is met for the selected day. Delegates to the
+	 * shared completion logic so cards, streaks, stats and the perfect-day
+	 * check can never disagree about what "complete" means.
+	 */
 	private isComplete(habit: HabitDefinition): boolean {
-		const value = this.currentValue(habit);
-		if (habit.type === "binary") {
-			return value >= 1;
-		}
-		return habit.target > 0 && value >= habit.target;
+		return isCompleteOn(habit, toDateKey(this.selectedDate));
 	}
 
 	/** Whether the habit is paused on the currently selected day. */
@@ -724,6 +736,7 @@ export class HabitsDashboard extends MarkdownRenderChild {
 				const perfect = this.isPerfectDay();
 				this.reload();
 				if (perfect) {
+					this.celebratedDays.add(toDateKey(this.selectedDate));
 					await this.playPerfectAnimation();
 				}
 			} finally {
@@ -731,7 +744,48 @@ export class HabitsDashboard extends MarkdownRenderChild {
 			}
 			return;
 		}
+		// The change didn't complete the habit; if it broke the perfect
+		// day (e.g. un-doing a habit), re-arm the celebration.
+		if (!this.isPerfectDay()) {
+			this.celebratedDays.delete(toDateKey(this.selectedDate));
+		}
 		this.reload();
+	}
+
+	/**
+	 * Re-render after a limit-habit change. Limit habits get no per-card
+	 * completion celebration — staying within a limit is quiet success —
+	 * but an action that completes a perfect day (confirming Clean, or
+	 * correcting an over-limit value back under) celebrates it, at most
+	 * once per perfect episode.
+	 */
+	private async finishLimitChange(mayCelebrate: boolean): Promise<void> {
+		const dateKey = toDateKey(this.selectedDate);
+		const perfectNow = this.isPerfectDay();
+		if (!perfectNow) {
+			// A slip (or going over a limit) ends the perfect episode, so
+			// recovering to perfect later celebrates again.
+			this.celebratedDays.delete(dateKey);
+		}
+		const celebrate =
+			mayCelebrate && perfectNow && !this.celebratedDays.has(dateKey);
+		// Repaint from local state rather than reloading: the metadata
+		// cache may not have absorbed the write yet, and a stale reload
+		// would briefly revert the control the user just pressed. The
+		// cache-change event settles the view afterwards.
+		this.render();
+		if (celebrate) {
+			this.celebratedDays.add(dateKey);
+			this.suppressAutoReload = true;
+			try {
+				await this.playPerfectAnimation();
+			} finally {
+				this.suppressAutoReload = false;
+			}
+			// The cache event likely fired inside the suppression window;
+			// reload once now that the cache has caught up.
+			this.reload();
+		}
 	}
 
 	/** True when every due, non-paused habit is complete for the selected day. */
@@ -887,13 +941,18 @@ export class HabitsDashboard extends MarkdownRenderChild {
 			}
 			done = true;
 			const wasComplete = this.isComplete(habit);
+			const wasPerfect = this.isPerfectDay();
 			if (save) {
 				const parsed = Number(input.value);
 				if (Number.isFinite(parsed)) {
 					await this.commit(habit, Math.max(0, Math.round(parsed)));
 				}
 			}
-			await this.finishChange(card, habit, wasComplete);
+			if (habit.goalDirection === "max") {
+				await this.finishLimitChange(!wasPerfect);
+			} else {
+				await this.finishChange(card, habit, wasComplete);
+			}
 		};
 
 		this.registerDomEvent(input, "keydown", (evt: KeyboardEvent) => {
@@ -937,6 +996,68 @@ export class HabitsDashboard extends MarkdownRenderChild {
 		});
 	}
 
+	/**
+	 * Two-box control for binary limit habits: Clean and Slipped. An
+	 * unlogged day already counts as clean, so Clean is highlighted by
+	 * default and stores nothing; tapping it clears a slip (and, as an
+	 * explicit confirmation, may trigger the perfect-day celebration).
+	 * Tapping Slipped records the slip. The boxes act like radio buttons.
+	 */
+	private renderLimitBinaryControl(
+		body: HTMLElement,
+		habit: HabitDefinition,
+		card: HTMLElement,
+	): void {
+		const slipped = this.currentValue(habit) >= 1;
+		const boxes = body.createDiv({ cls: "habits-limit-boxes" });
+
+		const makeBox = (
+			cls: string,
+			icon: string,
+			label: string,
+			active: boolean,
+		): HTMLButtonElement => {
+			const box = boxes.createEl("button", {
+				cls: `habits-limit-box ${cls}`,
+				attr: {
+					type: "button",
+					"aria-label": label,
+					"aria-pressed": String(active),
+				},
+			});
+			box.toggleClass("is-active", active);
+			const glyph = box.createSpan({ cls: "habits-limit-box-icon" });
+			setIcon(glyph, icon);
+			box.createSpan({ cls: "habits-limit-box-label", text: label });
+			return box;
+		};
+
+		const cleanBox = makeBox(
+			"habits-limit-clean",
+			"check",
+			t("Clean"),
+			!slipped,
+		);
+		const slippedBox = makeBox(
+			"habits-limit-slipped",
+			"x",
+			t("Slipped"),
+			slipped,
+		);
+
+		this.registerDomEvent(cleanBox, "click", async () => {
+			await this.commit(habit, 0);
+			await this.finishLimitChange(true);
+		});
+		this.registerDomEvent(slippedBox, "click", async () => {
+			await this.commit(habit, 1);
+			await this.finishLimitChange(false);
+		});
+		// The card element is unused here on purpose: limit habits play no
+		// per-card completion animation.
+		void card;
+	}
+
 	private renderCounterControl(
 		body: HTMLElement,
 		habit: HabitDefinition,
@@ -945,10 +1066,12 @@ export class HabitsDashboard extends MarkdownRenderChild {
 		const value = this.currentValue(habit);
 		const timed = habit.type === "timed";
 		const unit = habit.unit || (timed ? "min" : "");
+		const isMax = habit.goalDirection === "max";
+		const goalValue = isMax ? limitOf(habit) : habit.target;
 
 		const targetText = unit
-			? `/ ${habit.target} ${unit}`
-			: `/ ${habit.target}`;
+			? `/ ${goalValue} ${unit}`
+			: `/ ${goalValue}`;
 
 		const readout = body.createDiv({ cls: "habits-readout" });
 		const valueEl = readout.createEl("button", {
@@ -966,13 +1089,29 @@ export class HabitsDashboard extends MarkdownRenderChild {
 
 		const progress = body.createDiv({ cls: "habits-progress" });
 		const fill = progress.createDiv({ cls: "habits-progress-fill" });
-		const pct =
-			habit.target > 0
-				? Math.min(100, Math.round((value / habit.target) * 100))
-				: 0;
-		fill.setCssProps({ "--habits-progress": `${pct}%` });
-		if (value >= habit.target && habit.target > 0) {
-			progress.addClass("is-complete");
+		if (isMax) {
+			// The bar fills towards the limit and turns red once over it.
+			// A limit of 0 has no "towards": the bar is empty while clean
+			// and jumps straight to full-and-over on any logged value.
+			const pct =
+				goalValue > 0
+					? Math.min(100, Math.round((value / goalValue) * 100))
+					: value > 0
+						? 100
+						: 0;
+			fill.setCssProps({ "--habits-progress": `${pct}%` });
+			if (value > goalValue) {
+				progress.addClass("is-over");
+			}
+		} else {
+			const pct =
+				habit.target > 0
+					? Math.min(100, Math.round((value / habit.target) * 100))
+					: 0;
+			fill.setCssProps({ "--habits-progress": `${pct}%` });
+			if (value >= habit.target && habit.target > 0) {
+				progress.addClass("is-complete");
+			}
 		}
 
 		const buttons = body.createDiv({ cls: "habits-counter-buttons" });
@@ -984,14 +1123,28 @@ export class HabitsDashboard extends MarkdownRenderChild {
 		});
 		setIcon(minus, "minus");
 		this.registerDomEvent(minus, "click", async () => {
-			await this.commit(habit, value - 1);
-			this.render();
+			if (isMax) {
+				// Correcting a value back under the limit may complete a
+				// perfect day; celebrate the transition.
+				const wasPerfect = this.isPerfectDay();
+				await this.commit(habit, value - 1);
+				await this.finishLimitChange(!wasPerfect);
+			} else {
+				await this.commit(habit, value - 1);
+				this.render();
+			}
 		});
 
 		const addValue = async (amount: number): Promise<void> => {
 			const wasComplete = this.isComplete(habit);
-			await this.commit(habit, value + amount);
-			await this.finishChange(card, habit, wasComplete);
+			if (isMax) {
+				const wasPerfect = this.isPerfectDay();
+				await this.commit(habit, value + amount);
+				await this.finishLimitChange(!wasPerfect);
+			} else {
+				await this.commit(habit, value + amount);
+				await this.finishChange(card, habit, wasComplete);
+			}
 		};
 
 		if (timed) {
@@ -1046,6 +1199,7 @@ export class HabitsDashboard extends MarkdownRenderChild {
 						this.store,
 						() => this.reload(),
 						habit,
+						this.getSettings().experimental.limitHabits,
 					).open();
 				}),
 		);
@@ -1125,9 +1279,15 @@ export class HabitsDashboard extends MarkdownRenderChild {
 
 	/** Open the modal for creating a brand-new habit. */
 	private openCreateModal(): void {
-		new HabitModal(this.app, this.store, () => {
-			new Notice(t("Habit added to the dashboard."));
-			this.reload();
-		}).open();
+		new HabitModal(
+			this.app,
+			this.store,
+			() => {
+				new Notice(t("Habit added to the dashboard."));
+				this.reload();
+			},
+			null,
+			this.getSettings().experimental.limitHabits,
+		).open();
 	}
 }

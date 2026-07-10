@@ -21,6 +21,8 @@ import {
 	isComplete,
 	isDue,
 	isPausedOn,
+	limitOf,
+	limitStartKey,
 	longestStreak,
 } from "../stats";
 import { addDays, fromDateKey, toDateKey } from "../utils";
@@ -211,12 +213,34 @@ export class HabitMetrics extends MarkdownRenderChild {
 	/** Summary tiles: streaks, lifetime completions and the 30-day rate. */
 	private renderSummary(habit: HabitDefinition): void {
 		const today = new Date();
-		const completedDays = Object.keys(habit.records).filter((key) => {
-			const date = fromDateKey(key);
-			return (
-				date !== null && isDue(habit, date) && isComplete(habit, key)
-			);
-		}).length;
+		let completedDays: number;
+		if (habit.goalDirection === "max") {
+			// Unlogged days count as within limit, so successes cannot be
+			// counted from logged records alone; walk the tracked window.
+			completedDays = 0;
+			const start = fromDateKey(limitStartKey(habit, today));
+			if (start) {
+				const end = toDateKey(today);
+				for (
+					let cursor = start;
+					toDateKey(cursor) <= end;
+					cursor = addDays(cursor, 1)
+				) {
+					if (isComplete(habit, toDateKey(cursor))) {
+						completedDays++;
+					}
+				}
+			}
+		} else {
+			completedDays = Object.keys(habit.records).filter((key) => {
+				const date = fromDateKey(key);
+				return (
+					date !== null &&
+					isDue(habit, date) &&
+					isComplete(habit, key)
+				);
+			}).length;
+		}
 
 		// Rate is measured over the habit's recent due dates, so a weekly or
 		// monthly habit isn't penalised for the days it isn't due.
@@ -225,11 +249,20 @@ export class HabitMetrics extends MarkdownRenderChild {
 			RECENT_POINTS[habit.frequency],
 			today,
 		);
+		// Limit habits only start scoring on their start day; including
+		// earlier dates would count days before the habit existed as misses.
+		const maxStartKey =
+			habit.goalDirection === "max"
+				? limitStartKey(habit, today)
+				: "";
 		let recentDue = 0;
 		let recentHits = 0;
 		for (const date of recentDates) {
 			const key = toDateKey(date);
 			if (isPausedOn(habit, key)) {
+				continue;
+			}
+			if (maxStartKey && key < maxStartKey) {
 				continue;
 			}
 			recentDue++;
@@ -239,11 +272,13 @@ export class HabitMetrics extends MarkdownRenderChild {
 		}
 
 		const completedLabel =
-			habit.frequency === "weekly"
-				? t("Weeks completed")
-				: habit.frequency === "monthly"
-					? t("Months completed")
-					: t("Days completed");
+			habit.goalDirection === "max"
+				? t("Days within limit")
+				: habit.frequency === "weekly"
+					? t("Weeks completed")
+					: habit.frequency === "monthly"
+						? t("Months completed")
+						: t("Days completed");
 		const rateLabel =
 			habit.frequency === "daily" ? t("30-day rate") : t("Recent rate");
 
@@ -252,7 +287,10 @@ export class HabitMetrics extends MarkdownRenderChild {
 				value: String(currentStreak(habit, today)),
 				label: t("Current streak"),
 			},
-			{ value: String(longestStreak(habit)), label: t("Best streak") },
+			{
+				value: String(longestStreak(habit, today)),
+				label: t("Best streak"),
+			},
 			{ value: String(completedDays), label: completedLabel },
 			{
 				value:
@@ -284,6 +322,8 @@ export class HabitMetrics extends MarkdownRenderChild {
 			"",
 			"var(--color-green, var(--text-success))",
 		);
+		const red = this.resolveColor("", "var(--color-red, #e05d5d)");
+		const isMax = habit.goalDirection === "max";
 
 		const labels: string[] = [];
 		const values: number[] = [];
@@ -297,9 +337,16 @@ export class HabitMetrics extends MarkdownRenderChild {
 					month: "short",
 				}),
 			);
-			values.push(habit.records[key] ?? 0);
+			const value = habit.records[key] ?? 0;
+			values.push(value);
+			// Over-limit days show red; other incomplete days (including
+			// days before a limit habit started) stay dim and neutral.
 			colors.push(
-				isComplete(habit, key) ? green : this.withAlpha(accent, 0.45),
+				isMax && value > limitOf(habit)
+					? this.withAlpha(red, 0.8)
+					: isComplete(habit, key)
+						? green
+						: this.withAlpha(accent, 0.45),
 			);
 		}
 
@@ -315,9 +362,9 @@ export class HabitMetrics extends MarkdownRenderChild {
 		if (habit.type !== "binary" && habit.target > 0) {
 			datasets.push({
 				type: "line",
-				label: t("Target"),
+				label: isMax ? t("Limit") : t("Target"),
 				data: new Array(DAILY_DAYS).fill(habit.target) as number[],
-				borderColor: this.withAlpha(green, 0.7),
+				borderColor: this.withAlpha(isMax ? red : green, 0.7),
 				borderDash: [6, 4],
 				borderWidth: 1.5,
 				pointRadius: 0,
@@ -364,6 +411,13 @@ export class HabitMetrics extends MarkdownRenderChild {
 				}
 				const key = toDateKey(day);
 				if (isPausedOn(habit, key)) {
+					continue;
+				}
+				// Days before a limit habit started don't count against it.
+				if (
+					habit.goalDirection === "max" &&
+					key < limitStartKey(habit, today)
+				) {
 					continue;
 				}
 				elapsed++;

@@ -40,6 +40,24 @@ class FolderSuggest extends AbstractInputSuggest<TFolder> {
 	}
 }
 
+/**
+ * Feature flags for functionality that is still being tested.
+ *
+ * Every flag defaults to off. A flag only ever gates *entry points* (for
+ * example whether a creation option is offered) — never how existing data
+ * is interpreted — so turning a flag off can never corrupt or reinterpret
+ * anything the user created while it was on. Graduating a feature to
+ * fully-fledged means deleting its flag here and removing the UI guards.
+ */
+export interface ExperimentalFlags {
+	/** Limit ("break") habits: goals that mean staying under a maximum. */
+	limitHabits: boolean;
+}
+
+export const DEFAULT_EXPERIMENTAL: ExperimentalFlags = {
+	limitHabits: false,
+};
+
 /** User-configurable settings for the plugin. */
 export interface HabitsPluginSettings {
 	/** Folder that holds one note per habit. */
@@ -55,6 +73,8 @@ export interface HabitsPluginSettings {
 	followDailyNoteDate: boolean;
 	/** Show the comment flap on dashboard cards. */
 	enableComments: boolean;
+	/** Opt-in switches for features that are still being tested. */
+	experimental: ExperimentalFlags;
 }
 
 export const DEFAULT_SETTINGS: HabitsPluginSettings = {
@@ -63,6 +83,7 @@ export const DEFAULT_SETTINGS: HabitsPluginSettings = {
 	mobileCardsPerView: 2,
 	followDailyNoteDate: true,
 	enableComments: true,
+	experimental: { ...DEFAULT_EXPERIMENTAL },
 };
 
 /** Settings tab shown under Settings → Community plugins → Habits. */
@@ -166,6 +187,40 @@ export class HabitsSettingTab extends PluginSettingTab {
 					.onChange(async (value) => {
 						this.plugin.settings.mobileCardsPerView =
 							Number(value);
+						await this.plugin.saveSettings();
+					}),
+			);
+
+		this.displayExperimental(containerEl);
+	}
+
+	/**
+	 * Opt-in toggles for features still being tested. Turning a flag off
+	 * only hides the feature's entry points; anything already created with
+	 * it keeps working and keeps its meaning.
+	 */
+	private displayExperimental(containerEl: HTMLElement): void {
+		new Setting(containerEl).setName(t("Experimental")).setHeading();
+
+		containerEl.createEl("p", {
+			cls: "habits-experimental-note",
+			text: t(
+				"These features are still being tested and may change before they become permanent. Turning one off only hides it from menus — anything you created with it keeps working.",
+			),
+		});
+
+		new Setting(containerEl)
+			.setName(t("Break bad habits"))
+			.setDesc(
+				t(
+					"Track habits you want to reduce or avoid by staying under a daily limit — for example at most 2 hours of gaming, or no smoking at all.",
+				),
+			)
+			.addToggle((toggle) =>
+				toggle
+					.setValue(this.plugin.settings.experimental.limitHabits)
+					.onChange(async (value) => {
+						this.plugin.settings.experimental.limitHabits = value;
 						await this.plugin.saveSettings();
 					}),
 			);

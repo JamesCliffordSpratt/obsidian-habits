@@ -2,6 +2,7 @@ import { Editor, Events, Plugin, type WorkspaceLeaf } from "obsidian";
 import { t } from "./i18n";
 import { HabitStore } from "./habit-store";
 import {
+	DEFAULT_EXPERIMENTAL,
 	DEFAULT_SETTINGS,
 	HabitsSettingTab,
 	type HabitsPluginSettings,
@@ -85,9 +86,15 @@ export default class HabitsPlugin extends Plugin {
 			id: "create-habit",
 			name: t("Create habit"),
 			callback: () => {
-				new HabitModal(this.app, this.store, () => {
-					// The dashboard reloads itself when reopened.
-				}).open();
+				new HabitModal(
+					this.app,
+					this.store,
+					() => {
+						// The dashboard reloads itself when reopened.
+					},
+					null,
+					this.settings.experimental.limitHabits,
+				).open();
 			},
 		});
 
@@ -132,6 +139,12 @@ export default class HabitsPlugin extends Plugin {
 			| Partial<HabitsPluginSettings>
 			| null;
 		this.settings = Object.assign({}, DEFAULT_SETTINGS, data ?? {});
+		// Merge nested experimental flags so a data.json saved before a new
+		// flag existed still picks up that flag's default.
+		this.settings.experimental = {
+			...DEFAULT_EXPERIMENTAL,
+			...(data?.experimental ?? {}),
+		};
 	}
 
 	async saveSettings(): Promise<void> {

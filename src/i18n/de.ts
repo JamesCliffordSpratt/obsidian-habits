@@ -241,4 +241,30 @@ export const de: Record<string, string> = {
 	"Add a comment for this day…": "Füge einen Kommentar für diesen Tag hinzu…",
 	Comments: "Kommentare",
 	"+{n} more": "+{n} weitere",
+
+	// Limit habits (experimental)
+	Experimental: "Experimentell",
+	"These features are still being tested and may change before they become permanent. Turning one off only hides it from menus — anything you created with it keeps working.":
+		"Diese Funktionen werden noch getestet und können sich ändern, bevor sie dauerhaft werden. Das Ausschalten blendet sie nur aus den Menüs aus — alles, was du damit erstellt hast, funktioniert weiter.",
+	"Break bad habits": "Schlechte Gewohnheiten ablegen",
+	"Track habits you want to reduce or avoid by staying under a daily limit — for example at most 2 hours of gaming, or no smoking at all.":
+		"Verfolge Gewohnheiten, die du reduzieren oder vermeiden möchtest, indem du unter einem Tageslimit bleibst — zum Beispiel höchstens 2 Stunden Gaming oder gar nicht rauchen.",
+	Goal: "Ziel",
+	"Reach a target for habits you are building. Stay under a limit for habits you are cutting down or giving up.":
+		"Erreiche ein Ziel bei Gewohnheiten, die du aufbaust. Bleibe unter einem Limit bei Gewohnheiten, die du reduzierst oder aufgibst.",
+	"Reach a target": "Ein Ziel erreichen",
+	"Stay under a limit": "Unter einem Limit bleiben",
+	"Binary means avoiding it entirely. Repetition counts against a daily limit. Timed tracks minutes against a daily limit.":
+		"Binär bedeutet, es ganz zu vermeiden. Wiederholung zählt gegen ein Tageslimit. Zeit misst Minuten gegen ein Tageslimit.",
+	"Daily limit": "Tageslimit",
+	"Daily limit (minutes)": "Tageslimit (Minuten)",
+	"0 means none at all.": "0 bedeutet gar nicht.",
+	"Set an optional weekly or monthly goal for how many days you stay within your limit. Turn on a perfect toggle to aim for every day of the period automatically, whatever its length.":
+		"Lege ein optionales Wochen- oder Monatsziel fest, an wie vielen Tagen du innerhalb deines Limits bleibst. Aktiviere einen Perfekt-Schalter, um automatisch jeden Tag des Zeitraums anzustreben, egal wie lang er ist.",
+	Clean: "Sauber",
+	Slipped: "Ausgerutscht",
+	"Mark as clean": "Als sauber markieren",
+	"Mark as slipped": "Als ausgerutscht markieren",
+	"Days within limit": "Tage im Limit",
+	Limit: "Limit",
 };

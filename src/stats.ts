@@ -95,9 +95,57 @@ export function isDue(habit: HabitDefinition, date: Date): boolean {
 	return true;
 }
 
-/** True when a habit met its goal on the given day. */
+/**
+ * The limit a `max` habit must stay under. Binary limit habits are always
+ * "none at all" (any logged value is a slip); counter and timed habits use
+ * `target` as the limit, where `0` is a valid "zero allowed" limit.
+ */
+export function limitOf(habit: HabitDefinition): number {
+	if (habit.type === "binary") {
+		return 0;
+	}
+	return Math.max(0, habit.target);
+}
+
+/**
+ * The first day a `max` habit counts towards scoring.
+ *
+ * An unlogged day scores as "within limit", so without a lower bound every
+ * day since the beginning of time would count as a success — inflating
+ * streaks, heatmaps and perfect days. Habits normally carry a `startDate`;
+ * for hand-written notes without one, the earliest record is used, and a
+ * habit with neither only starts scoring today.
+ */
+export function limitStartKey(
+	habit: HabitDefinition,
+	today: Date = new Date(),
+): string {
+	if (habit.startDate !== "") {
+		return habit.startDate;
+	}
+	const keys = Object.keys(habit.records);
+	if (keys.length > 0) {
+		return keys.reduce((min, key) => (key < min ? key : min));
+	}
+	return toDateKey(today);
+}
+
+/**
+ * True when a habit met its goal on the given day.
+ *
+ * For `min` habits: the logged value reached the target.
+ * For `max` habits: the logged value stayed at or under the limit — an
+ * unlogged day counts as within limit, but only from the habit's start
+ * day onward (see {@link limitStartKey}).
+ */
 export function isComplete(habit: HabitDefinition, dateKey: string): boolean {
 	const value = habit.records[dateKey] ?? 0;
+	if (habit.goalDirection === "max") {
+		if (dateKey < limitStartKey(habit)) {
+			return false;
+		}
+		return value <= limitOf(habit);
+	}
 	if (habit.type === "binary") {
 		return value >= 1;
 	}
@@ -138,8 +186,15 @@ export function currentStreak(habit: HabitDefinition, today: Date): number {
 		}
 		if (isComplete(habit, key)) {
 			streak++;
-		} else if (streak === 0 && !graceUsed) {
-			// The most recent due date may still be blank (e.g. today).
+		} else if (
+			streak === 0 &&
+			!graceUsed &&
+			habit.goalDirection !== "max"
+		) {
+			// The most recent due date may still be blank (e.g. today). Limit
+			// habits get no grace: for them a blank day already counts as
+			// within limit, so an incomplete day is a real slip (or a day
+			// before the habit started) and the streak genuinely ends there.
 			graceUsed = true;
 		} else {
 			break;
@@ -153,16 +208,33 @@ export function currentStreak(habit: HabitDefinition, today: Date): number {
  * The longest run of consecutive complete due periods ever recorded. Days on
  * which the habit is not due are ignored, and paused due dates inside a run do
  * not break it.
+ *
+ * `min` habits anchor the scan on logged completions. `max` habits cannot
+ * (silence is success, so there may be no logged "completions" at all);
+ * they scan the whole tracked window, from the habit's start day to today.
  */
-export function longestStreak(habit: HabitDefinition): number {
-	const completedKeys = Object.keys(habit.records)
-		.filter((key) => isComplete(habit, key))
-		.sort();
-	if (completedKeys.length === 0) {
-		return 0;
+export function longestStreak(
+	habit: HabitDefinition,
+	today: Date = new Date(),
+): number {
+	let first: Date | null;
+	let last: Date | null;
+	if (habit.goalDirection === "max") {
+		first = fromDateKey(limitStartKey(habit, today));
+		last = startOfDay(today);
+		if (!first || first.getTime() > last.getTime()) {
+			return 0;
+		}
+	} else {
+		const completedKeys = Object.keys(habit.records)
+			.filter((key) => isComplete(habit, key))
+			.sort();
+		if (completedKeys.length === 0) {
+			return 0;
+		}
+		first = fromDateKey(completedKeys[0]);
+		last = fromDateKey(completedKeys[completedKeys.length - 1]);
 	}
-	const first = fromDateKey(completedKeys[0]);
-	const last = fromDateKey(completedKeys[completedKeys.length - 1]);
 	if (!first || !last) {
 		return 0;
 	}
@@ -218,7 +290,14 @@ export function habitStats(
 		}
 		days++;
 		const value = habit.records[key] ?? 0;
-		if (habit.type === "binary") {
+		if (habit.goalDirection === "max") {
+			// For limit habits `total` is consumption (slips for binary),
+			// and a completed day is one that stayed within the limit.
+			total += value;
+			if (isComplete(habit, key)) {
+				completed++;
+			}
+		} else if (habit.type === "binary") {
 			if (value >= 1) {
 				completed++;
 				total++;
@@ -237,7 +316,7 @@ export function habitStats(
 		total,
 		rate: days > 0 ? completed / days : 0,
 		current: currentStreak(habit, today),
-		best: longestStreak(habit),
+		best: longestStreak(habit, today),
 	};
 }
 

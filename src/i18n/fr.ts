@@ -239,4 +239,30 @@ export const fr: Record<string, string> = {
 	"Add a comment for this day…": "Ajoutez un commentaire pour ce jour…",
 	Comments: "Commentaires",
 	"+{n} more": "+{n} de plus",
+
+	// Limit habits (experimental)
+	Experimental: "Expérimental",
+	"These features are still being tested and may change before they become permanent. Turning one off only hides it from menus — anything you created with it keeps working.":
+		"Ces fonctionnalités sont encore en cours de test et peuvent changer avant de devenir permanentes. Les désactiver ne fait que les masquer des menus — tout ce que vous avez créé avec continue de fonctionner.",
+	"Break bad habits": "Rompre avec les mauvaises habitudes",
+	"Track habits you want to reduce or avoid by staying under a daily limit — for example at most 2 hours of gaming, or no smoking at all.":
+		"Suivez les habitudes que vous voulez réduire ou éviter en restant sous une limite quotidienne — par exemple au plus 2 heures de jeu vidéo, ou ne pas fumer du tout.",
+	Goal: "Objectif",
+	"Reach a target for habits you are building. Stay under a limit for habits you are cutting down or giving up.":
+		"Atteignez un objectif pour les habitudes que vous construisez. Restez sous une limite pour les habitudes que vous réduisez ou abandonnez.",
+	"Reach a target": "Atteindre un objectif",
+	"Stay under a limit": "Rester sous une limite",
+	"Binary means avoiding it entirely. Repetition counts against a daily limit. Timed tracks minutes against a daily limit.":
+		"Binaire signifie l'éviter complètement. Répétition compte par rapport à une limite quotidienne. Chronométré mesure des minutes par rapport à une limite quotidienne.",
+	"Daily limit": "Limite quotidienne",
+	"Daily limit (minutes)": "Limite quotidienne (minutes)",
+	"0 means none at all.": "0 signifie pas du tout.",
+	"Set an optional weekly or monthly goal for how many days you stay within your limit. Turn on a perfect toggle to aim for every day of the period automatically, whatever its length.":
+		"Définissez un objectif hebdomadaire ou mensuel facultatif pour le nombre de jours où vous restez dans votre limite. Activez une bascule parfaite pour viser automatiquement chaque jour de la période, quelle que soit sa durée.",
+	Clean: "Sans écart",
+	Slipped: "Écart",
+	"Mark as clean": "Marquer comme sans écart",
+	"Mark as slipped": "Marquer comme écart",
+	"Days within limit": "Jours dans la limite",
+	Limit: "Limite",
 };

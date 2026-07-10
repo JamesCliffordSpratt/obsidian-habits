@@ -7,7 +7,12 @@ import {
 	setIcon,
 } from "obsidian";
 import type { HabitStore } from "../habit-store";
-import type { HabitDefinition, HabitFrequency, HabitType } from "../types";
+import type {
+	GoalDirection,
+	HabitDefinition,
+	HabitFrequency,
+	HabitType,
+} from "../types";
 import {
 	applyHabitIcon,
 	IconSuggestModal,
@@ -99,6 +104,31 @@ const EXAMPLES: Record<HabitType, HabitExample[]> = {
 	],
 };
 
+/** Example habits shown when the goal is a limit rather than a target. */
+const LIMIT_EXAMPLES: Record<HabitType, HabitExample[]> = {
+	binary: [
+		{ name: "No smoking" },
+		{ name: "No alcohol" },
+		{ name: "No fast food" },
+		{ name: "No online shopping" },
+		{ name: "No snoozing the alarm" },
+		{ name: "No nail biting" },
+	],
+	repetition: [
+		{ name: "Cigarettes", unit: "Cigarettes", target: 2 },
+		{ name: "Coffee", unit: "Cups", target: 2 },
+		{ name: "Fizzy drinks", unit: "Cans", target: 1 },
+		{ name: "Snacks", unit: "Snacks", target: 2 },
+		{ name: "Impulse buys", unit: "Purchases", target: 0 },
+	],
+	timed: [
+		{ name: "Gaming", target: 120 },
+		{ name: "Social media", target: 30 },
+		{ name: "TV", target: 60 },
+		{ name: "Phone before bed", target: 0 },
+	],
+};
+
 /** Constrain a text input to whole numbers within an optional range. */
 function applyNumeric(
 	input: HTMLInputElement,
@@ -118,6 +148,7 @@ function applyNumeric(
 export class HabitModal extends Modal {
 	private habitName = "";
 	private type: HabitType = "binary";
+	private goalDirection: GoalDirection = "min";
 	private frequency: HabitFrequency = "daily";
 	private weekday = new Date().getDay();
 	private monthDay = new Date().getDate();
@@ -144,19 +175,26 @@ export class HabitModal extends Modal {
 		private store: HabitStore,
 		private onCreated: () => void,
 		editing: HabitDefinition | null = null,
+		private allowLimitHabits = false,
 	) {
 		super(app);
 		this.editing = editing;
 		if (editing) {
 			this.habitName = editing.name;
 			this.type = editing.type;
+			this.goalDirection = editing.goalDirection;
 			this.frequency = editing.frequency;
 			if (editing.frequency === "weekly") {
 				this.weekday = editing.weekday;
 			} else if (editing.frequency === "monthly") {
 				this.monthDay = editing.monthDay;
 			}
-			this.target = editing.target || 1;
+			// A limit habit's target may legitimately be 0 ("none at all");
+			// only build habits coerce a missing target to 1.
+			this.target =
+				editing.goalDirection === "max"
+					? Math.max(0, editing.target)
+					: editing.target || 1;
 			this.unit = editing.unit;
 			this.weeklyTarget = editing.weeklyTarget || 0;
 			this.monthlyTarget = editing.monthlyTarget || 0;
@@ -170,7 +208,7 @@ export class HabitModal extends Modal {
 	onOpen(): void {
 		this.modalEl.addClass("habits-modal");
 		this.exampleIndex = Math.floor(
-			Math.random() * EXAMPLES[this.type].length,
+			Math.random() * this.exampleList().length,
 		);
 		this.build();
 	}
@@ -199,12 +237,46 @@ export class HabitModal extends Modal {
 				}),
 		);
 
+		// The goal picker is the experimental feature's only entry point:
+		// it appears when the flag is on, or when editing a habit that is
+		// already a limit habit (so such habits stay editable even after
+		// the flag is switched off).
+		if (this.allowLimitHabits || this.editing?.goalDirection === "max") {
+			new Setting(contentEl)
+				.setName(t("Goal"))
+				.setDesc(
+					t(
+						"Reach a target for habits you are building. Stay under a limit for habits you are cutting down or giving up.",
+					),
+				)
+				.addDropdown((dropdown) =>
+					dropdown
+						.addOption("min", t("Reach a target"))
+						.addOption("max", t("Stay under a limit"))
+						.setValue(this.goalDirection)
+						.onChange((value) => {
+							this.goalDirection = value as GoalDirection;
+							if (this.goalDirection === "max") {
+								// Limit habits are daily-only for now.
+								this.frequency = "daily";
+							}
+							this.randomizeExample();
+							this.build();
+						}),
+				);
+		}
+
+		const isMax = this.goalDirection === "max";
 		new Setting(contentEl)
 			.setName(t("Type"))
 			.setDesc(
-				t(
-					"Binary is done or not done. Repetition counts towards a target. Timed tracks minutes.",
-				),
+				isMax
+					? t(
+							"Binary means avoiding it entirely. Repetition counts against a daily limit. Timed tracks minutes against a daily limit.",
+						)
+					: t(
+							"Binary is done or not done. Repetition counts towards a target. Timed tracks minutes.",
+						),
 			)
 			.addDropdown((dropdown) =>
 				dropdown
@@ -220,12 +292,21 @@ export class HabitModal extends Modal {
 			);
 
 		if (this.type !== "binary") {
-			const targetName =
-				this.type === "timed"
+			const targetName = isMax
+				? this.type === "timed"
+					? t("Daily limit (minutes)")
+					: t("Daily limit")
+				: this.type === "timed"
 					? t("Daily target (minutes)")
 					: t("Daily target");
-			new Setting(contentEl).setName(targetName).addText((text) => {
-				applyNumeric(text.inputEl, 1);
+			const setting = new Setting(contentEl).setName(targetName);
+			if (isMax) {
+				setting.setDesc(t("0 means none at all."));
+			}
+			setting.addText((text) => {
+				// A limit of 0 is meaningful ("none at all"); a target of 0
+				// is not, so build habits keep their minimum of 1.
+				applyNumeric(text.inputEl, isMax ? 0 : 1);
 				text
 					.setPlaceholder(
 						String(
@@ -236,7 +317,10 @@ export class HabitModal extends Modal {
 					.setValue(String(this.target))
 					.onChange((value) => {
 						const parsed = Number(value);
-						this.target = Number.isFinite(parsed) ? parsed : 1;
+						const fallback = isMax ? 0 : 1;
+						this.target = Number.isFinite(parsed)
+							? Math.max(isMax ? 0 : 1, Math.round(parsed))
+							: fallback;
 					});
 			});
 
@@ -255,7 +339,12 @@ export class HabitModal extends Modal {
 			}
 		}
 
-		this.renderFrequency(contentEl);
+		// Limit habits are daily-only for now, so the frequency picker is
+		// hidden for them (this.frequency is forced back to "daily" when
+		// the goal switches to a limit).
+		if (!isMax) {
+			this.renderFrequency(contentEl);
+		}
 
 		// Weekly and monthly goals count days completed within a period, which
 		// only makes sense for a daily habit; a weekly/monthly habit is due at
@@ -315,7 +404,11 @@ export class HabitModal extends Modal {
 						const options = {
 							name: this.habitName,
 							type: this.type,
-							frequency: this.frequency,
+							goalDirection: this.goalDirection,
+							frequency:
+								this.goalDirection === "max"
+									? ("daily" as HabitFrequency)
+									: this.frequency,
 							weekday: this.weekday,
 							monthDay: this.monthDay,
 							target: this.target,
@@ -338,16 +431,23 @@ export class HabitModal extends Modal {
 			);
 	}
 
+	/** The example pool matching the current goal direction and type. */
+	private exampleList(): HabitExample[] {
+		const source =
+			this.goalDirection === "max" ? LIMIT_EXAMPLES : EXAMPLES;
+		return source[this.type];
+	}
+
 	/** Move to a different example so switching type always rotates. */
 	private randomizeExample(): void {
-		const count = EXAMPLES[this.type].length;
+		const count = this.exampleList().length;
 		this.exampleIndex =
 			(this.exampleIndex + 1 + Math.floor(Math.random() * (count - 1))) %
 			count;
 	}
 
 	private currentExample(): HabitExample {
-		const list = EXAMPLES[this.type];
+		const list = this.exampleList();
 		return list[this.exampleIndex % list.length];
 	}
 
@@ -425,9 +525,14 @@ export class HabitModal extends Modal {
 		});
 		details.createEl("p", {
 			cls: "habits-targets-intro",
-			text: t(
-				"Set an optional weekly or monthly goal for how many days you complete this habit. For example, hitting your daily goal on all 7 days is a weekly target of 7. Turn on a perfect toggle to aim for every day of the period automatically, whatever its length.",
-			),
+			text:
+				this.goalDirection === "max"
+					? t(
+							"Set an optional weekly or monthly goal for how many days you stay within your limit. Turn on a perfect toggle to aim for every day of the period automatically, whatever its length.",
+						)
+					: t(
+							"Set an optional weekly or monthly goal for how many days you complete this habit. For example, hitting your daily goal on all 7 days is a weekly target of 7. Turn on a perfect toggle to aim for every day of the period automatically, whatever its length.",
+						),
 		});
 
 		new Setting(details)

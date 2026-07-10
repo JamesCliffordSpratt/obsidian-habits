@@ -9,6 +9,7 @@ import {
 	isComplete,
 	isDue,
 	isPausedOn,
+	limitStartKey,
 	perfectDays,
 	rangeLength,
 	type StatsPeriod,
@@ -143,6 +144,13 @@ export function renderStatsView(
 				cell.addClass("is-paused");
 			} else if (isComplete(habit, key)) {
 				cell.addClass("is-complete");
+			} else if (habit.goalDirection === "max") {
+				// For a limit habit "not complete" is either a day over the
+				// limit or a day before the habit started; pre-start days
+				// stay neutral rather than reading as failures.
+				if (key >= limitStartKey(habit, today)) {
+					cell.addClass("is-over");
+				}
 			} else if (value > 0) {
 				cell.addClass("is-partial");
 			}

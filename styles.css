@@ -1756,3 +1756,99 @@
 	text-overflow: ellipsis;
 	color: #555555;
 }
+
+/* == Limit habits (experimental) ================================== */
+
+/* Clean / Slipped boxes on binary limit-habit cards. The two boxes act
+   like radio buttons; Clean is highlighted by default because an
+   unlogged day already counts as clean. */
+.habits-limit-boxes {
+	display: flex;
+	/* If both labels don't fit side by side, the boxes stack vertically
+	   instead of truncating or breaking the text. */
+	flex-wrap: wrap;
+	gap: 6px;
+	width: 100%;
+}
+
+.habits-limit-box {
+	flex: 1 1 0;
+	/* Never smaller than the label, so the text always shows in full. */
+	min-width: fit-content;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 3px;
+	/* Obsidian buttons have a fixed height (--input-height); this box
+	   stacks an icon over a label, so it must size to its content. */
+	height: auto;
+	min-height: 0;
+	padding: 8px 4px;
+	border-radius: 8px;
+	border: 1px solid var(--background-modifier-border);
+	background: var(--background-secondary);
+	color: var(--text-muted);
+	cursor: pointer;
+	box-sizing: border-box;
+	box-shadow: none;
+	line-height: 1.2;
+	transition:
+		background-color 0.15s ease,
+		border-color 0.15s ease,
+		color 0.15s ease;
+}
+
+.habits-limit-box-icon {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.habits-limit-box-icon svg {
+	width: 16px;
+	height: 16px;
+}
+
+.habits-limit-box-label {
+	font-size: var(--font-ui-smaller);
+	line-height: 1.2;
+	text-align: center;
+	white-space: nowrap;
+}
+
+.habits-limit-box.habits-limit-clean.is-active {
+	border-color: var(--color-green, var(--text-success));
+	background: rgba(var(--color-green-rgb, 76, 175, 80), 0.12);
+	color: var(--color-green, var(--text-success));
+}
+
+.habits-limit-box.habits-limit-slipped.is-active {
+	border-color: var(--color-red, var(--text-error));
+	background: rgba(var(--color-red-rgb, 224, 93, 93), 0.12);
+	color: var(--color-red, var(--text-error));
+}
+
+/* Counter/timed limit habits: the bar turns red once over the limit. */
+.habits-progress.is-over .habits-progress-fill,
+.habits-panel-progress.is-over .habits-panel-progress-fill {
+	background: var(--color-red, var(--text-error));
+}
+
+/* Stats heatmap: a day over the limit. */
+.habits-stats-cell.is-over {
+	background: var(--color-red, var(--text-error));
+	opacity: 0.75;
+}
+
+/* Panel row for a slipped/over-limit day: tint the toggle red. */
+.habits-panel-row.is-slipped .habits-panel-slip-toggle {
+	color: var(--color-red, var(--text-error));
+}
+
+/* Note shown at the top of the experimental settings section. */
+.habits-experimental-note {
+	margin: 0 0 12px;
+	color: var(--text-muted);
+	font-size: var(--font-ui-small);
+}

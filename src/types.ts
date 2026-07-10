@@ -17,6 +17,18 @@ export type HabitType = "binary" | "repetition" | "timed";
 export type HabitFrequency = "daily" | "weekly" | "monthly";
 
 /**
+ * Which way a habit's goal points.
+ *
+ * - `min`: reach a target — the classic habit (do at least this much).
+ * - `max`: stay under a limit — for habits being reduced or avoided
+ *   (e.g. at most 2 hours of gaming, or no smoking at all).
+ *
+ * Absent from frontmatter means `min`, so every note written before this
+ * field existed keeps its original meaning untouched.
+ */
+export type GoalDirection = "min" | "max";
+
+/**
  * A period during which a habit was paused (inclusive of both ends).
  * An empty `end` means the pause is still ongoing.
  */
@@ -38,6 +50,13 @@ export interface HabitDefinition {
 	name: string;
 	/** The kind of habit. */
 	type: HabitType;
+	/**
+	 * Whether the goal is a target to reach (`min`) or a limit to stay
+	 * under (`max`). For `max` habits `target` is the limit — `0` means
+	 * "none at all" — and a binary `max` habit's limit is always `0`
+	 * (any logged value is a slip).
+	 */
+	goalDirection: GoalDirection;
 	/** How often the habit is due. Defaults to `daily`. */
 	frequency: HabitFrequency;
 	/**
@@ -100,6 +119,7 @@ export interface HabitDefinition {
 export interface NewHabitOptions {
 	name: string;
 	type: HabitType;
+	goalDirection: GoalDirection;
 	frequency: HabitFrequency;
 	weekday: number;
 	monthDay: number;

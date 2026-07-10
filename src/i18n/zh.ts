@@ -235,4 +235,30 @@ export const zh: Record<string, string> = {
 	"Add a comment for this day…": "为这一天添加评论…",
 	Comments: "评论",
 	"+{n} more": "还有 {n} 条",
+
+	// Limit habits (experimental)
+	Experimental: "实验性功能",
+	"These features are still being tested and may change before they become permanent. Turning one off only hides it from menus — anything you created with it keeps working.":
+		"这些功能仍在测试中，在正式发布前可能会有变化。关闭某项功能只会将其从菜单中隐藏——你用它创建的内容会继续正常工作。",
+	"Break bad habits": "戒除坏习惯",
+	"Track habits you want to reduce or avoid by staying under a daily limit — for example at most 2 hours of gaming, or no smoking at all.":
+		"通过保持在每日限额以下来跟踪你想减少或戒除的习惯——例如每天最多玩 2 小时游戏，或完全不吸烟。",
+	Goal: "目标",
+	"Reach a target for habits you are building. Stay under a limit for habits you are cutting down or giving up.":
+		"要养成的习惯选择达成目标。要减少或戒除的习惯选择保持在限额以下。",
+	"Reach a target": "达成目标",
+	"Stay under a limit": "保持在限额以下",
+	"Binary means avoiding it entirely. Repetition counts against a daily limit. Timed tracks minutes against a daily limit.":
+		"二元表示完全避免。重复按每日限额计数。计时按每日限额记录分钟数。",
+	"Daily limit": "每日限额",
+	"Daily limit (minutes)": "每日限额（分钟）",
+	"0 means none at all.": "0 表示完全不做。",
+	"Set an optional weekly or monthly goal for how many days you stay within your limit. Turn on a perfect toggle to aim for every day of the period automatically, whatever its length.":
+		"设置一个可选的每周或每月目标，即有多少天保持在限额以内。打开完美开关即可自动以该时段的每一天为目标，无论其长短。",
+	Clean: "未破戒",
+	Slipped: "破戒",
+	"Mark as clean": "标记为未破戒",
+	"Mark as slipped": "标记为破戒",
+	"Days within limit": "限额内天数",
+	Limit: "限额",
 };

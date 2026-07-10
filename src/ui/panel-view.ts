@@ -11,7 +11,7 @@ import {
 import type { HabitStore } from "../habit-store";
 import type { HabitsPluginSettings } from "../settings";
 import type { HabitDefinition } from "../types";
-import { isComplete, isDue, isPausedOn } from "../stats";
+import { isComplete, isDue, isPausedOn, limitOf } from "../stats";
 import { registerLongPress, toDateKey } from "../utils";
 import { t } from "../i18n";
 import { HabitModal } from "./habit-modal";
@@ -199,7 +199,13 @@ export class HabitsPanelView extends ItemView {
 		});
 		setIcon(add, "plus");
 		this.registerDomEvent(add, "click", () => {
-			new HabitModal(this.app, this.store, () => this.reload()).open();
+			new HabitModal(
+				this.app,
+				this.store,
+				() => this.reload(),
+				null,
+				this.getSettings().experimental.limitHabits,
+			).open();
 		});
 
 		if (this.habits.length === 0) {
@@ -211,8 +217,12 @@ export class HabitsPanelView extends ItemView {
 				attr: { type: "button" },
 			});
 			this.registerDomEvent(button, "click", () => {
-				new HabitModal(this.app, this.store, () =>
-					this.reload(),
+				new HabitModal(
+					this.app,
+					this.store,
+					() => this.reload(),
+					null,
+					this.getSettings().experimental.limitHabits,
 				).open();
 			});
 			return;
@@ -280,6 +290,28 @@ export class HabitsPanelView extends ItemView {
 		const done = this.isDone(habit);
 		row.toggleClass("is-done", done);
 
+		if (habit.type === "binary" && habit.goalDirection === "max") {
+			// A limit day is clean unless a slip is logged, so the toggle
+			// inverts: it records the slip, and records it back away.
+			const slipped = this.valueOf(habit) >= 1;
+			row.toggleClass("is-slipped", slipped);
+			const toggle = main.createEl("button", {
+				cls: "habits-panel-toggle habits-panel-slip-toggle",
+				attr: {
+					type: "button",
+					"aria-label": slipped
+						? t("Mark as clean")
+						: t("Mark as slipped"),
+					"aria-pressed": String(slipped),
+				},
+			});
+			setIcon(toggle, slipped ? "x" : "check");
+			this.registerDomEvent(toggle, "click", async () => {
+				await this.commit(habit, slipped ? 0 : 1, row);
+			});
+			return;
+		}
+
 		if (habit.type === "binary") {
 			const toggle = main.createEl("button", {
 				cls: "habits-panel-toggle",
@@ -298,9 +330,12 @@ export class HabitsPanelView extends ItemView {
 
 		const value = this.valueOf(habit);
 		const timed = habit.type === "timed";
+		const isMax = habit.goalDirection === "max";
+		const goalValue = isMax ? limitOf(habit) : habit.target;
+		row.toggleClass("is-slipped", isMax && !done);
 		const valueBtn = main.createEl("button", {
 			cls: "habits-panel-value",
-			text: `${value}/${habit.target}`,
+			text: `${value}/${goalValue}`,
 			attr: { type: "button", "aria-label": t("Edit value") },
 		});
 		setTooltip(valueBtn, t("Click to type a value"));
@@ -347,12 +382,19 @@ export class HabitsPanelView extends ItemView {
 		const fill = progress.createDiv({
 			cls: "habits-panel-progress-fill",
 		});
-		const pct =
-			habit.target > 0
+		const pct = isMax
+			? goalValue > 0
+				? Math.min(100, Math.round((value / goalValue) * 100))
+				: value > 0
+					? 100
+					: 0
+			: habit.target > 0
 				? Math.min(100, Math.round((value / habit.target) * 100))
 				: 0;
 		fill.setCssProps({ "--habits-progress": `${pct}%` });
-		if (done) {
+		if (isMax && !done) {
+			progress.addClass("is-over");
+		} else if (done) {
 			progress.addClass("is-complete");
 		}
 	}
@@ -430,7 +472,13 @@ export class HabitsPanelView extends ItemView {
 		this.suppressAutoReload = true;
 		try {
 			await this.store.setRecord(habit, dateKey, clamped);
-			if (!wasDone && this.isDone(habit)) {
+			// Limit habits celebrate quietly: recovering from a slip or
+			// logging under the limit should not flash a completion check.
+			if (
+				!wasDone &&
+				this.isDone(habit) &&
+				habit.goalDirection !== "max"
+			) {
 				row.addClass("is-celebrating");
 				const flash = row.createDiv({ cls: "habits-panel-flash" });
 				const icon = flash.createSpan({
@@ -477,6 +525,7 @@ export class HabitsPanelView extends ItemView {
 						this.store,
 						() => this.reload(),
 						habit,
+						this.getSettings().experimental.limitHabits,
 					).open();
 				}),
 		);

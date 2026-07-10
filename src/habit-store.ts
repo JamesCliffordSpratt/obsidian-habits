@@ -89,6 +89,7 @@ export class HabitStore {
 			path: file.path,
 			name: file.basename,
 			type: fm.type,
+			goalDirection: fm.goalDirection === "max" ? "max" : "min",
 			frequency: isHabitFrequency(fm.frequency)
 				? fm.frequency
 				: "daily",
@@ -442,8 +443,15 @@ export class HabitStore {
 			const fm = frontmatter as Record<string, unknown>;
 			fm.habit = true;
 			fm.type = options.type;
+			// Only limit habits store the field; its absence means "min", so
+			// notes created before the field existed keep their meaning.
+			if (options.goalDirection === "max") {
+				fm.goalDirection = "max";
+			}
 			this.writeFrequency(fm, options);
 			if (options.type !== "binary") {
+				// A limit of 0 is meaningful ("none at all"), so max habits
+				// always write the field even when it is zero.
 				fm.target = options.target;
 			}
 			if (options.unit) {
@@ -515,6 +523,11 @@ export class HabitStore {
 			const fm = frontmatter as Record<string, unknown>;
 			fm.habit = true;
 			fm.type = options.type;
+			if (options.goalDirection === "max") {
+				fm.goalDirection = "max";
+			} else {
+				delete fm.goalDirection;
+			}
 			this.writeFrequency(fm, options);
 			if (options.type === "binary") {
 				delete fm.target;

@@ -239,4 +239,30 @@ export const es: Record<string, string> = {
 	"Add a comment for this day…": "Añade un comentario para este día…",
 	Comments: "Comentarios",
 	"+{n} more": "+{n} más",
+
+	// Limit habits (experimental)
+	Experimental: "Experimental",
+	"These features are still being tested and may change before they become permanent. Turning one off only hides it from menus — anything you created with it keeps working.":
+		"Estas funciones aún se están probando y pueden cambiar antes de ser permanentes. Desactivarlas solo las oculta de los menús: todo lo que hayas creado con ellas sigue funcionando.",
+	"Break bad habits": "Romper malos hábitos",
+	"Track habits you want to reduce or avoid by staying under a daily limit — for example at most 2 hours of gaming, or no smoking at all.":
+		"Controla hábitos que quieres reducir o evitar manteniéndote por debajo de un límite diario — por ejemplo, como máximo 2 horas de videojuegos, o no fumar en absoluto.",
+	Goal: "Objetivo",
+	"Reach a target for habits you are building. Stay under a limit for habits you are cutting down or giving up.":
+		"Alcanza una meta para hábitos que estás construyendo. Mantente bajo un límite para hábitos que estás reduciendo o dejando.",
+	"Reach a target": "Alcanzar una meta",
+	"Stay under a limit": "Mantenerse bajo un límite",
+	"Binary means avoiding it entirely. Repetition counts against a daily limit. Timed tracks minutes against a daily limit.":
+		"Binario significa evitarlo por completo. Repetición cuenta contra un límite diario. Cronometrado mide minutos contra un límite diario.",
+	"Daily limit": "Límite diario",
+	"Daily limit (minutes)": "Límite diario (minutos)",
+	"0 means none at all.": "0 significa nada en absoluto.",
+	"Set an optional weekly or monthly goal for how many days you stay within your limit. Turn on a perfect toggle to aim for every day of the period automatically, whatever its length.":
+		"Establece una meta semanal o mensual opcional de cuántos días te mantienes dentro de tu límite. Activa un interruptor de perfección para aspirar automáticamente a todos los días del período, sea cual sea su duración.",
+	Clean: "Limpio",
+	Slipped: "Recaída",
+	"Mark as clean": "Marcar como limpio",
+	"Mark as slipped": "Marcar como recaída",
+	"Days within limit": "Días dentro del límite",
+	Limit: "Límite",
 };
