@@ -52,10 +52,33 @@ class FolderSuggest extends AbstractInputSuggest<TFolder> {
 export interface ExperimentalFlags {
 	/** Limit ("break") habits: goals that mean staying under a maximum. */
 	limitHabits: boolean;
+	/** AI-generated summaries on the weekly and monthly stats tabs. */
+	aiSummaries: boolean;
 }
 
 export const DEFAULT_EXPERIMENTAL: ExperimentalFlags = {
 	limitHabits: false,
+	aiSummaries: false,
+};
+
+/**
+ * Connection details for the AI summaries feature. Any OpenAI-compatible
+ * chat-completions endpoint works, including local servers (Ollama,
+ * LM Studio), in which case the API key may be left blank.
+ */
+export interface AiSummarySettings {
+	/** Endpoint base URL, e.g. `https://api.openai.com/v1`. */
+	baseUrl: string;
+	/** Bearer token for the endpoint. May be blank for local servers. */
+	apiKey: string;
+	/** Model name to request, e.g. `gpt-4o-mini`. */
+	model: string;
+}
+
+export const DEFAULT_AI_SUMMARY: AiSummarySettings = {
+	baseUrl: "https://api.openai.com/v1",
+	apiKey: "",
+	model: "gpt-4o-mini",
 };
 
 /** User-configurable settings for the plugin. */
@@ -73,8 +96,14 @@ export interface HabitsPluginSettings {
 	followDailyNoteDate: boolean;
 	/** Show the comment flap on dashboard cards. */
 	enableComments: boolean;
+	/** Split the stats page's habit rows into carousel pages. */
+	statsCarousel: boolean;
+	/** How many habit rows each stats carousel page shows. */
+	statsRowsPerPage: number;
 	/** Opt-in switches for features that are still being tested. */
 	experimental: ExperimentalFlags;
+	/** Connection details used when AI summaries are enabled. */
+	aiSummary: AiSummarySettings;
 }
 
 export const DEFAULT_SETTINGS: HabitsPluginSettings = {
@@ -83,7 +112,10 @@ export const DEFAULT_SETTINGS: HabitsPluginSettings = {
 	mobileCardsPerView: 2,
 	followDailyNoteDate: true,
 	enableComments: true,
+	statsCarousel: false,
+	statsRowsPerPage: 4,
 	experimental: { ...DEFAULT_EXPERIMENTAL },
+	aiSummary: { ...DEFAULT_AI_SUMMARY },
 };
 
 /** Settings tab shown under Settings → Community plugins → Habits. */
@@ -191,6 +223,52 @@ export class HabitsSettingTab extends PluginSettingTab {
 					}),
 			);
 
+		new Setting(containerEl)
+			.setName(t("Stats page carousel"))
+			.setDesc(
+				t(
+					"Show the per-habit stats as pages you can flip through instead of one long list.",
+				),
+			)
+			.addToggle((toggle) =>
+				toggle
+					.setValue(this.plugin.settings.statsCarousel)
+					.onChange(async (value) => {
+						this.plugin.settings.statsCarousel = value;
+						await this.plugin.saveSettings();
+						// Show or hide the page-size option with the toggle.
+						renderCarouselOptions();
+					}),
+			);
+
+		// The page-size option lives in its own container so toggling the
+		// carousel can redraw just this block instead of the whole tab.
+		const carouselDetails = containerEl.createDiv();
+		const renderCarouselOptions = (): void => {
+			carouselDetails.empty();
+			if (!this.plugin.settings.statsCarousel) {
+				return;
+			}
+			new Setting(carouselDetails)
+				.setName(t("Stats rows per page"))
+				.setDesc(t("How many habits each stats page shows."))
+				.addDropdown((dropdown) => {
+					for (let n = 1; n <= 8; n++) {
+						dropdown.addOption(String(n), String(n));
+					}
+					dropdown
+						.setValue(
+							String(this.plugin.settings.statsRowsPerPage),
+						)
+						.onChange(async (value) => {
+							this.plugin.settings.statsRowsPerPage =
+								Number(value);
+							await this.plugin.saveSettings();
+						});
+				});
+		};
+		renderCarouselOptions();
+
 		this.displayExperimental(containerEl);
 	}
 
@@ -221,6 +299,87 @@ export class HabitsSettingTab extends PluginSettingTab {
 					.setValue(this.plugin.settings.experimental.limitHabits)
 					.onChange(async (value) => {
 						this.plugin.settings.experimental.limitHabits = value;
+						await this.plugin.saveSettings();
+					}),
+			);
+
+		new Setting(containerEl)
+			.setName(t("AI summaries"))
+			.setDesc(
+				t(
+					"Show an AI-generated summary with feedback and advice on the stats page tabs. Uses an OpenAI-compatible service you configure below; your habit stats are sent to it only when you press the generate button.",
+				),
+			)
+			.addToggle((toggle) =>
+				toggle
+					.setValue(this.plugin.settings.experimental.aiSummaries)
+					.onChange(async (value) => {
+						this.plugin.settings.experimental.aiSummaries = value;
+						await this.plugin.saveSettings();
+						// Show or hide the connection fields with the toggle.
+						renderAiFields();
+					}),
+			);
+
+		// The connection fields live in their own container so toggling the
+		// feature can redraw just this block instead of the whole tab.
+		const aiDetails = containerEl.createDiv();
+		const renderAiFields = (): void => {
+			aiDetails.empty();
+			if (this.plugin.settings.experimental.aiSummaries) {
+				this.displayAiSummary(aiDetails);
+			}
+		};
+		renderAiFields();
+	}
+
+	/** Connection fields for the AI summaries feature (shown only when on). */
+	private displayAiSummary(containerEl: HTMLElement): void {
+		new Setting(containerEl)
+			.setName(t("AI base URL"))
+			.setDesc(
+				t(
+					"Base URL of an OpenAI-compatible API. Works with OpenAI, OpenRouter, or local servers like Ollama (http://localhost:11434/v1).",
+				),
+			)
+			.addText((text) =>
+				text
+					.setPlaceholder(DEFAULT_AI_SUMMARY.baseUrl)
+					.setValue(this.plugin.settings.aiSummary.baseUrl)
+					.onChange(async (value) => {
+						this.plugin.settings.aiSummary.baseUrl =
+							value.trim() || DEFAULT_AI_SUMMARY.baseUrl;
+						await this.plugin.saveSettings();
+					}),
+			);
+
+		new Setting(containerEl)
+			.setName(t("AI API key"))
+			.setDesc(
+				t(
+					"Stored locally in this vault's plugin data. Leave blank for local servers that need no key.",
+				),
+			)
+			.addText((text) => {
+				text.inputEl.type = "password";
+				text
+					.setValue(this.plugin.settings.aiSummary.apiKey)
+					.onChange(async (value) => {
+						this.plugin.settings.aiSummary.apiKey = value.trim();
+						await this.plugin.saveSettings();
+					});
+			});
+
+		new Setting(containerEl)
+			.setName(t("AI model"))
+			.setDesc(t("Model name the service should use."))
+			.addText((text) =>
+				text
+					.setPlaceholder(DEFAULT_AI_SUMMARY.model)
+					.setValue(this.plugin.settings.aiSummary.model)
+					.onChange(async (value) => {
+						this.plugin.settings.aiSummary.model =
+							value.trim() || DEFAULT_AI_SUMMARY.model;
 						await this.plugin.saveSettings();
 					}),
 			);

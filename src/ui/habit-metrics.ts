@@ -22,7 +22,7 @@ import {
 	isDue,
 	isPausedOn,
 	limitOf,
-	limitStartKey,
+	trackingStartKey,
 	longestStreak,
 } from "../stats";
 import { addDays, fromDateKey, toDateKey } from "../utils";
@@ -218,7 +218,7 @@ export class HabitMetrics extends MarkdownRenderChild {
 			// Unlogged days count as within limit, so successes cannot be
 			// counted from logged records alone; walk the tracked window.
 			completedDays = 0;
-			const start = fromDateKey(limitStartKey(habit, today));
+			const start = fromDateKey(trackingStartKey(habit, today));
 			if (start) {
 				const end = toDateKey(today);
 				for (
@@ -249,12 +249,9 @@ export class HabitMetrics extends MarkdownRenderChild {
 			RECENT_POINTS[habit.frequency],
 			today,
 		);
-		// Limit habits only start scoring on their start day; including
-		// earlier dates would count days before the habit existed as misses.
-		const maxStartKey =
-			habit.goalDirection === "max"
-				? limitStartKey(habit, today)
-				: "";
+		// Habits only start scoring on their start day; including earlier
+		// dates would count days before the habit existed as misses.
+		const startKey = trackingStartKey(habit, today);
 		let recentDue = 0;
 		let recentHits = 0;
 		for (const date of recentDates) {
@@ -262,7 +259,7 @@ export class HabitMetrics extends MarkdownRenderChild {
 			if (isPausedOn(habit, key)) {
 				continue;
 			}
-			if (maxStartKey && key < maxStartKey) {
+			if (key < startKey) {
 				continue;
 			}
 			recentDue++;
@@ -413,11 +410,8 @@ export class HabitMetrics extends MarkdownRenderChild {
 				if (isPausedOn(habit, key)) {
 					continue;
 				}
-				// Days before a limit habit started don't count against it.
-				if (
-					habit.goalDirection === "max" &&
-					key < limitStartKey(habit, today)
-				) {
+				// Days before the habit started don't count against it.
+				if (key < trackingStartKey(habit, today)) {
 					continue;
 				}
 				elapsed++;

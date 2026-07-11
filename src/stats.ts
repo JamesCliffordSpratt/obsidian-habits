@@ -3,8 +3,15 @@ import { addDays, daysInMonth, fromDateKey, toDateKey } from "./utils";
 
 const MS_PER_DAY = 86_400_000;
 
-export type StatsPeriod = "weekly" | "monthly";
+export type StatsPeriod = "weekly" | "monthly" | "custom";
 export type StatsRangeMode = "rolling" | "calendar";
+
+/**
+ * Longest span a custom range may cover. Keeps the per-habit heatmaps
+ * renderable — a full year is 366 cells; an accidental decade would be
+ * thousands.
+ */
+export const MAX_CUSTOM_DAYS = 366;
 
 export interface DateRange {
 	start: Date;
@@ -32,16 +39,46 @@ export function rangeLength(range: DateRange): number {
 }
 
 /**
+ * Bring a user-picked custom range into canonical form: reversed ends are
+ * swapped, times are stripped, and the span is capped at
+ * {@link MAX_CUSTOM_DAYS} (keeping the chosen end). Without a range, the
+ * last 14 days are used as a sensible starting point.
+ */
+export function normalizeCustomRange(
+	custom: DateRange | undefined,
+	today: Date,
+): DateRange {
+	const base = startOfDay(today);
+	if (!custom) {
+		return { start: addDays(base, -13), end: base };
+	}
+	let start = startOfDay(custom.start);
+	let end = startOfDay(custom.end);
+	if (start.getTime() > end.getTime()) {
+		[start, end] = [end, start];
+	}
+	if (rangeLength({ start, end }) > MAX_CUSTOM_DAYS) {
+		start = addDays(end, -(MAX_CUSTOM_DAYS - 1));
+	}
+	return { start, end };
+}
+
+/**
  * Resolve the date range for a period and mode.
  *
  * - rolling: the last 7 or 30 days ending today.
  * - calendar: the current week (Monday–Sunday) or current month (dynamic).
+ * - custom period: the user-picked range (normalized); `mode` is ignored.
  */
 export function getStatsRange(
 	today: Date,
 	period: StatsPeriod,
 	mode: StatsRangeMode,
+	custom?: DateRange,
 ): DateRange {
+	if (period === "custom") {
+		return normalizeCustomRange(custom, today);
+	}
 	const base = startOfDay(today);
 	if (mode === "rolling") {
 		const length = period === "weekly" ? 7 : 30;
@@ -108,15 +145,17 @@ export function limitOf(habit: HabitDefinition): number {
 }
 
 /**
- * The first day a `max` habit counts towards scoring.
+ * The first day a habit counts towards scoring.
  *
- * An unlogged day scores as "within limit", so without a lower bound every
- * day since the beginning of time would count as a success — inflating
- * streaks, heatmaps and perfect days. Habits normally carry a `startDate`;
- * for hand-written notes without one, the earliest record is used, and a
- * habit with neither only starts scoring today.
+ * Days before a habit existed must not count at all: for `max` habits an
+ * unlogged day scores as "within limit", so without a lower bound every day
+ * since the beginning of time would count as a success — and for `min`
+ * habits every pre-start day would count as a failure, deflating rates.
+ * Habits normally carry a `startDate`; for hand-written notes without one,
+ * the earliest record is used, and a habit with neither only starts scoring
+ * today.
  */
-export function limitStartKey(
+export function trackingStartKey(
 	habit: HabitDefinition,
 	today: Date = new Date(),
 ): string {
@@ -141,7 +180,7 @@ export function limitStartKey(
 export function isComplete(habit: HabitDefinition, dateKey: string): boolean {
 	const value = habit.records[dateKey] ?? 0;
 	if (habit.goalDirection === "max") {
-		if (dateKey < limitStartKey(habit)) {
+		if (dateKey < trackingStartKey(habit)) {
 			return false;
 		}
 		return value <= limitOf(habit);
@@ -220,7 +259,7 @@ export function longestStreak(
 	let first: Date | null;
 	let last: Date | null;
 	if (habit.goalDirection === "max") {
-		first = fromDateKey(limitStartKey(habit, today));
+		first = fromDateKey(trackingStartKey(habit, today));
 		last = startOfDay(today);
 		if (!first || first.getTime() > last.getTime()) {
 			return 0;
@@ -271,20 +310,30 @@ function elapsedEnd(range: DateRange, today: Date): number {
 	return Math.min(range.end.getTime(), startOfDay(today).getTime());
 }
 
-/** Aggregate a single habit's stats over the elapsed days of a range. */
+/**
+ * Aggregate a single habit's stats over the elapsed days of a range.
+ * Days before the habit's tracking start (see {@link trackingStartKey}) are
+ * excluded entirely — the habit did not exist yet, so they count neither as
+ * successes nor as failures.
+ */
 export function habitStats(
 	habit: HabitDefinition,
 	range: DateRange,
 	today: Date,
 ): HabitPeriodStats {
 	const end = elapsedEnd(range, today);
+	const startKey = trackingStartKey(habit, today);
 	let days = 0;
 	let completed = 0;
 	let total = 0;
 	let cursor = new Date(range.start);
 	while (cursor.getTime() <= end) {
 		const key = toDateKey(cursor);
-		if (!isDue(habit, cursor) || isPausedOn(habit, key)) {
+		if (
+			key < startKey ||
+			!isDue(habit, cursor) ||
+			isPausedOn(habit, key)
+		) {
 			cursor = addDays(cursor, 1);
 			continue;
 		}
@@ -322,8 +371,9 @@ export function habitStats(
 
 /**
  * Count elapsed days in the range where every habit was complete.
- * Habits paused on a given day are ignored for that day; a day with every
- * habit paused cannot be perfect.
+ * Habits paused on a given day are ignored for that day, as are habits not
+ * yet being tracked; a day with every habit paused or untracked cannot be
+ * perfect.
  */
 export function perfectDays(
 	habits: HabitDefinition[],
@@ -334,13 +384,17 @@ export function perfectDays(
 		return 0;
 	}
 	const end = elapsedEnd(range, today);
+	const startKeys = habits.map((habit) => trackingStartKey(habit, today));
 	let count = 0;
 	let cursor = new Date(range.start);
 	while (cursor.getTime() <= end) {
 		const key = toDateKey(cursor);
 		const date = cursor;
 		const active = habits.filter(
-			(habit) => isDue(habit, date) && !isPausedOn(habit, key),
+			(habit, i) =>
+				key >= startKeys[i] &&
+				isDue(habit, date) &&
+				!isPausedOn(habit, key),
 		);
 		if (
 			active.length > 0 &&

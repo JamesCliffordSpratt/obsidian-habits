@@ -839,6 +839,27 @@
 	font-size: var(--font-ui-small);
 }
 
+/* From/to pickers on the custom stats tab. */
+.habits-custom-range {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.4rem;
+}
+
+.habits-dashboard input.habits-custom-date {
+	font-size: var(--font-ui-small);
+	padding: 0.15rem 0.45rem;
+	background: var(--background-primary);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: var(--radius-s);
+	color: var(--text-normal);
+}
+
+.habits-custom-range-sep {
+	color: var(--text-muted);
+}
+
 .habits-stats-summary {
 	display: grid;
 	grid-template-columns: repeat(auto-fit, minmax(4.5rem, 1fr));
@@ -870,10 +891,105 @@
 	font-size: var(--font-ui-smaller);
 }
 
+.habits-ai-summary {
+	margin-bottom: 0.85rem;
+	padding: 0.7rem 0.8rem;
+	background: var(--background-primary);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: var(--radius-m);
+}
+
+.habits-ai-summary-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.5rem;
+	margin-bottom: 0.4rem;
+}
+
+.habits-ai-summary-title {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.35rem;
+	font-weight: var(--font-semibold);
+	font-size: var(--font-ui-small);
+}
+
+.habits-ai-summary-icon {
+	display: inline-flex;
+	color: var(--interactive-accent);
+}
+
+.habits-ai-summary-icon svg {
+	width: 1em;
+	height: 1em;
+}
+
+.habits-ai-summary-button {
+	font-size: var(--font-ui-smaller);
+	padding: 0.25rem 0.7rem;
+	border-radius: var(--radius-s);
+	cursor: pointer;
+}
+
+.habits-ai-summary-button:disabled {
+	opacity: 0.6;
+	cursor: default;
+}
+
+.habits-ai-summary-body p {
+	margin: 0 0 0.5rem;
+	font-size: var(--font-ui-small);
+	line-height: 1.45;
+}
+
+.habits-ai-summary-body p:last-child {
+	margin-bottom: 0;
+}
+
+.habits-ai-summary-body.is-muted p {
+	color: var(--text-muted);
+}
+
+.habits-ai-summary.is-loading .habits-ai-summary-body p {
+	animation: habits-ai-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes habits-ai-pulse {
+	0%,
+	100% {
+		opacity: 1;
+	}
+	50% {
+		opacity: 0.45;
+	}
+}
+
 .habits-stats-list {
 	display: flex;
 	flex-direction: column;
 	gap: 0.6rem;
+}
+
+/* Stats carousel: pages of habit rows sliding horizontally. */
+.habits-stats-carousel-viewport {
+	overflow: hidden;
+}
+
+.habits-stats-carousel-track {
+	display: flex;
+	align-items: flex-start;
+	transform: translateX(var(--habits-stats-translate, 0%));
+	transition: transform 0.3s ease;
+}
+
+.habits-stats-page {
+	flex: 0 0 100%;
+	min-width: 0;
+}
+
+.habits-stats-carousel-controls {
+	margin-top: 0.6rem;
 }
 
 .habits-stats-row {
@@ -997,6 +1113,43 @@
 .habits-stats-cell.is-notdue {
 	background: transparent;
 	opacity: 0.25;
+}
+
+.habits-stats-cell.is-prestart {
+	background: transparent;
+	border: 1px dotted var(--background-modifier-border);
+	opacity: 0.35;
+}
+
+.habits-stats-cell.is-start {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+/* Filled play icon marking the first tracked day. Accent-coloured on
+   neutral cells; flipped to the on-accent text colour when the cell
+   itself is filled with the accent (start day already complete). */
+.habits-stats-cell.is-start svg {
+	width: 72%;
+	height: 72%;
+	color: var(--habits-accent);
+	fill: currentcolor;
+}
+
+.habits-stats-cell.is-start.is-complete svg {
+	color: var(--text-on-accent);
+}
+
+/* A partial start cell would fade the icon along with the whole-cell
+   opacity; keep the icon solid and fade only the background instead. */
+.habits-stats-cell.is-start.is-partial {
+	opacity: 1;
+	background: color-mix(in srgb, var(--habits-accent) 45%, transparent);
+}
+
+.habits-stats-cell.is-start.is-partial svg {
+	color: var(--text-on-accent);
 }
 
 /* Stats per-habit goal progress */

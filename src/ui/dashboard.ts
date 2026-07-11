@@ -22,6 +22,8 @@ import {
 	isDue,
 	isPausedOn,
 	limitOf,
+	normalizeCustomRange,
+	type DateRange,
 	type StatsPeriod,
 	type StatsRangeMode,
 } from "../stats";
@@ -50,6 +52,8 @@ export class HabitsDashboard extends MarkdownRenderChild {
 	private mode: "dashboard" | "stats" = "dashboard";
 	private statsPeriod: StatsPeriod = "weekly";
 	private statsRange: StatsRangeMode = "rolling";
+	/** User-picked range for the custom stats tab (null until first use). */
+	private customRange: DateRange | null = null;
 
 	private root: HTMLElement;
 	private trackEl: HTMLElement | null = null;
@@ -182,12 +186,22 @@ export class HabitsDashboard extends MarkdownRenderChild {
 			this.renderStatsHeader();
 			this.renderRangeToggle();
 			const body = this.root.createDiv();
+			const settings = this.getSettings();
 			renderStatsView(
 				body,
 				this.habits,
 				this.statsPeriod,
 				this.statsRange,
 				new Date(),
+				this.statsPeriod === "custom"
+					? this.normalizedCustomRange()
+					: undefined,
+				settings.experimental.aiSummaries
+					? settings.aiSummary
+					: undefined,
+				settings.statsCarousel
+					? settings.statsRowsPerPage
+					: undefined,
 			);
 			return;
 		}
@@ -225,6 +239,7 @@ export class HabitsDashboard extends MarkdownRenderChild {
 		const periods: { id: StatsPeriod; label: string }[] = [
 			{ id: "weekly", label: t("Weekly") },
 			{ id: "monthly", label: t("Monthly") },
+			{ id: "custom", label: t("Custom") },
 		];
 		for (const entry of periods) {
 			const tab = tabs.createEl("button", {
@@ -245,12 +260,71 @@ export class HabitsDashboard extends MarkdownRenderChild {
 		});
 		setIcon(download, "download");
 		this.registerDomEvent(download, "click", () => {
-			new ExportModal(this.app, this.habits).open();
+			const settings = this.getSettings();
+			new ExportModal(
+				this.app,
+				this.habits,
+				settings.experimental.aiSummaries
+					? settings.aiSummary
+					: undefined,
+			).open();
+		});
+	}
+
+	/**
+	 * The custom range, normalized (swapped ends, span capped) and written
+	 * back so the pickers always show what is actually rendered.
+	 */
+	private normalizedCustomRange(): DateRange {
+		const range = normalizeCustomRange(
+			this.customRange ?? undefined,
+			new Date(),
+		);
+		this.customRange = range;
+		return range;
+	}
+
+	/** From/to date pickers shown in place of the rolling/calendar toggle. */
+	private renderCustomRangePicker(): void {
+		const wrap = this.root.createDiv({
+			cls: "habits-range-toggle habits-custom-range",
+		});
+		const range = this.normalizedCustomRange();
+
+		const makeInput = (
+			value: string,
+			label: string,
+			onPick: (date: Date) => void,
+		): void => {
+			const input = wrap.createEl("input", {
+				cls: "habits-custom-date",
+				attr: { type: "date", "aria-label": label },
+			});
+			input.value = value;
+			this.registerDomEvent(input, "change", () => {
+				const parsed = fromDateKey(input.value);
+				if (parsed) {
+					onPick(parsed);
+					this.render();
+				}
+			});
+		};
+
+		makeInput(toDateKey(range.start), t("Start date"), (date) => {
+			this.customRange = { start: date, end: range.end };
+		});
+		wrap.createSpan({ cls: "habits-custom-range-sep", text: "–" });
+		makeInput(toDateKey(range.end), t("End date"), (date) => {
+			this.customRange = { start: range.start, end: date };
 		});
 	}
 
 	/** Segmented toggle between rolling and calendar date ranges. */
 	private renderRangeToggle(): void {
+		if (this.statsPeriod === "custom") {
+			this.renderCustomRangePicker();
+			return;
+		}
 		const wrap = this.root.createDiv({ cls: "habits-range-toggle" });
 		const weekly = this.statsPeriod === "weekly";
 		const options: { id: StatsRangeMode; label: string }[] = [

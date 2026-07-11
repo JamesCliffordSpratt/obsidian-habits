@@ -2,6 +2,7 @@ import { Editor, Events, Plugin, type WorkspaceLeaf } from "obsidian";
 import { t } from "./i18n";
 import { HabitStore } from "./habit-store";
 import {
+	DEFAULT_AI_SUMMARY,
 	DEFAULT_EXPERIMENTAL,
 	DEFAULT_SETTINGS,
 	HabitsSettingTab,
@@ -144,6 +145,10 @@ export default class HabitsPlugin extends Plugin {
 		this.settings.experimental = {
 			...DEFAULT_EXPERIMENTAL,
 			...(data?.experimental ?? {}),
+		};
+		this.settings.aiSummary = {
+			...DEFAULT_AI_SUMMARY,
+			...(data?.aiSummary ?? {}),
 		};
 	}
 

@@ -20,6 +20,12 @@ import {
 } from "chart.js";
 import { jsPDF } from "jspdf";
 import type { HabitDefinition } from "../types";
+import type { AiSummarySettings } from "../settings";
+import {
+	buildStatsDigest,
+	generateSummary,
+	getCachedSummary,
+} from "../ai-summary";
 import {
 	getStatsRange,
 	habitStats,
@@ -75,6 +81,7 @@ interface ExportOptions {
 	customStart: string;
 	customEnd: string;
 	includeSummary: boolean;
+	includeAiSummary: boolean;
 	includeTrend: boolean;
 	includeGrid: boolean;
 	includeGoals: boolean;
@@ -93,8 +100,35 @@ interface RGB {
 type Block =
 	| { kind: "title" }
 	| { kind: "summary"; tiles: { value: string; label: string }[] }
+	| { kind: "ai"; lines: string[] }
 	| { kind: "chart" }
 	| { kind: "habit"; habit: HabitDefinition; stats: HabitPeriodStats };
+
+/**
+ * Wrap plain text into lines of at most `maxChars` characters, breaking on
+ * words. Both the preview and the PDF render these exact lines, so their
+ * block heights (and page breaks) can never disagree — which is why this
+ * uses a character estimate instead of each renderer's own text metrics.
+ */
+function wrapPlainText(text: string, maxChars: number): string[] {
+	const lines: string[] = [];
+	for (const paragraph of text.split(/\n+/)) {
+		let line = "";
+		for (const word of paragraph.split(/\s+/).filter(Boolean)) {
+			const candidate = line === "" ? word : `${line} ${word}`;
+			if (candidate.length > maxChars && line !== "") {
+				lines.push(line);
+				line = word;
+			} else {
+				line = candidate;
+			}
+		}
+		if (line !== "") {
+			lines.push(line);
+		}
+	}
+	return lines;
+}
 
 /** Shared layout facts used by both the preview and the PDF renderer. */
 interface RenderCtx {
@@ -137,6 +171,7 @@ export class ExportModal extends Modal {
 		customStart: toDateKey(addDays(new Date(), -6)),
 		customEnd: toDateKey(new Date()),
 		includeSummary: true,
+		includeAiSummary: false,
 		includeTrend: true,
 		includeGrid: true,
 		includeGoals: true,
@@ -152,9 +187,20 @@ export class ExportModal extends Modal {
 	private trendKey = "";
 	private requestRefresh = debounce(() => void this.refresh(), 150, true);
 
+	/** The generated AI summary text, once available. */
+	private aiText: string | null = null;
+	/** Digest the current `aiText` (or in-flight request) belongs to. */
+	private aiDigest = "";
+	/** True while a summary request is in flight. */
+	private aiPending = false;
+	/** Message shown in the block when the last request failed. */
+	private aiError: string | null = null;
+
 	constructor(
 		app: App,
 		private habits: HabitDefinition[],
+		/** Set only when the AI summaries experimental feature is enabled. */
+		private aiSettings?: AiSummarySettings,
 	) {
 		super(app);
 	}
@@ -242,6 +288,23 @@ export class ExportModal extends Modal {
 
 		new Setting(root).setName(t("Content")).setHeading();
 		this.contentToggle(root, t("Summary tiles"), "includeSummary");
+		if (this.aiSettings) {
+			new Setting(root)
+				.setName(t("AI summary"))
+				.setDesc(
+					t(
+						"Adds an AI-generated overview with feedback and advice. Your habit stats are sent to your configured AI service.",
+					),
+				)
+				.addToggle((toggle) =>
+					toggle
+						.setValue(this.options.includeAiSummary)
+						.onChange((value) => {
+							this.options.includeAiSummary = value;
+							this.requestRefresh();
+						}),
+				);
+		}
 		this.contentToggle(root, t("Completion trend chart"), "includeTrend");
 		this.contentToggle(root, t("Daily grids"), "includeGrid");
 		this.contentToggle(root, t("Goal progress"), "includeGoals");
@@ -432,6 +495,80 @@ export class ExportModal extends Modal {
 		return 0;
 	}
 
+	// ------------------------------------------------------------------
+	// AI summary (opt-in block, experimental feature)
+
+	/**
+	 * Keep `aiText` in sync with the currently selected range. Called on
+	 * every preview refresh; a request is only sent when the block is
+	 * enabled and no summary (cached or in flight) exists for the range's
+	 * digest, so idle refreshes never touch the network.
+	 */
+	private ensureAiSummary(range: DateRange): void {
+		if (!this.aiSettings || !this.options.includeAiSummary) {
+			return;
+		}
+		const digest = buildStatsDigest(
+			this.habits,
+			"custom",
+			"calendar",
+			new Date(),
+			range,
+		);
+		if (digest === this.aiDigest && (this.aiText !== null || this.aiPending)) {
+			return;
+		}
+		this.aiDigest = digest;
+		this.aiError = null;
+		this.aiText = getCachedSummary(
+			this.aiSettings,
+			"custom",
+			"calendar",
+			digest,
+		);
+		if (this.aiText !== null) {
+			return;
+		}
+		this.aiPending = true;
+		generateSummary(this.aiSettings, "custom", "calendar", digest)
+			.then((text) => {
+				// A slower response for an older range must not clobber
+				// the summary of the range the user has since picked.
+				if (digest === this.aiDigest) {
+					this.aiText = text;
+				}
+			})
+			.catch((error: unknown) => {
+				if (digest === this.aiDigest) {
+					this.aiError =
+						error instanceof Error
+							? error.message
+							: String(error);
+				}
+			})
+			.finally(() => {
+				this.aiPending = false;
+				this.requestRefresh();
+			});
+	}
+
+	/** Widest line (in characters) that fits the content width at 8pt. */
+	private aiMaxChars(ctx: RenderCtx): number {
+		const charW = 8 * 0.3528 * 0.52 * ctx.s;
+		return Math.max(20, Math.floor((ctx.contentW - 2) / charW));
+	}
+
+	/** The AI block's lines for the current state (text, loading, error). */
+	private aiLines(ctx: RenderCtx): string[] {
+		const text =
+			this.aiText ??
+			(this.aiPending
+				? t("Generating AI summary…")
+				: (this.aiError ??
+					t("The AI summary will be generated when you export.")));
+		return wrapPlainText(text, this.aiMaxChars(ctx));
+	}
+
 	private blockHeight(block: Block, ctx: RenderCtx): number {
 		const s = ctx.s;
 		switch (block.kind) {
@@ -439,6 +576,8 @@ export class ExportModal extends Modal {
 				return 18 * s;
 			case "summary":
 				return 22 * s;
+			case "ai":
+				return 5 * s + block.lines.length * 4.5 * s + 2;
 			case "chart":
 				return 8 * s + ctx.contentW * 0.3;
 			case "habit": {
@@ -469,7 +608,7 @@ export class ExportModal extends Modal {
 		}
 	}
 
-	private buildBlocks(ctx: RenderCtx): Block[] {
+	private buildBlocks(ctx: RenderCtx, forPdf = false): Block[] {
 		const today = new Date();
 		const blocks: Block[] = [{ kind: "title" }];
 
@@ -502,6 +641,17 @@ export class ExportModal extends Modal {
 					{ value: `${best}`, label: docT("Best streak") },
 				],
 			});
+		}
+		// The preview shows the block in every state (text, generating,
+		// error) so the user sees what is happening; the PDF itself only
+		// ever includes real text — a failed generation is dropped rather
+		// than printed as an error message.
+		if (
+			this.options.includeAiSummary &&
+			this.aiSettings &&
+			(!forPdf || this.aiText !== null)
+		) {
+			blocks.push({ kind: "ai", lines: this.aiLines(ctx) });
 		}
 		if (this.options.includeTrend && this.trendImage) {
 			blocks.push({ kind: "chart" });
@@ -638,6 +788,7 @@ export class ExportModal extends Modal {
 		}
 		const range = this.computeRange();
 		const ctx = this.renderCtx(range);
+		this.ensureAiSummary(range);
 		await this.ensureTrendImage(ctx);
 
 		const root = this.previewEl;
@@ -804,6 +955,25 @@ export class ExportModal extends Modal {
 			return;
 		}
 
+		if (block.kind === "ai") {
+			font(
+				el.createDiv({
+					cls: "habits-export-section",
+					text: docT("AI summary"),
+				}),
+				9,
+			);
+			for (const lineText of block.lines) {
+				const line = el.createDiv({ cls: "habits-export-comment" });
+				line.setCssProps({
+					"--hx-line-h": `${4.5 * ctx.s * PX}px`,
+				});
+				line.setText(lineText);
+				font(line, 8);
+			}
+			return;
+		}
+
 		if (block.kind === "chart") {
 			font(
 				el.createDiv({
@@ -933,8 +1103,46 @@ export class ExportModal extends Modal {
 		}
 		const range = this.computeRange();
 		const ctx = this.renderCtx(range);
+
+		// The AI summary must be in hand before the pages are laid out —
+		// its block height depends on the text. Waiting here covers both a
+		// request still in flight and one never started (e.g. the user
+		// enabled the toggle and exported immediately).
+		if (
+			this.aiSettings &&
+			this.options.includeAiSummary &&
+			this.aiText === null
+		) {
+			new Notice(t("Generating AI summary…"));
+			const digest = buildStatsDigest(
+				this.habits,
+				"custom",
+				"calendar",
+				new Date(),
+				range,
+			);
+			this.aiDigest = digest;
+			try {
+				this.aiText = await generateSummary(
+					this.aiSettings,
+					"custom",
+					"calendar",
+					digest,
+				);
+				this.aiError = null;
+			} catch (error) {
+				const message =
+					error instanceof Error ? error.message : String(error);
+				new Notice(
+					t("Could not generate a summary: {message}", { message }),
+				);
+				this.aiError = message;
+			}
+			this.requestRefresh();
+		}
+
 		await this.ensureTrendImage(ctx);
-		const pages = this.paginate(this.buildBlocks(ctx), ctx);
+		const pages = this.paginate(this.buildBlocks(ctx, true), ctx);
 
 		const doc = new jsPDF({
 			orientation: this.options.orientation,
@@ -1069,6 +1277,22 @@ export class ExportModal extends Modal {
 	): void {
 		const s = ctx.s;
 		const x = MARGIN;
+
+		if (block.kind === "ai") {
+			doc.setFont("helvetica", "bold");
+			doc.setFontSize(9 * s);
+			doc.setTextColor(TEXT.r, TEXT.g, TEXT.b);
+			doc.text(docT("AI summary"), x, y + 4 * s);
+			doc.setFont("helvetica", "normal");
+			doc.setFontSize(8 * s);
+			doc.setTextColor(85, 85, 85);
+			let ty = y + 4 * s;
+			for (const line of block.lines) {
+				ty += 4.5 * s;
+				doc.text(line, x, ty);
+			}
+			return;
+		}
 
 		if (block.kind === "title") {
 			doc.setFont("helvetica", "bold");
