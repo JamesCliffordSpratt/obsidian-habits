@@ -265,4 +265,71 @@ export const es: Record<string, string> = {
 	"Mark as slipped": "Marcar como recaída",
 	"Days within limit": "Días dentro del límite",
 	Limit: "Límite",
+
+	// Frequencies and per-note metrics
+	Frequency: "Frecuencia",
+	Daily: "Diario",
+	"Day of week": "Día de la semana",
+	"Day of month": "Día del mes",
+	"How often this habit is due. Weekly and monthly habits only appear on their due date.":
+		"Con qué frecuencia vence este hábito. Los hábitos semanales y mensuales solo aparecen en su día de vencimiento.",
+	"The weekday this habit is due on.":
+		"El día de la semana en que vence este hábito.",
+	"The day of the month this habit is due. In shorter months it falls due on the last day, so 31 always lands on the final day of the month.":
+		"El día del mes en que vence este hábito. En meses más cortos vence el último día, así que 31 siempre cae en el último día del mes.",
+	"Every {day}": "Cada {day}",
+	"Monthly · day {day}": "Mensual · día {day}",
+	"No habits are due on this day.": "Ningún hábito vence este día.",
+	"Nothing due today.": "Nada vence hoy.",
+	"Weekly activity": "Actividad semanal",
+	"Monthly activity": "Actividad mensual",
+	"Weeks completed": "Semanas completadas",
+	"Months completed": "Meses completados",
+	"Recent rate": "Tasa reciente",
+	"{n}-week completion rate": "Tasa de cumplimiento de {n} semanas",
+	"{n}-month completion rate": "Tasa de cumplimiento de {n} meses",
+
+	// AI summaries
+	"AI summaries": "Resúmenes con IA",
+	"AI summary": "Resumen con IA",
+	"Show an AI-generated summary with feedback and advice on the stats page tabs. Uses an OpenAI-compatible service you configure below; your habit stats are sent to it only when you press the generate button.":
+		"Muestra un resumen generado por IA con comentarios y consejos en las pestañas de la página de estadísticas. Usa un servicio compatible con OpenAI que configuras abajo; tus estadísticas de hábitos se le envían solo cuando pulsas el botón de generar.",
+	"AI base URL": "URL base de IA",
+	"Base URL of an OpenAI-compatible API. Works with OpenAI, OpenRouter, or local servers like Ollama (http://localhost:11434/v1).":
+		"URL base de una API compatible con OpenAI. Funciona con OpenAI, OpenRouter o servidores locales como Ollama (http://localhost:11434/v1).",
+	"AI API key": "Clave de API de IA",
+	"Stored locally in this vault's plugin data. Leave blank for local servers that need no key.":
+		"Se guarda localmente en los datos del plugin de este vault. Déjala en blanco para servidores locales que no necesitan clave.",
+	"AI model": "Modelo de IA",
+	"Model name the service should use.":
+		"Nombre del modelo que debe usar el servicio.",
+	"Generate summary": "Generar resumen",
+	Regenerate: "Regenerar",
+	"Get feedback and advice on your habits for this period. Your stats are sent to the AI service you configured only when you press the button.":
+		"Recibe comentarios y consejos sobre tus hábitos en este período. Tus estadísticas se envían al servicio de IA que configuraste solo cuando pulsas el botón.",
+	"Thinking…": "Pensando…",
+	"Could not generate a summary: {message}":
+		"No se pudo generar el resumen: {message}",
+	"Adds an AI-generated overview with feedback and advice. Your habit stats are sent to your configured AI service.":
+		"Añade un resumen generado por IA con comentarios y consejos. Tus estadísticas de hábitos se envían al servicio de IA configurado.",
+	"Generating AI summary…": "Generando resumen con IA…",
+	"The AI summary will be generated when you export.":
+		"El resumen con IA se generará al exportar.",
+
+	// Custom stats range
+	Custom: "Personalizado",
+	"Start date": "Fecha de inicio",
+	"End date": "Fecha de fin",
+
+	// Heatmap start markers
+	"not tracked yet": "aún sin seguimiento",
+	"started tracking on {date}": "seguimiento iniciado el {date}",
+
+	// Stats carousel
+	"Stats page carousel": "Carrusel en la página de estadísticas",
+	"Show the per-habit stats as pages you can flip through instead of one long list.":
+		"Muestra las estadísticas por hábito como páginas para hojear en lugar de una lista larga.",
+	"Stats rows per page": "Filas de estadísticas por página",
+	"How many habits each stats page shows.":
+		"Cuántos hábitos muestra cada página de estadísticas.",
 };

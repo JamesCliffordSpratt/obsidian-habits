@@ -261,4 +261,67 @@ export const zh: Record<string, string> = {
 	"Mark as slipped": "标记为破戒",
 	"Days within limit": "限额内天数",
 	Limit: "限额",
+
+	// Frequencies and per-note metrics
+	Frequency: "频率",
+	Daily: "每天",
+	"Day of week": "星期几",
+	"Day of month": "每月日期",
+	"How often this habit is due. Weekly and monthly habits only appear on their due date.":
+		"此习惯的到期频率。每周和每月习惯只在到期日显示。",
+	"The weekday this habit is due on.": "此习惯到期的星期几。",
+	"The day of the month this habit is due. In shorter months it falls due on the last day, so 31 always lands on the final day of the month.":
+		"此习惯每月的到期日。在较短的月份中落在最后一天，因此 31 总是落在当月最后一天。",
+	"Every {day}": "每{day}",
+	"Monthly · day {day}": "每月 · 第 {day} 天",
+	"No habits are due on this day.": "这一天没有到期的习惯。",
+	"Nothing due today.": "今天没有到期的习惯。",
+	"Weekly activity": "每周活动",
+	"Monthly activity": "每月活动",
+	"Weeks completed": "已完成周数",
+	"Months completed": "已完成月数",
+	"Recent rate": "近期完成率",
+	"{n}-week completion rate": "{n} 周完成率",
+	"{n}-month completion rate": "{n} 个月完成率",
+
+	// AI summaries
+	"AI summaries": "AI 摘要",
+	"AI summary": "AI 摘要",
+	"Show an AI-generated summary with feedback and advice on the stats page tabs. Uses an OpenAI-compatible service you configure below; your habit stats are sent to it only when you press the generate button.":
+		"在统计页的标签页中显示由 AI 生成的摘要，包含反馈和建议。使用下方配置的 OpenAI 兼容服务；只有按下生成按钮时，习惯统计数据才会发送给它。",
+	"AI base URL": "AI 基础 URL",
+	"Base URL of an OpenAI-compatible API. Works with OpenAI, OpenRouter, or local servers like Ollama (http://localhost:11434/v1).":
+		"OpenAI 兼容 API 的基础 URL。适用于 OpenAI、OpenRouter 或本地服务器（如 Ollama：http://localhost:11434/v1）。",
+	"AI API key": "AI API 密钥",
+	"Stored locally in this vault's plugin data. Leave blank for local servers that need no key.":
+		"保存在此仓库的插件数据中（仅限本地）。本地服务器无需密钥时可留空。",
+	"AI model": "AI 模型",
+	"Model name the service should use.": "服务应使用的模型名称。",
+	"Generate summary": "生成摘要",
+	Regenerate: "重新生成",
+	"Get feedback and advice on your habits for this period. Your stats are sent to the AI service you configured only when you press the button.":
+		"获取本时段习惯的反馈和建议。只有按下按钮时，统计数据才会发送到所配置的 AI 服务。",
+	"Thinking…": "思考中…",
+	"Could not generate a summary: {message}": "无法生成摘要：{message}",
+	"Adds an AI-generated overview with feedback and advice. Your habit stats are sent to your configured AI service.":
+		"添加由 AI 生成的概览，包含反馈和建议。习惯统计数据会发送到所配置的 AI 服务。",
+	"Generating AI summary…": "正在生成 AI 摘要…",
+	"The AI summary will be generated when you export.":
+		"导出时将生成 AI 摘要。",
+
+	// Custom stats range
+	Custom: "自定义",
+	"Start date": "开始日期",
+	"End date": "结束日期",
+
+	// Heatmap start markers
+	"not tracked yet": "尚未跟踪",
+	"started tracking on {date}": "自 {date} 开始跟踪",
+
+	// Stats carousel
+	"Stats page carousel": "统计页轮播",
+	"Show the per-habit stats as pages you can flip through instead of one long list.":
+		"将每个习惯的统计显示为可翻页的页面，而不是一个长列表。",
+	"Stats rows per page": "每页统计行数",
+	"How many habits each stats page shows.": "每页统计显示多少个习惯。",
 };

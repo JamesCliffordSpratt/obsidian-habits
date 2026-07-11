@@ -267,4 +267,72 @@ export const de: Record<string, string> = {
 	"Mark as slipped": "Als ausgerutscht markieren",
 	"Days within limit": "Tage im Limit",
 	Limit: "Limit",
+
+	// Frequencies and per-note metrics
+	Frequency: "Häufigkeit",
+	Daily: "Täglich",
+	"Day of week": "Wochentag",
+	"Day of month": "Tag des Monats",
+	"How often this habit is due. Weekly and monthly habits only appear on their due date.":
+		"Wie oft diese Gewohnheit fällig ist. Wöchentliche und monatliche Gewohnheiten erscheinen nur an ihrem Fälligkeitstag.",
+	"The weekday this habit is due on.":
+		"Der Wochentag, an dem diese Gewohnheit fällig ist.",
+	"The day of the month this habit is due. In shorter months it falls due on the last day, so 31 always lands on the final day of the month.":
+		"Der Tag des Monats, an dem diese Gewohnheit fällig ist. In kürzeren Monaten fällt sie auf den letzten Tag, sodass 31 immer auf den letzten Tag des Monats fällt.",
+	"Every {day}": "Jeden {day}",
+	"Monthly · day {day}": "Monatlich · Tag {day}",
+	"No habits are due on this day.":
+		"An diesem Tag sind keine Gewohnheiten fällig.",
+	"Nothing due today.": "Heute ist nichts fällig.",
+	"Weekly activity": "Wöchentliche Aktivität",
+	"Monthly activity": "Monatliche Aktivität",
+	"Weeks completed": "Abgeschlossene Wochen",
+	"Months completed": "Abgeschlossene Monate",
+	"Recent rate": "Aktuelle Quote",
+	"{n}-week completion rate": "Erfüllungsquote über {n} Wochen",
+	"{n}-month completion rate": "Erfüllungsquote über {n} Monate",
+
+	// AI summaries
+	"AI summaries": "KI-Zusammenfassungen",
+	"AI summary": "KI-Zusammenfassung",
+	"Show an AI-generated summary with feedback and advice on the stats page tabs. Uses an OpenAI-compatible service you configure below; your habit stats are sent to it only when you press the generate button.":
+		"Zeigt eine KI-generierte Zusammenfassung mit Feedback und Tipps auf den Tabs der Statistik-Seite. Verwendet einen OpenAI-kompatiblen Dienst, den du unten konfigurierst; deine Gewohnheits-Statistiken werden erst gesendet, wenn du den Erstellen-Button drückst.",
+	"AI base URL": "KI-Basis-URL",
+	"Base URL of an OpenAI-compatible API. Works with OpenAI, OpenRouter, or local servers like Ollama (http://localhost:11434/v1).":
+		"Basis-URL einer OpenAI-kompatiblen API. Funktioniert mit OpenAI, OpenRouter oder lokalen Servern wie Ollama (http://localhost:11434/v1).",
+	"AI API key": "KI-API-Schlüssel",
+	"Stored locally in this vault's plugin data. Leave blank for local servers that need no key.":
+		"Wird lokal in den Plugin-Daten dieses Vaults gespeichert. Für lokale Server ohne Schlüssel leer lassen.",
+	"AI model": "KI-Modell",
+	"Model name the service should use.":
+		"Name des Modells, das der Dienst verwenden soll.",
+	"Generate summary": "Zusammenfassung erstellen",
+	Regenerate: "Neu erstellen",
+	"Get feedback and advice on your habits for this period. Your stats are sent to the AI service you configured only when you press the button.":
+		"Erhalte Feedback und Tipps zu deinen Gewohnheiten in diesem Zeitraum. Deine Statistiken werden erst an den konfigurierten KI-Dienst gesendet, wenn du den Button drückst.",
+	"Thinking…": "Denkt nach …",
+	"Could not generate a summary: {message}":
+		"Zusammenfassung konnte nicht erstellt werden: {message}",
+	"Adds an AI-generated overview with feedback and advice. Your habit stats are sent to your configured AI service.":
+		"Fügt einen KI-generierten Überblick mit Feedback und Tipps hinzu. Deine Gewohnheits-Statistiken werden an den konfigurierten KI-Dienst gesendet.",
+	"Generating AI summary…": "KI-Zusammenfassung wird erstellt …",
+	"The AI summary will be generated when you export.":
+		"Die KI-Zusammenfassung wird beim Exportieren erstellt.",
+
+	// Custom stats range
+	Custom: "Benutzerdefiniert",
+	"Start date": "Startdatum",
+	"End date": "Enddatum",
+
+	// Heatmap start markers
+	"not tracked yet": "noch nicht erfasst",
+	"started tracking on {date}": "Erfassung ab {date}",
+
+	// Stats carousel
+	"Stats page carousel": "Karussell auf der Statistik-Seite",
+	"Show the per-habit stats as pages you can flip through instead of one long list.":
+		"Zeigt die Statistiken pro Gewohnheit als durchblätterbare Seiten statt als eine lange Liste.",
+	"Stats rows per page": "Statistik-Zeilen pro Seite",
+	"How many habits each stats page shows.":
+		"Wie viele Gewohnheiten jede Statistik-Seite anzeigt.",
 };
