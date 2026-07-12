@@ -1,6 +1,6 @@
 {
 	"name": "obsidian-habits",
-	"version": "1.3.0",
+	"version": "1.4.0",
 	"description": "Habit tracker with streaks, charts, and statistics. Log daily habits from a carousel dashboard or sidebar panel, pause habits without losing streaks, and export printable PDF reports.",
 	"main": "main.js",
 	"scripts": {
