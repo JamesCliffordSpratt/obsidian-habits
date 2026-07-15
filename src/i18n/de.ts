@@ -15,6 +15,9 @@ export const de: Record<string, string> = {
 	"Follow daily note date": "Datum der täglichen Notiz übernehmen",
 	"When a dashboard is embedded in a daily note (a note whose name contains a date like 2026-07-01), open it on that note's date instead of today.":
 		"Wenn ein Dashboard in eine tägliche Notiz eingebettet ist (eine Notiz, deren Name ein Datum wie 2026-07-01 enthält), öffnet es sich mit dem Datum dieser Notiz statt mit heute.",
+	"Daily note date format": "Datumsformat der täglichen Notiz",
+	"Moment.js format used to read the date from a daily note's name, such as YYYY-MM-DD or YYYYMMDD.":
+		"Moment.js-Format, mit dem das Datum aus dem Namen einer täglichen Notiz gelesen wird, zum Beispiel YYYY-MM-DD oder YYYYMMDD.",
 	"Cards per view": "Karten pro Ansicht",
 	"How many habit cards the carousel shows at once on wider screens.":
 		"Wie viele Gewohnheitskarten das Karussell auf breiten Bildschirmen gleichzeitig anzeigt.",

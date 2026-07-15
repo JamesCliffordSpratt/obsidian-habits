@@ -94,6 +94,11 @@ export interface HabitsPluginSettings {
 	 * contains a date), open it on that note's date instead of today.
 	 */
 	followDailyNoteDate: boolean;
+	/**
+	 * Moment.js format used to read the date from a daily note's name,
+	 * e.g. `YYYY-MM-DD` or `YYYYMMDD`.
+	 */
+	dailyNoteDateFormat: string;
 	/** Show the comment flap on dashboard cards. */
 	enableComments: boolean;
 	/** Split the stats page's habit rows into carousel pages. */
@@ -111,6 +116,7 @@ export const DEFAULT_SETTINGS: HabitsPluginSettings = {
 	cardsPerView: 4,
 	mobileCardsPerView: 2,
 	followDailyNoteDate: true,
+	dailyNoteDateFormat: "YYYY-MM-DD",
 	enableComments: true,
 	statsCarousel: false,
 	statsRowsPerPage: 4,
@@ -162,6 +168,24 @@ export class HabitsSettingTab extends PluginSettingTab {
 					.setValue(this.plugin.settings.followDailyNoteDate)
 					.onChange(async (value) => {
 						this.plugin.settings.followDailyNoteDate = value;
+						await this.plugin.saveSettings();
+					}),
+			);
+
+		new Setting(containerEl)
+			.setName(t("Daily note date format"))
+			.setDesc(
+				t(
+					"Moment.js format used to read the date from a daily note's name, such as YYYY-MM-DD or YYYYMMDD.",
+				),
+			)
+			.addText((text) =>
+				text
+					.setPlaceholder("YYYY-MM-DD")
+					.setValue(this.plugin.settings.dailyNoteDateFormat)
+					.onChange(async (value) => {
+						this.plugin.settings.dailyNoteDateFormat =
+							value.trim() || DEFAULT_SETTINGS.dailyNoteDateFormat;
 						await this.plugin.saveSettings();
 					}),
 			);

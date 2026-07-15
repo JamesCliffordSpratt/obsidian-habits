@@ -32,6 +32,7 @@ import {
 	addDays,
 	friendlyDateLabel,
 	fromDateKey,
+	parseNoteDate,
 	registerLongPress,
 	toDateKey,
 } from "../utils";
@@ -85,12 +86,16 @@ export class HabitsDashboard extends MarkdownRenderChild {
 	 * the dashboard opens on that note's date instead of today.
 	 */
 	private dailyNoteDate(): Date | null {
-		if (!this.getSettings().followDailyNoteDate) {
+		const settings = this.getSettings();
+		if (!settings.followDailyNoteDate) {
 			return null;
 		}
-		const base = this.sourcePath.split("/").pop() ?? "";
-		const match = /(\d{4}-\d{2}-\d{2})/.exec(base);
-		return match ? fromDateKey(match[1]) : null;
+		const base = (this.sourcePath.split("/").pop() ?? "").replace(
+			/\.md$/,
+			"",
+		);
+		const format = settings.dailyNoteDateFormat?.trim() || "YYYY-MM-DD";
+		return parseNoteDate(base, format);
 	}
 
 	onload(): void {

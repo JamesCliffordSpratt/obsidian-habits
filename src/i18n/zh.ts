@@ -15,6 +15,9 @@ export const zh: Record<string, string> = {
 	"Follow daily note date": "跟随日记日期",
 	"When a dashboard is embedded in a daily note (a note whose name contains a date like 2026-07-01), open it on that note's date instead of today.":
 		"当习惯面板嵌入到日记中（笔记名称包含类似 2026-07-01 的日期）时，面板会显示该笔记日期的记录，而不是今天。",
+	"Daily note date format": "日记日期格式",
+	"Moment.js format used to read the date from a daily note's name, such as YYYY-MM-DD or YYYYMMDD.":
+		"用于从日记名称中读取日期的 Moment.js 格式，例如 YYYY-MM-DD 或 YYYYMMDD。",
 	"Cards per view": "每页卡片数",
 	"How many habit cards the carousel shows at once on wider screens.":
 		"在宽屏幕上轮播一次显示多少张习惯卡片。",

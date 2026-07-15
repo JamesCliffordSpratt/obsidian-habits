@@ -180,6 +180,7 @@ Works with **any OpenAI-compatible service**: OpenAI, OpenRouter, Groq, Google A
 | --- | --- | --- |
 | Habits folder | `Habits` | Where habit notes live (with folder autocomplete) |
 | Follow daily note date | On | Dashboards in daily notes open on that note's date |
+| Daily note date format | `YYYY-MM-DD` | Moment.js format used to read the date from a daily note's name (e.g. `YYYYMMDD`) |
 | Cards per view | 4 | Carousel cards shown at once on wide screens (1–4) |
 | Cards per view on mobile | 2 | Carousel cards on phone-sized screens (1–2) |
 | Comments on cards | On | Show the comment flap on dashboard cards |
