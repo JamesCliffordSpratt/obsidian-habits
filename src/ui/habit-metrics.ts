@@ -685,7 +685,7 @@ export class HabitMetrics extends MarkdownRenderChild {
 	 * own accent) to a concrete rgb value Chart.js can use.
 	 */
 	private resolveColor(preferred: string, fallback: string): string {
-		const probe = this.containerEl.doc.body.createEl("span");
+		const probe = this.containerEl.doc.body.createSpan();
 		probe.style.color = preferred || fallback;
 		const resolved = probe.win.getComputedStyle(probe).color;
 		probe.remove();

@@ -27,7 +27,9 @@ export default defineConfig([
 				"warn",
 				{
 					brands: ["Lucide", "Obsidian"],
-					acronyms: ["ID", "PDF"],
+					// The date tokens cover Moment.js format strings such
+					// as the YYYY-MM-DD placeholder in the settings tab.
+					acronyms: ["ID", "PDF", "YYYY-MM-DD", "YYYYMMDD"],
 				},
 			],
 		},

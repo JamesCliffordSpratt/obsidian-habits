@@ -462,7 +462,7 @@ export class ExportModal extends Modal {
 	}
 
 	private resolveRGB(value: string, fallback: RGB): RGB {
-		const probe = this.contentEl.doc.body.createEl("span");
+		const probe = this.contentEl.doc.body.createSpan();
 		probe.style.color = value;
 		const resolved = probe.win.getComputedStyle(probe).color;
 		probe.remove();

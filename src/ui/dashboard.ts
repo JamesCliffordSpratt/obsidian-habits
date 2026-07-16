@@ -375,7 +375,7 @@ export class HabitsDashboard extends MarkdownRenderChild {
 			this.render();
 		});
 
-		const dateDisplay = nav.createEl("span", {
+		const dateDisplay = nav.createSpan({
 			cls: "habits-date-display",
 		});
 		const dateButton = dateDisplay.createEl("button", {

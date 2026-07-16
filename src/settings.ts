@@ -2,8 +2,10 @@ import {
 	AbstractInputSuggest,
 	App,
 	PluginSettingTab,
+	requireApiVersion,
 	Setting,
 	TFolder,
+	type SettingDefinitionItem,
 } from "obsidian";
 import { t } from "./i18n";
 import type HabitsPlugin from "./main";
@@ -124,6 +126,40 @@ export const DEFAULT_SETTINGS: HabitsPluginSettings = {
 	aiSummary: { ...DEFAULT_AI_SUMMARY },
 };
 
+/** Settings stored as numbers but edited through string-valued dropdowns. */
+const NUMERIC_DROPDOWN_KEYS = new Set([
+	"cardsPerView",
+	"mobileCardsPerView",
+	"statsRowsPerPage",
+]);
+
+/** Read a possibly nested settings value by a dot-separated key. */
+function getPath(obj: unknown, key: string): unknown {
+	let current: unknown = obj;
+	for (const part of key.split(".")) {
+		if (current === null || typeof current !== "object") {
+			return undefined;
+		}
+		current = (current as Record<string, unknown>)[part];
+	}
+	return current;
+}
+
+/** Write a possibly nested settings value by a dot-separated key. */
+function setPath(obj: object, key: string, value: unknown): void {
+	const parts = key.split(".");
+	const last = parts.pop() as string;
+	let current = obj as Record<string, unknown>;
+	for (const part of parts) {
+		const next = current[part];
+		if (next === null || typeof next !== "object") {
+			return;
+		}
+		current = next as Record<string, unknown>;
+	}
+	current[last] = value;
+}
+
 /** Settings tab shown under Settings → Community plugins → Habits. */
 export class HabitsSettingTab extends PluginSettingTab {
 	private plugin: HabitsPlugin;
@@ -133,6 +169,245 @@ export class HabitsSettingTab extends PluginSettingTab {
 		this.plugin = plugin;
 	}
 
+	/**
+	 * Declarative settings (Obsidian 1.13+), which also makes every option
+	 * discoverable through the settings search. `display()` below remains
+	 * as the fallback for older Obsidian versions and is only called when
+	 * this method is unavailable.
+	 */
+	getSettingDefinitions(): SettingDefinitionItem[] {
+		const aiSummariesOn = (): boolean =>
+			this.plugin.settings.experimental.aiSummaries;
+		return [
+			{
+				name: t("Habits folder"),
+				desc: t(
+					"Folder where each habit is stored as its own note. It is created automatically if it does not exist.",
+				),
+				control: {
+					type: "folder",
+					key: "habitsFolder",
+					placeholder: DEFAULT_SETTINGS.habitsFolder,
+					defaultValue: DEFAULT_SETTINGS.habitsFolder,
+				},
+			},
+			{
+				name: t("Follow daily note date"),
+				desc: t(
+					"When a dashboard is embedded in a daily note (a note whose name contains a date like 2026-07-01), open it on that note's date instead of today.",
+				),
+				control: {
+					type: "toggle",
+					key: "followDailyNoteDate",
+					defaultValue: DEFAULT_SETTINGS.followDailyNoteDate,
+				},
+			},
+			{
+				name: t("Daily note date format"),
+				desc: t(
+					"Moment.js format used to read the date from a daily note's name, such as YYYY-MM-DD or YYYYMMDD.",
+				),
+				control: {
+					type: "text",
+					key: "dailyNoteDateFormat",
+					placeholder: DEFAULT_SETTINGS.dailyNoteDateFormat,
+					defaultValue: DEFAULT_SETTINGS.dailyNoteDateFormat,
+				},
+			},
+			{
+				name: t("Comments on cards"),
+				desc: t(
+					"Show a comment flap on dashboard cards for jotting a note about any day.",
+				),
+				control: {
+					type: "toggle",
+					key: "enableComments",
+					defaultValue: DEFAULT_SETTINGS.enableComments,
+				},
+			},
+			{
+				name: t("Cards per view"),
+				desc: t(
+					"How many habit cards the carousel shows at once on wider screens.",
+				),
+				control: {
+					type: "dropdown",
+					key: "cardsPerView",
+					options: { "1": "1", "2": "2", "3": "3", "4": "4" },
+					defaultValue: String(DEFAULT_SETTINGS.cardsPerView),
+				},
+			},
+			{
+				name: t("Cards per view on mobile"),
+				desc: t(
+					"How many habit cards the carousel shows at once on phone-sized screens.",
+				),
+				control: {
+					type: "dropdown",
+					key: "mobileCardsPerView",
+					options: { "1": "1", "2": "2" },
+					defaultValue: String(DEFAULT_SETTINGS.mobileCardsPerView),
+				},
+			},
+			{
+				name: t("Stats page carousel"),
+				desc: t(
+					"Show the per-habit stats as pages you can flip through instead of one long list.",
+				),
+				control: {
+					type: "toggle",
+					key: "statsCarousel",
+					defaultValue: DEFAULT_SETTINGS.statsCarousel,
+				},
+			},
+			{
+				name: t("Stats rows per page"),
+				desc: t("How many habits each stats page shows."),
+				visible: () => this.plugin.settings.statsCarousel,
+				control: {
+					type: "dropdown",
+					key: "statsRowsPerPage",
+					options: {
+						"1": "1",
+						"2": "2",
+						"3": "3",
+						"4": "4",
+						"5": "5",
+						"6": "6",
+						"7": "7",
+						"8": "8",
+					},
+					defaultValue: String(DEFAULT_SETTINGS.statsRowsPerPage),
+				},
+			},
+			{
+				type: "group",
+				heading: t("Experimental"),
+				items: [
+					{
+						name: "",
+						desc: t(
+							"These features are still being tested and may change before they become permanent. Turning one off only hides it from menus — anything you created with it keeps working.",
+						),
+						searchable: false,
+					},
+					{
+						name: t("Break bad habits"),
+						desc: t(
+							"Track habits you want to reduce or avoid by staying under a daily limit — for example at most 2 hours of gaming, or no smoking at all.",
+						),
+						control: {
+							type: "toggle",
+							key: "experimental.limitHabits",
+							defaultValue: DEFAULT_EXPERIMENTAL.limitHabits,
+						},
+					},
+					{
+						name: t("AI summaries"),
+						desc: t(
+							"Show an AI-generated summary with feedback and advice on the stats page tabs. Uses an OpenAI-compatible service you configure below; your habit stats are sent to it only when you press the generate button.",
+						),
+						control: {
+							type: "toggle",
+							key: "experimental.aiSummaries",
+							defaultValue: DEFAULT_EXPERIMENTAL.aiSummaries,
+						},
+					},
+					{
+						name: t("AI base URL"),
+						desc: t(
+							"Base URL of an OpenAI-compatible API. Works with OpenAI, OpenRouter, or local servers like Ollama (http://localhost:11434/v1).",
+						),
+						visible: aiSummariesOn,
+						control: {
+							type: "text",
+							key: "aiSummary.baseUrl",
+							placeholder: DEFAULT_AI_SUMMARY.baseUrl,
+							defaultValue: DEFAULT_AI_SUMMARY.baseUrl,
+						},
+					},
+					{
+						name: t("AI API key"),
+						desc: t(
+							"Stored locally in this vault's plugin data. Leave blank for local servers that need no key.",
+						),
+						visible: aiSummariesOn,
+						// A masked input; the declarative text control has no
+						// password variant, so this row renders imperatively.
+						render: (setting: Setting) => {
+							setting.addText((text) => {
+								text.inputEl.type = "password";
+								text
+									.setValue(
+										this.plugin.settings.aiSummary.apiKey,
+									)
+									.onChange(async (value) => {
+										this.plugin.settings.aiSummary.apiKey =
+											value.trim();
+										await this.plugin.saveSettings();
+									});
+							});
+						},
+					},
+					{
+						name: t("AI model"),
+						desc: t("Model name the service should use."),
+						visible: aiSummariesOn,
+						control: {
+							type: "text",
+							key: "aiSummary.model",
+							placeholder: DEFAULT_AI_SUMMARY.model,
+							defaultValue: DEFAULT_AI_SUMMARY.model,
+						},
+					},
+				],
+			},
+		];
+	}
+
+	/** Read a control's current value from the plugin settings. */
+	getControlValue(key: string): unknown {
+		const value = getPath(this.plugin.settings, key);
+		return NUMERIC_DROPDOWN_KEYS.has(key) ? String(value) : value;
+	}
+
+	/** Normalise, store, and persist a control's new value. */
+	async setControlValue(key: string, value: unknown): Promise<void> {
+		setPath(this.plugin.settings, key, this.normalizeValue(key, value));
+		await this.plugin.saveSettings();
+		// Re-evaluate `visible` predicates so dependent rows (stats rows
+		// per page, the AI connection fields) follow their toggles. Only
+		// ever called on the 1.13+ declarative path, but guard anyway to
+		// honour the plugin's older minAppVersion.
+		if (requireApiVersion("1.13.0")) {
+			this.refreshDomState();
+		}
+	}
+
+	/** Mirror the trims and empty-value fallbacks of the legacy tab. */
+	private normalizeValue(key: string, value: unknown): unknown {
+		if (NUMERIC_DROPDOWN_KEYS.has(key)) {
+			return Number(value);
+		}
+		if (typeof value !== "string") {
+			return value;
+		}
+		const trimmed = value.trim();
+		switch (key) {
+			case "habitsFolder":
+				return trimmed || DEFAULT_SETTINGS.habitsFolder;
+			case "dailyNoteDateFormat":
+				return trimmed || DEFAULT_SETTINGS.dailyNoteDateFormat;
+			case "aiSummary.baseUrl":
+				return trimmed || DEFAULT_AI_SUMMARY.baseUrl;
+			case "aiSummary.model":
+				return trimmed || DEFAULT_AI_SUMMARY.model;
+			default:
+				return trimmed;
+		}
+	}
+
+	/** Imperative fallback for Obsidian versions older than 1.13. */
 	display(): void {
 		const { containerEl } = this;
 		containerEl.empty();
