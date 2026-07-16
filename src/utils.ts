@@ -196,6 +196,23 @@ function escapeRegExp(text: string): string {
 	return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
+/** The slice of a parsed Moment object that note-date parsing uses. */
+interface ParsedMoment {
+	isValid(): boolean;
+	toDate(): Date;
+}
+
+/**
+ * Obsidian's bundled Moment.js, typed by hand. Moment's own type
+ * definitions are not always resolvable in stricter lint setups, which
+ * would otherwise make every call through `moment` unsafely typed.
+ */
+const parseMoment = moment as unknown as (
+	input: string,
+	format: string,
+	strict: boolean,
+) => ParsedMoment;
+
 /**
  * Extract a date from a note name using a Moment.js format such as
  * `YYYY-MM-DD` or `YYYYMMDD`. The date may sit anywhere in the name
@@ -211,7 +228,7 @@ export function parseNoteDate(name: string, format: string): Date | null {
 	if (pattern) {
 		const match = pattern.exec(name);
 		if (match) {
-			const parsed = moment(match[1], trimmed, true);
+			const parsed = parseMoment(match[1], trimmed, true);
 			if (parsed.isValid()) {
 				return parsed.toDate();
 			}
@@ -220,6 +237,6 @@ export function parseNoteDate(name: string, format: string): Date | null {
 	}
 	// Formats with tokens the extractor does not know still work when the
 	// note name is exactly the date.
-	const whole = moment(name, trimmed, true);
+	const whole = parseMoment(name, trimmed, true);
 	return whole.isValid() ? whole.toDate() : null;
 }
