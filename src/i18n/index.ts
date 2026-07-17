@@ -3,8 +3,17 @@ import { es } from "./es";
 import { fr } from "./fr";
 import { de } from "./de";
 import { zh } from "./zh";
+import { ja } from "./ja";
+import { ko } from "./ko";
 
-const LOCALES: Record<string, Record<string, string>> = { es, fr, de, zh };
+const LOCALES: Record<string, Record<string, string>> = {
+	es,
+	fr,
+	de,
+	zh,
+	ja,
+	ko,
+};
 
 /** Resolve the active dictionary from Obsidian's language setting. */
 function dictionary(): Record<string, string> | null {

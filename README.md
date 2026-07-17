@@ -23,7 +23,7 @@
 - 💬 **Per-day comments** — flip any card over to jot down why a day went the way it did; comments can be included in PDF reports
 - 📅 **Daily-note aware** — a dashboard inside `2026-07-01.md` shows that day's habits automatically
 - 📱 **Mobile friendly** — responsive cards, long-press menus, and a configurable mobile layout
-- 🌍 **In your language** — available in English, Spanish, French, German, and Simplified Chinese
+- 🌍 **In your language** — available in English, Spanish, French, German, Japanese, Korean, and Simplified Chinese
 - 🎨 **Theme native** — every colour comes from your theme; custom accents and icons per habit
 
 ## 📥 Installation
