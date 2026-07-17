@@ -1,7 +1,7 @@
 {
 	"id": "habits",
 	"name": "Habits",
-	"version": "1.4.3",
+	"version": "1.5.0",
 	"minAppVersion": "1.7.2",
 	"description": "Habit tracker with streaks, charts, and statistics. Log daily habits from a carousel dashboard or sidebar panel, pause habits without losing streaks, and export printable PDF reports.",
 	"author": "James Clifford Spratt",
