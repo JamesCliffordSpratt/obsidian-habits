@@ -83,10 +83,18 @@ export const DEFAULT_AI_SUMMARY: AiSummarySettings = {
 	model: "gpt-4o-mini",
 };
 
+/** How the dashboard presents its habit cards. */
+export type DashboardLayout = "carousel" | "grid" | "vertical";
+
 /** User-configurable settings for the plugin. */
 export interface HabitsPluginSettings {
 	/** Folder that holds one note per habit. */
 	habitsFolder: string;
+	/**
+	 * How the dashboard shows its cards: a paged carousel, a grid that
+	 * wraps onto new rows, or a fixed-height vertically scrolling grid.
+	 */
+	dashboardLayout: DashboardLayout;
 	/** How many cards are visible at once in the carousel on wide screens. */
 	cardsPerView: number;
 	/** How many cards are visible at once on phone-sized screens (1–2). */
@@ -115,6 +123,7 @@ export interface HabitsPluginSettings {
 
 export const DEFAULT_SETTINGS: HabitsPluginSettings = {
 	habitsFolder: "Habits",
+	dashboardLayout: "carousel",
 	cardsPerView: 4,
 	mobileCardsPerView: 2,
 	followDailyNoteDate: true,
@@ -226,9 +235,25 @@ export class HabitsSettingTab extends PluginSettingTab {
 				},
 			},
 			{
+				name: t("Dashboard layout"),
+				desc: t(
+					"How to move through your habit cards: a paged carousel with arrows, a grid that wraps onto new rows, or a fixed-height grid that scrolls vertically.",
+				),
+				control: {
+					type: "dropdown",
+					key: "dashboardLayout",
+					options: {
+						carousel: t("Carousel"),
+						grid: t("Grid"),
+						vertical: t("Vertical scroll"),
+					},
+					defaultValue: DEFAULT_SETTINGS.dashboardLayout,
+				},
+			},
+			{
 				name: t("Cards per view"),
 				desc: t(
-					"How many habit cards the carousel shows at once on wider screens.",
+					"How many habit cards fit side by side on wider screens.",
 				),
 				control: {
 					type: "dropdown",
@@ -240,7 +265,7 @@ export class HabitsSettingTab extends PluginSettingTab {
 			{
 				name: t("Cards per view on mobile"),
 				desc: t(
-					"How many habit cards the carousel shows at once on phone-sized screens.",
+					"How many habit cards fit side by side on phone-sized screens.",
 				),
 				control: {
 					type: "dropdown",
@@ -394,6 +419,10 @@ export class HabitsSettingTab extends PluginSettingTab {
 		}
 		const trimmed = value.trim();
 		switch (key) {
+			case "dashboardLayout":
+				return trimmed === "grid" || trimmed === "vertical"
+					? trimmed
+					: "carousel";
 			case "habitsFolder":
 				return trimmed || DEFAULT_SETTINGS.habitsFolder;
 			case "dailyNoteDateFormat":
@@ -482,10 +511,32 @@ export class HabitsSettingTab extends PluginSettingTab {
 			);
 
 		new Setting(containerEl)
+			.setName(t("Dashboard layout"))
+			.setDesc(
+				t(
+					"How to move through your habit cards: a paged carousel with arrows, a grid that wraps onto new rows, or a fixed-height grid that scrolls vertically.",
+				),
+			)
+			.addDropdown((dropdown) =>
+				dropdown
+					.addOption("carousel", t("Carousel"))
+					.addOption("grid", t("Grid"))
+					.addOption("vertical", t("Vertical scroll"))
+					.setValue(this.plugin.settings.dashboardLayout)
+					.onChange(async (value) => {
+						this.plugin.settings.dashboardLayout =
+							value === "grid" || value === "vertical"
+								? value
+								: "carousel";
+						await this.plugin.saveSettings();
+					}),
+			);
+
+		new Setting(containerEl)
 			.setName(t("Cards per view"))
 			.setDesc(
 				t(
-					"How many habit cards the carousel shows at once on wider screens.",
+					"How many habit cards fit side by side on wider screens.",
 				),
 			)
 			.addDropdown((dropdown) =>
@@ -505,7 +556,7 @@ export class HabitsSettingTab extends PluginSettingTab {
 			.setName(t("Cards per view on mobile"))
 			.setDesc(
 				t(
-					"How many habit cards the carousel shows at once on phone-sized screens.",
+					"How many habit cards fit side by side on phone-sized screens.",
 				),
 			)
 			.addDropdown((dropdown) =>

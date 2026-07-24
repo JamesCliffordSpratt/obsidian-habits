@@ -18,12 +18,18 @@ export const zh: Record<string, string> = {
 	"Daily note date format": "日记日期格式",
 	"Moment.js format used to read the date from a daily note's name, such as YYYY-MM-DD or YYYYMMDD.":
 		"用于从日记名称中读取日期的 Moment.js 格式，例如 YYYY-MM-DD 或 YYYYMMDD。",
+	"Dashboard layout": "仪表盘布局",
+	"How to move through your habit cards: a paged carousel with arrows, a grid that wraps onto new rows, or a fixed-height grid that scrolls vertically.":
+		"浏览习惯卡片的方式:带箭头的分页轮播、自动换行的网格,或固定高度、垂直滚动的网格。",
+	Carousel: "轮播",
+	Grid: "网格",
+	"Vertical scroll": "垂直滚动",
 	"Cards per view": "每页卡片数",
-	"How many habit cards the carousel shows at once on wider screens.":
-		"在宽屏幕上轮播一次显示多少张习惯卡片。",
+	"How many habit cards fit side by side on wider screens.":
+		"宽屏上并排显示多少张习惯卡片。",
 	"Cards per view on mobile": "移动端每页卡片数",
-	"How many habit cards the carousel shows at once on phone-sized screens.":
-		"在手机屏幕上轮播一次显示多少张习惯卡片。",
+	"How many habit cards fit side by side on phone-sized screens.":
+		"手机屏幕上并排显示多少张习惯卡片。",
 
 	// Confirm dialog defaults
 	Cancel: "取消",

@@ -223,7 +223,11 @@ export class HabitsDashboard extends MarkdownRenderChild {
 			return;
 		}
 
-		this.renderCarousel();
+		if (this.getSettings().dashboardLayout === "carousel") {
+			this.renderCarousel();
+		} else {
+			this.renderGrid();
+		}
 	}
 
 	/** Header shown on the stats view: home, period tabs, export. */
@@ -459,6 +463,53 @@ export class HabitsDashboard extends MarkdownRenderChild {
 		}
 
 		this.applyLayout();
+	}
+
+	/**
+	 * Grid and vertical-scroll layouts: every due habit is rendered at
+	 * once into rows of `perView()` cards. The grid grows down the note
+	 * and scrolls with it; the vertical variant instead caps its height
+	 * so the cards scroll inside the widget (mouse wheel on desktop,
+	 * thumb-drag on touch — both native, no JS scrolling involved).
+	 */
+	private renderGrid(): void {
+		const vertical = this.getSettings().dashboardLayout === "vertical";
+		const grid = this.root.createDiv({ cls: "habits-grid" });
+		grid.toggleClass("is-vertical", vertical);
+		this.trackEl = null;
+
+		const perRow = this.perView();
+		this.lastPerView = perRow;
+		grid.setCssProps({ "--habits-per-row": String(perRow) });
+
+		for (const habit of this.orderedHabits()) {
+			this.renderCard(grid, habit);
+		}
+
+		if (vertical) {
+			this.capVerticalHeight(grid);
+		}
+	}
+
+	/**
+	 * Cap the vertical-scroll grid at about a row and a half, so a partial
+	 * row peeks out below the fold as the "there is more" cue. Measured
+	 * from the first card after layout, so the cap follows the theme's
+	 * actual card height. Skipped when everything already fits.
+	 */
+	private capVerticalHeight(grid: HTMLElement): void {
+		window.requestAnimationFrame(() => {
+			const card = grid.querySelector<HTMLElement>(".habits-card");
+			if (!card) {
+				return;
+			}
+			const cap = Math.round(card.offsetHeight * 1.55);
+			if (grid.scrollHeight > cap) {
+				grid.setCssProps({
+					"--habits-vertical-max": `${cap}px`,
+				});
+			}
+		});
 	}
 
 	/** Number of distinct positions the carousel can rest at. */
@@ -970,7 +1021,13 @@ export class HabitsDashboard extends MarkdownRenderChild {
 		overlay: HTMLElement,
 	): Promise<void> {
 		const track = card.parentElement;
-		if (!track || track.lastElementChild === card) {
+		// Grid layouts have no queue to slide along: the overlay fades out
+		// and the re-render moves the card to the end of the grid.
+		if (
+			!track ||
+			track.hasClass("habits-grid") ||
+			track.lastElementChild === card
+		) {
 			overlay.addClass("is-leaving");
 			await sleep(200);
 			return;

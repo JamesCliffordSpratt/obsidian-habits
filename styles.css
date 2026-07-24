@@ -120,6 +120,37 @@
 	transition: transform 0.25s ease;
 }
 
+/* Grid and vertical-scroll layouts: rows of cards instead of a paged
+   track. The slack padding + negative margin mirror the carousel
+   viewport so hovered cards can lift without being clipped. */
+.habits-grid {
+	display: grid;
+	grid-template-columns: repeat(var(--habits-per-row, 4), minmax(0, 1fr));
+	gap: 0.6rem;
+	padding: 8px 4px;
+	margin: -8px -4px;
+}
+
+/* The vertical variant caps its height (set from JS at about a row and
+   a half, so a partial row peeks out below as the "there is more" cue)
+   and scrolls the cards inside the widget. Wheel and touch-drag both
+   work natively; `overscroll-behavior` keeps the note from scrolling
+   along once the cards run out, and proximity snapping settles rows
+   cleanly after a flick without fighting free scrolling. */
+.habits-grid.is-vertical {
+	max-height: var(--habits-vertical-max, none);
+	overflow-y: auto;
+	overflow-x: hidden;
+	overscroll-behavior: contain;
+	scroll-snap-type: y proximity;
+	-webkit-overflow-scrolling: touch;
+}
+
+.habits-grid.is-vertical .habits-card {
+	scroll-snap-align: start;
+	scroll-margin-top: 8px;
+}
+
 .habits-card {
 	position: relative;
 	overflow: hidden;

@@ -18,12 +18,18 @@ export const ja: Record<string, string> = {
 	"Daily note date format": "デイリーノートの日付形式",
 	"Moment.js format used to read the date from a daily note's name, such as YYYY-MM-DD or YYYYMMDD.":
 		"デイリーノート名から日付を読み取るための Moment.js 形式。例：YYYY-MM-DD、YYYYMMDD。",
+	"Dashboard layout": "ダッシュボードのレイアウト",
+	"How to move through your habit cards: a paged carousel with arrows, a grid that wraps onto new rows, or a fixed-height grid that scrolls vertically.":
+		"カードの表示方法:矢印で切り替えるカルーセル、行を折り返すグリッド、または高さ固定で縦にスクロールするグリッド。",
+	Carousel: "カルーセル",
+	Grid: "グリッド",
+	"Vertical scroll": "縦スクロール",
 	"Cards per view": "1画面あたりのカード数",
-	"How many habit cards the carousel shows at once on wider screens.":
-		"広い画面でカルーセルに同時に表示する習慣カードの枚数。",
+	"How many habit cards fit side by side on wider screens.":
+		"広い画面で横に並べるカードの数。",
 	"Cards per view on mobile": "モバイルでの1画面あたりのカード数",
-	"How many habit cards the carousel shows at once on phone-sized screens.":
-		"スマートフォンの画面でカルーセルに同時に表示する習慣カードの枚数。",
+	"How many habit cards fit side by side on phone-sized screens.":
+		"スマートフォンの画面で横に並べるカードの数。",
 
 	// Confirm dialog defaults
 	Cancel: "キャンセル",

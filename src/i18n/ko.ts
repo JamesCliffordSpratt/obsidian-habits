@@ -18,12 +18,18 @@ export const ko: Record<string, string> = {
 	"Daily note date format": "데일리 노트 날짜 형식",
 	"Moment.js format used to read the date from a daily note's name, such as YYYY-MM-DD or YYYYMMDD.":
 		"데일리 노트 이름에서 날짜를 읽는 데 사용하는 Moment.js 형식입니다. 예: YYYY-MM-DD, YYYYMMDD.",
+	"Dashboard layout": "대시보드 레이아웃",
+	"How to move through your habit cards: a paged carousel with arrows, a grid that wraps onto new rows, or a fixed-height grid that scrolls vertically.":
+		"습관 카드 탐색 방식: 화살표로 넘기는 캐러셀, 새 줄로 이어지는 그리드, 또는 고정 높이에서 세로로 스크롤되는 그리드.",
+	Carousel: "캐러셀",
+	Grid: "그리드",
+	"Vertical scroll": "세로 스크롤",
 	"Cards per view": "한 화면당 카드 수",
-	"How many habit cards the carousel shows at once on wider screens.":
-		"넓은 화면에서 캐러셀에 한 번에 표시할 습관 카드 수입니다.",
+	"How many habit cards fit side by side on wider screens.":
+		"넓은 화면에서 나란히 표시할 습관 카드 수.",
 	"Cards per view on mobile": "모바일 한 화면당 카드 수",
-	"How many habit cards the carousel shows at once on phone-sized screens.":
-		"휴대폰 화면에서 캐러셀에 한 번에 표시할 습관 카드 수입니다.",
+	"How many habit cards fit side by side on phone-sized screens.":
+		"휴대폰 화면에서 나란히 표시할 습관 카드 수.",
 
 	// Confirm dialog defaults
 	Cancel: "취소",

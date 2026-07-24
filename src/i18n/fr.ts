@@ -18,12 +18,18 @@ export const fr: Record<string, string> = {
 	"Daily note date format": "Format de date de la note quotidienne",
 	"Moment.js format used to read the date from a daily note's name, such as YYYY-MM-DD or YYYYMMDD.":
 		"Format Moment.js utilisé pour lire la date dans le nom d'une note quotidienne, par exemple YYYY-MM-DD ou YYYYMMDD.",
+	"Dashboard layout": "Disposition du tableau de bord",
+	"How to move through your habit cards: a paged carousel with arrows, a grid that wraps onto new rows, or a fixed-height grid that scrolls vertically.":
+		"Comment parcourir vos cartes d'habitudes : un carrousel paginé avec flèches, une grille qui passe à la ligne, ou une grille à hauteur fixe qui défile verticalement.",
+	Carousel: "Carrousel",
+	Grid: "Grille",
+	"Vertical scroll": "Défilement vertical",
 	"Cards per view": "Cartes par vue",
-	"How many habit cards the carousel shows at once on wider screens.":
-		"Nombre de cartes d'habitudes affichées à la fois sur les grands écrans.",
+	"How many habit cards fit side by side on wider screens.":
+		"Combien de cartes d'habitudes tiennent côte à côte sur les grands écrans.",
 	"Cards per view on mobile": "Cartes par vue sur mobile",
-	"How many habit cards the carousel shows at once on phone-sized screens.":
-		"Nombre de cartes d'habitudes affichées à la fois sur les écrans de téléphone.",
+	"How many habit cards fit side by side on phone-sized screens.":
+		"Combien de cartes d'habitudes tiennent côte à côte sur les écrans de téléphone.",
 
 	// Confirm dialog defaults
 	Cancel: "Annuler",
