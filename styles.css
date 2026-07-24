@@ -121,14 +121,21 @@
 }
 
 /* Grid and vertical-scroll layouts: rows of cards instead of a paged
-   track. The slack padding + negative margin mirror the carousel
-   viewport so hovered cards can lift without being clipped. */
+   track, gathered into one or more sections (one per group when
+   grouping is on). The slack padding + negative margin mirror the
+   carousel viewport so hovered cards can lift without being clipped. */
+.habits-grid-wrap {
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+	padding: 8px 4px;
+	margin: -8px -4px;
+}
+
 .habits-grid {
 	display: grid;
 	grid-template-columns: repeat(var(--habits-per-row, 4), minmax(0, 1fr));
 	gap: 0.6rem;
-	padding: 8px 4px;
-	margin: -8px -4px;
 }
 
 /* The vertical variant caps its height (set from JS at about a row and
@@ -137,7 +144,7 @@
    work natively; `overscroll-behavior` keeps the note from scrolling
    along once the cards run out, and proximity snapping settles rows
    cleanly after a flick without fighting free scrolling. */
-.habits-grid.is-vertical {
+.habits-grid-wrap.is-vertical {
 	max-height: var(--habits-vertical-max, none);
 	overflow-y: auto;
 	overflow-x: hidden;
@@ -146,9 +153,47 @@
 	-webkit-overflow-scrolling: touch;
 }
 
-.habits-grid.is-vertical .habits-card {
+.habits-grid-wrap.is-vertical .habits-card {
 	scroll-snap-align: start;
 	scroll-margin-top: 8px;
+}
+
+/* Section headers shown when grouping is on: a small muted label, with
+   a colour swatch in colour mode. */
+.habits-group-header {
+	display: flex;
+	align-items: center;
+	gap: 0.4rem;
+	margin-bottom: -0.35rem;
+	font-size: var(--font-ui-small);
+	font-weight: 600;
+	color: var(--text-muted);
+}
+
+.habits-group-swatch {
+	width: 10px;
+	height: 10px;
+	border-radius: 3px;
+	flex-shrink: 0;
+	background: var(--habits-accent);
+}
+
+.habits-group-swatch.is-none {
+	background: var(--background-modifier-border);
+}
+
+.habits-panel-group {
+	display: flex;
+	align-items: center;
+	gap: 0.4rem;
+	margin: 0.6rem 0 0.15rem;
+	font-size: var(--font-ui-smaller);
+	font-weight: 600;
+	color: var(--text-muted);
+}
+
+.habits-panel-group:first-child {
+	margin-top: 0;
 }
 
 /* Manual sort order editor in settings: one slim draggable row per

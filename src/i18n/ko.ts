@@ -20,7 +20,6 @@ export const ko: Record<string, string> = {
 		"데일리 노트 이름에서 날짜를 읽는 데 사용하는 Moment.js 형식입니다. 예: YYYY-MM-DD, YYYYMMDD.",
 
 	// Sorting
-	Sorting: "정렬",
 	"Sort habits by": "습관 정렬 기준",
 	"The base order of habit cards in the dashboard and side panel.":
 		"대시보드와 사이드 패널에서 습관 카드의 기본 순서.",
@@ -34,6 +33,17 @@ export const ko: Record<string, string> = {
 	"Move completed cards to the end": "완료된 카드를 끝으로 이동",
 	"Completed habits drift to the end of the queue and paused ones park behind them. Turn this off to keep every card in its sorted position.":
 		"완료된 습관은 대기열 끝으로 이동하고 일시정지된 습관은 그 뒤에 놓입니다. 끄면 모든 카드가 정렬된 위치를 유지합니다.",
+	"Sorting & grouping": "정렬 및 그룹화",
+	"Group habits by": "습관 그룹화 기준",
+	"Show habits in sections: by their group name (set on each habit), or by accent color.":
+		"습관을 섹션으로 표시합니다: 그룹 이름(각 습관에서 설정) 또는 강조 색상별.",
+	Off: "끄기",
+	Group: "그룹",
+	Ungrouped: "그룹 없음",
+	"No color": "색상 없음",
+	"Optional group used to build dashboard sections — for example an area of responsibility.":
+		"대시보드 섹션을 만들기 위한 선택적 그룹 — 예를 들어 책임 영역.",
+	"e.g. Health": "예: 건강",
 	"Dashboard layout": "대시보드 레이아웃",
 	"How to move through your habit cards: a paged carousel with arrows, a grid that wraps onto new rows, or a fixed-height grid that scrolls vertically.":
 		"습관 카드 탐색 방식: 화살표로 넘기는 캐러셀, 새 줄로 이어지는 그리드, 또는 고정 높이에서 세로로 스크롤되는 그리드.",

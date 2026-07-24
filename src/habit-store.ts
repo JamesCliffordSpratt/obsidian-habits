@@ -103,6 +103,7 @@ export class HabitStore {
 			monthlyPerfect: fm.monthlyPerfect === true,
 			icon: typeof fm.icon === "string" ? fm.icon : "",
 			color: typeof fm.color === "string" ? fm.color : "",
+			group: typeof fm.group === "string" ? fm.group : "",
 			startDate: typeof fm.startDate === "string" ? fm.startDate : "",
 			paused: pauses.some((pause) => pause.end === ""),
 			pauses,
@@ -473,6 +474,9 @@ export class HabitStore {
 			if (options.color) {
 				fm.color = options.color;
 			}
+			if (options.group) {
+				fm.group = options.group;
+			}
 			fm.startDate = toDateKey(new Date());
 			fm.records = {};
 		});
@@ -570,6 +574,11 @@ export class HabitStore {
 				fm.color = options.color;
 			} else {
 				delete fm.color;
+			}
+			if (options.group) {
+				fm.group = options.group;
+			} else {
+				delete fm.group;
 			}
 		});
 

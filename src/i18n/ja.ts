@@ -20,7 +20,6 @@ export const ja: Record<string, string> = {
 		"デイリーノート名から日付を読み取るための Moment.js 形式。例：YYYY-MM-DD、YYYYMMDD。",
 
 	// Sorting
-	Sorting: "並べ替え",
 	"Sort habits by": "習慣の並び順",
 	"The base order of habit cards in the dashboard and side panel.":
 		"ダッシュボードとサイドパネルでのカードの基本的な並び順。",
@@ -34,6 +33,17 @@ export const ja: Record<string, string> = {
 	"Move completed cards to the end": "完了したカードを最後に移動",
 	"Completed habits drift to the end of the queue and paused ones park behind them. Turn this off to keep every card in its sorted position.":
 		"完了した習慣はキューの最後へ移動し、一時停止中の習慣はその後ろに並びます。オフにすると、すべてのカードが並び順の位置に留まります。",
+	"Sorting & grouping": "並べ替えとグループ化",
+	"Group habits by": "習慣のグループ化",
+	"Show habits in sections: by their group name (set on each habit), or by accent color.":
+		"習慣をセクションで表示します:グループ名(各習慣で設定)またはアクセントカラーごと。",
+	Off: "オフ",
+	Group: "グループ",
+	Ungrouped: "グループなし",
+	"No color": "色なし",
+	"Optional group used to build dashboard sections — for example an area of responsibility.":
+		"ダッシュボードのセクションを作るための任意のグループ — 例えば責任範囲など。",
+	"e.g. Health": "例:健康",
 	"Dashboard layout": "ダッシュボードのレイアウト",
 	"How to move through your habit cards: a paged carousel with arrows, a grid that wraps onto new rows, or a fixed-height grid that scrolls vertically.":
 		"カードの表示方法:矢印で切り替えるカルーセル、行を折り返すグリッド、または高さ固定で縦にスクロールするグリッド。",

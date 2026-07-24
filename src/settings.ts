@@ -10,7 +10,7 @@ import {
 } from "obsidian";
 import { t } from "./i18n";
 import type HabitsPlugin from "./main";
-import type { HabitSortMode } from "./types";
+import type { GroupByMode, HabitSortMode } from "./types";
 import { sortHabits } from "./utils";
 import { applyHabitIcon } from "./ui/icon-suggest-modal";
 
@@ -115,6 +115,8 @@ export interface HabitsPluginSettings {
 	 * card keeps its sorted position.
 	 */
 	statusOrdering: boolean;
+	/** How habits are gathered into visual sections. `off` by default. */
+	groupBy: GroupByMode;
 	/** How many cards are visible at once on phone-sized screens (1–2). */
 	mobileCardsPerView: number;
 	/**
@@ -146,6 +148,7 @@ export const DEFAULT_SETTINGS: HabitsPluginSettings = {
 	sortMode: "name",
 	manualOrder: [],
 	statusOrdering: true,
+	groupBy: "off",
 	mobileCardsPerView: 2,
 	followDailyNoteDate: true,
 	dailyNoteDateFormat: "YYYY-MM-DD",
@@ -297,7 +300,7 @@ export class HabitsSettingTab extends PluginSettingTab {
 			},
 			{
 				type: "group",
-				heading: t("Sorting"),
+				heading: t("Sorting & grouping"),
 				items: [
 					{
 						name: t("Sort habits by"),
@@ -326,6 +329,22 @@ export class HabitsSettingTab extends PluginSettingTab {
 							this.plugin.settings.sortMode === "manual",
 						render: (setting: Setting) => {
 							this.renderManualOrderEditor(setting);
+						},
+					},
+					{
+						name: t("Group habits by"),
+						desc: t(
+							"Show habits in sections: by their group name (set on each habit), or by accent color.",
+						),
+						control: {
+							type: "dropdown",
+							key: "groupBy",
+							options: {
+								off: t("Off"),
+								group: t("Group"),
+								color: t("Color"),
+							},
+							defaultValue: DEFAULT_SETTINGS.groupBy,
 						},
 					},
 					{
@@ -492,6 +511,10 @@ export class HabitsSettingTab extends PluginSettingTab {
 				)
 					? trimmed
 					: "name";
+			case "groupBy":
+				return trimmed === "group" || trimmed === "color"
+					? trimmed
+					: "off";
 			case "dashboardLayout":
 				return trimmed === "grid" || trimmed === "vertical"
 					? trimmed
@@ -548,7 +571,10 @@ export class HabitsSettingTab extends PluginSettingTab {
 
 	/**
 	 * Pointer-based dragging (rather than HTML5 drag events) so the rows
-	 * can be rearranged by touch on mobile as well as by mouse.
+	 * can be rearranged by touch on mobile as well as by mouse. The move
+	 * and release listeners sit on the window, not the row: reordering
+	 * re-inserts the row into the list, which would clear any pointer
+	 * capture on it and kill the drag mid-flight.
 	 */
 	private registerRowDrag(row: HTMLElement, list: HTMLElement): void {
 		row.addEventListener("pointerdown", (evt: PointerEvent) => {
@@ -556,8 +582,8 @@ export class HabitsSettingTab extends PluginSettingTab {
 				return;
 			}
 			evt.preventDefault();
-			row.setPointerCapture(evt.pointerId);
 			row.addClass("is-dragging");
+			const win = row.win;
 
 			const onMove = (e: PointerEvent): void => {
 				const rows = Array.from(
@@ -569,21 +595,23 @@ export class HabitsSettingTab extends PluginSettingTab {
 						el.getBoundingClientRect().top + el.offsetHeight / 2,
 				);
 				if (next) {
-					list.insertBefore(row, next);
-				} else {
+					if (next !== row.nextElementSibling) {
+						list.insertBefore(row, next);
+					}
+				} else if (list.lastElementChild !== row) {
 					list.appendChild(row);
 				}
 			};
 			const onUp = (): void => {
 				row.removeClass("is-dragging");
-				row.removeEventListener("pointermove", onMove);
-				row.removeEventListener("pointerup", onUp);
-				row.removeEventListener("pointercancel", onUp);
+				win.removeEventListener("pointermove", onMove);
+				win.removeEventListener("pointerup", onUp);
+				win.removeEventListener("pointercancel", onUp);
 				void this.persistOrder(list);
 			};
-			row.addEventListener("pointermove", onMove);
-			row.addEventListener("pointerup", onUp);
-			row.addEventListener("pointercancel", onUp);
+			win.addEventListener("pointermove", onMove);
+			win.addEventListener("pointerup", onUp);
+			win.addEventListener("pointercancel", onUp);
 		});
 	}
 
@@ -738,7 +766,9 @@ export class HabitsSettingTab extends PluginSettingTab {
 					}),
 			);
 
-		new Setting(containerEl).setName(t("Sorting")).setHeading();
+		new Setting(containerEl)
+			.setName(t("Sorting & grouping"))
+			.setHeading();
 
 		new Setting(containerEl)
 			.setName(t("Sort habits by"))
@@ -784,6 +814,28 @@ export class HabitsSettingTab extends PluginSettingTab {
 		manualOrderSetting.settingEl.toggle(
 			this.plugin.settings.sortMode === "manual",
 		);
+
+		new Setting(containerEl)
+			.setName(t("Group habits by"))
+			.setDesc(
+				t(
+					"Show habits in sections: by their group name (set on each habit), or by accent color.",
+				),
+			)
+			.addDropdown((dropdown) =>
+				dropdown
+					.addOption("off", t("Off"))
+					.addOption("group", t("Group"))
+					.addOption("color", t("Color"))
+					.setValue(this.plugin.settings.groupBy)
+					.onChange(async (value) => {
+						this.plugin.settings.groupBy =
+							value === "group" || value === "color"
+								? value
+								: "off";
+						await this.plugin.saveSettings();
+					}),
+			);
 
 		new Setting(containerEl)
 			.setName(t("Move completed cards to the end"))

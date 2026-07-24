@@ -45,6 +45,16 @@ export type HabitSortMode =
 	| "manual";
 
 /**
+ * How habits are gathered into visual sections.
+ *
+ * - `off`: no sections (the original behaviour).
+ * - `group`: by each habit's optional group name — whatever the user's
+ *   system calls its areas (PARA areas, identity vs outcome habits, …).
+ * - `color`: by accent colour.
+ */
+export type GroupByMode = "off" | "group" | "color";
+
+/**
  * A period during which a habit was paused (inclusive of both ends).
  * An empty `end` means the pause is still ongoing.
  */
@@ -109,6 +119,11 @@ export interface HabitDefinition {
 	icon: string;
 	/** Optional accent colour (any valid CSS colour). */
 	color: string;
+	/**
+	 * Optional group name used to build dashboard sections (e.g. an area
+	 * of responsibility). Empty means ungrouped.
+	 */
+	group: string;
 	/** Date the habit started, as `YYYY-MM-DD`. */
 	startDate: string;
 	/** True while an open pause exists. Paused days are skipped by stats. */
@@ -147,4 +162,5 @@ export interface NewHabitOptions {
 	monthlyPerfect: boolean;
 	icon: string;
 	color: string;
+	group: string;
 }

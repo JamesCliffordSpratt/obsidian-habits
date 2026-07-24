@@ -20,7 +20,6 @@ export const es: Record<string, string> = {
 		"Formato de Moment.js usado para leer la fecha del nombre de una nota diaria, por ejemplo YYYY-MM-DD o YYYYMMDD.",
 
 	// Sorting
-	Sorting: "Ordenación",
 	"Sort habits by": "Ordenar hábitos por",
 	"The base order of habit cards in the dashboard and side panel.":
 		"El orden base de las tarjetas de hábitos en el panel principal y el panel lateral.",
@@ -35,6 +34,17 @@ export const es: Record<string, string> = {
 		"Mover las tarjetas completadas al final",
 	"Completed habits drift to the end of the queue and paused ones park behind them. Turn this off to keep every card in its sorted position.":
 		"Los hábitos completados se desplazan al final de la cola y los pausados quedan detrás. Desactívalo para que cada tarjeta mantenga su posición ordenada.",
+	"Sorting & grouping": "Ordenación y agrupación",
+	"Group habits by": "Agrupar hábitos por",
+	"Show habits in sections: by their group name (set on each habit), or by accent color.":
+		"Muestra los hábitos en secciones: por su nombre de grupo (definido en cada hábito) o por color de acento.",
+	Off: "Desactivado",
+	Group: "Grupo",
+	Ungrouped: "Sin grupo",
+	"No color": "Sin color",
+	"Optional group used to build dashboard sections — for example an area of responsibility.":
+		"Grupo opcional para crear secciones en el panel — por ejemplo, un área de responsabilidad.",
+	"e.g. Health": "p. ej. Salud",
 	"Dashboard layout": "Diseño del panel",
 	"How to move through your habit cards: a paged carousel with arrows, a grid that wraps onto new rows, or a fixed-height grid that scrolls vertically.":
 		"Cómo navegar por tus tarjetas de hábitos: un carrusel paginado con flechas, una cuadrícula que salta a nuevas filas o una cuadrícula de altura fija con desplazamiento vertical.",

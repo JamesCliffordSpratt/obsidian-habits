@@ -32,10 +32,13 @@ import {
 	addDays,
 	friendlyDateLabel,
 	fromDateKey,
+	groupHabits,
 	parseNoteDate,
 	registerLongPress,
+	sectionLabel,
 	sortHabits,
 	toDateKey,
+	type HabitSection,
 } from "../utils";
 
 const MOBILE_BREAKPOINT = 768;
@@ -477,22 +480,50 @@ export class HabitsDashboard extends MarkdownRenderChild {
 	 * thumb-drag on touch — both native, no JS scrolling involved).
 	 */
 	private renderGrid(): void {
-		const vertical = this.getSettings().dashboardLayout === "vertical";
-		const grid = this.root.createDiv({ cls: "habits-grid" });
-		grid.toggleClass("is-vertical", vertical);
+		const settings = this.getSettings();
+		const vertical = settings.dashboardLayout === "vertical";
+		const wrap = this.root.createDiv({ cls: "habits-grid-wrap" });
+		wrap.toggleClass("is-vertical", vertical);
 		this.trackEl = null;
 
 		const perRow = this.perView();
 		this.lastPerView = perRow;
-		grid.setCssProps({ "--habits-per-row": String(perRow) });
+		wrap.setCssProps({ "--habits-per-row": String(perRow) });
 
-		for (const habit of this.orderedHabits()) {
-			this.renderCard(grid, habit);
+		const showHeaders = settings.groupBy !== "off";
+		for (const section of this.sections()) {
+			if (showHeaders) {
+				this.renderSectionHeader(wrap, section.key);
+			}
+			const grid = wrap.createDiv({ cls: "habits-grid" });
+			for (const habit of section.habits) {
+				this.renderCard(grid, habit);
+			}
 		}
 
 		if (vertical) {
-			this.capVerticalHeight(grid);
+			this.capVerticalHeight(wrap);
 		}
+	}
+
+	/** Section header: a colour swatch (colour mode) plus a label. */
+	private renderSectionHeader(container: HTMLElement, key: string): void {
+		const groupBy = this.getSettings().groupBy;
+		const header = container.createDiv({ cls: "habits-group-header" });
+		if (groupBy === "color") {
+			const swatch = header.createSpan({
+				cls: "habits-group-swatch",
+			});
+			if (key) {
+				swatch.setCssProps({ "--habits-accent": key });
+			} else {
+				swatch.addClass("is-none");
+			}
+		}
+		header.createSpan({
+			cls: "habits-group-label",
+			text: sectionLabel(key, groupBy),
+		});
 	}
 
 	/**
@@ -841,9 +872,29 @@ export class HabitsDashboard extends MarkdownRenderChild {
 	 * Weekly and monthly habits appear only on the days they are due.
 	 */
 	private orderedHabits(): HabitDefinition[] {
+		return this.sections().flatMap((section) => section.habits);
+	}
+
+	/**
+	 * Visual sections for the selected day. Without grouping there is a
+	 * single unnamed section; with it, one per group or colour. Status
+	 * ordering applies within each section, so completed habits sink to
+	 * the end of their own section rather than escaping it.
+	 */
+	private sections(): HabitSection[] {
 		const due = this.habits.filter((habit) =>
 			this.isDueOnSelected(habit),
 		);
+		return groupHabits(due, this.getSettings().groupBy)
+			.map((section) => ({
+				key: section.key,
+				habits: this.applyStatusOrder(section.habits),
+			}))
+			.filter((section) => section.habits.length > 0);
+	}
+
+	/** Status partition applied to an already-sorted run of due habits. */
+	private applyStatusOrder(due: HabitDefinition[]): HabitDefinition[] {
 		// With status ordering off, every card keeps its sorted position —
 		// nothing moves as habits are completed or paused.
 		if (!this.getSettings().statusOrdering) {

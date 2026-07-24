@@ -12,7 +12,14 @@ import type { HabitStore } from "../habit-store";
 import type { HabitsPluginSettings } from "../settings";
 import type { HabitDefinition } from "../types";
 import { isComplete, isDue, isPausedOn, limitOf } from "../stats";
-import { registerLongPress, sortHabits, toDateKey } from "../utils";
+import {
+	groupHabits,
+	registerLongPress,
+	sectionLabel,
+	sortHabits,
+	toDateKey,
+	type HabitSection,
+} from "../utils";
 import { t } from "../i18n";
 import { HabitModal } from "./habit-modal";
 import { ConfirmModal } from "./confirm-modal";
@@ -157,7 +164,22 @@ export class HabitsPanelView extends ItemView {
 	 * monthly habits are included only on the days they are due.
 	 */
 	private ordered(): HabitDefinition[] {
+		return this.sections().flatMap((section) => section.habits);
+	}
+
+	/** Sections mirroring the dashboard's grouping behaviour. */
+	private sections(): HabitSection[] {
 		const due = this.habits.filter((habit) => this.isDueToday(habit));
+		return groupHabits(due, this.getSettings().groupBy)
+			.map((section) => ({
+				key: section.key,
+				habits: this.applyStatusOrder(section.habits),
+			}))
+			.filter((section) => section.habits.length > 0);
+	}
+
+	/** Status partition applied to an already-sorted run of due habits. */
+	private applyStatusOrder(due: HabitDefinition[]): HabitDefinition[] {
 		// With status ordering off, every row keeps its sorted position.
 		if (!this.getSettings().statusOrdering) {
 			return due;
@@ -243,8 +265,31 @@ export class HabitsPanelView extends ItemView {
 		}
 
 		const list = root.createDiv({ cls: "habits-panel-list" });
-		for (const habit of due) {
-			this.renderRow(list, habit);
+		const groupBy = this.getSettings().groupBy;
+		for (const section of this.sections()) {
+			if (groupBy !== "off") {
+				const header = list.createDiv({
+					cls: "habits-panel-group",
+				});
+				if (groupBy === "color") {
+					const swatch = header.createSpan({
+						cls: "habits-group-swatch",
+					});
+					if (section.key) {
+						swatch.setCssProps({
+							"--habits-accent": section.key,
+						});
+					} else {
+						swatch.addClass("is-none");
+					}
+				}
+				header.createSpan({
+					text: sectionLabel(section.key, groupBy),
+				});
+			}
+			for (const habit of section.habits) {
+				this.renderRow(list, habit);
+			}
 		}
 	}
 

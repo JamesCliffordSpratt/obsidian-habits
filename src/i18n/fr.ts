@@ -20,7 +20,6 @@ export const fr: Record<string, string> = {
 		"Format Moment.js utilisé pour lire la date dans le nom d'une note quotidienne, par exemple YYYY-MM-DD ou YYYYMMDD.",
 
 	// Sorting
-	Sorting: "Tri",
 	"Sort habits by": "Trier les habitudes par",
 	"The base order of habit cards in the dashboard and side panel.":
 		"L'ordre de base des cartes d'habitudes dans le tableau de bord et le panneau latéral.",
@@ -35,6 +34,17 @@ export const fr: Record<string, string> = {
 		"Déplacer les cartes terminées à la fin",
 	"Completed habits drift to the end of the queue and paused ones park behind them. Turn this off to keep every card in its sorted position.":
 		"Les habitudes terminées glissent en fin de file et celles en pause se rangent derrière. Désactivez pour garder chaque carte à sa position triée.",
+	"Sorting & grouping": "Tri et regroupement",
+	"Group habits by": "Regrouper les habitudes par",
+	"Show habits in sections: by their group name (set on each habit), or by accent color.":
+		"Affiche les habitudes en sections : par nom de groupe (défini sur chaque habitude) ou par couleur d'accent.",
+	Off: "Désactivé",
+	Group: "Groupe",
+	Ungrouped: "Sans groupe",
+	"No color": "Sans couleur",
+	"Optional group used to build dashboard sections — for example an area of responsibility.":
+		"Groupe facultatif pour créer des sections dans le tableau de bord — par exemple un domaine de responsabilité.",
+	"e.g. Health": "p. ex. Santé",
 	"Dashboard layout": "Disposition du tableau de bord",
 	"How to move through your habit cards: a paged carousel with arrows, a grid that wraps onto new rows, or a fixed-height grid that scrolls vertically.":
 		"Comment parcourir vos cartes d'habitudes : un carrousel paginé avec flèches, une grille qui passe à la ligne, ou une grille à hauteur fixe qui défile verticalement.",

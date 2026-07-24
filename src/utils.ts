@@ -1,6 +1,10 @@
 import { moment, type Component } from "obsidian";
 import { t } from "./i18n";
-import type { HabitDefinition, HabitSortMode } from "./types";
+import type {
+	GroupByMode,
+	HabitDefinition,
+	HabitSortMode,
+} from "./types";
 
 /**
  * Invoke `onTrigger` when the user holds a touch on `el` for half a second
@@ -243,12 +247,48 @@ export function parseNoteDate(name: string, format: string): Date | null {
 }
 
 /**
+ * The theme palette the habit modal's swatches store, ordered by hue.
+ * The theme accent gets `-1` so default-coloured habits lead, and greys
+ * would land at 360; the actual rendered colour depends on the theme,
+ * so the palette order is by the colours' conventional hues.
+ */
+const PALETTE_HUES: Record<string, number> = {
+	"var(--interactive-accent)": -1,
+	"var(--color-red)": 0,
+	"var(--color-orange)": 30,
+	"var(--color-yellow)": 60,
+	"var(--color-green)": 120,
+	"var(--color-cyan)": 180,
+	"var(--color-blue)": 240,
+	"var(--color-purple)": 280,
+	"var(--color-pink)": 330,
+};
+
+/** English labels for the palette; translated at display time. */
+const PALETTE_LABELS: Record<string, string> = {
+	"var(--interactive-accent)": "Accent",
+	"var(--color-red)": "Red",
+	"var(--color-orange)": "Orange",
+	"var(--color-yellow)": "Yellow",
+	"var(--color-green)": "Green",
+	"var(--color-cyan)": "Cyan",
+	"var(--color-blue)": "Blue",
+	"var(--color-purple)": "Purple",
+	"var(--color-pink)": "Pink",
+};
+
+/**
  * Hue (0–360) of a habit's accent colour, used to order colours so
- * similar ones sit together. Only hex colours are parsed — that is what
- * the habit modal's colour picker produces; anything else returns `null`
- * and sorts after the coloured habits.
+ * similar ones sit together. Handles the theme-palette CSS variables the
+ * habit modal's swatches store as well as hex colours from the custom
+ * picker; anything else returns `null` and sorts after the coloured
+ * habits.
  */
 function colorHue(color: string): number | null {
+	const palette = PALETTE_HUES[color.trim()];
+	if (palette !== undefined) {
+		return palette;
+	}
 	const match = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(color.trim());
 	if (!match) {
 		return null;
@@ -348,4 +388,77 @@ export function sortHabits(
 			break;
 	}
 	return sorted;
+}
+
+/** One visual section of the dashboard when grouping is active. */
+export interface HabitSection {
+	/**
+	 * Raw section key: the group name, the colour value, or "" for the
+	 * catch-all section (ungrouped or colourless habits).
+	 */
+	key: string;
+	habits: HabitDefinition[];
+}
+
+/**
+ * Gather habits into sections, preserving the incoming (sorted) order
+ * within each section. Sections are ordered alphabetically for groups
+ * and by hue for colours; the catch-all section always comes last.
+ */
+export function groupHabits(
+	habits: HabitDefinition[],
+	groupBy: GroupByMode,
+): HabitSection[] {
+	if (groupBy === "off") {
+		return [{ key: "", habits }];
+	}
+	const sections = new Map<string, HabitDefinition[]>();
+	for (const habit of habits) {
+		const key =
+			groupBy === "color" ? habit.color.trim() : habit.group.trim();
+		const bucket = sections.get(key);
+		if (bucket) {
+			bucket.push(habit);
+		} else {
+			sections.set(key, [habit]);
+		}
+	}
+	const keys = Array.from(sections.keys()).sort((a, b) => {
+		// The catch-all section always trails.
+		if (a === "" || b === "") {
+			return a === "" ? 1 : -1;
+		}
+		if (groupBy === "color") {
+			const ha = colorHue(a);
+			const hb = colorHue(b);
+			if (ha === null && hb === null) {
+				return a.localeCompare(b);
+			}
+			if (ha === null || hb === null) {
+				return ha === null ? 1 : -1;
+			}
+			return ha - hb || a.localeCompare(b);
+		}
+		return a.localeCompare(b);
+	});
+	return keys.map((key) => ({
+		key,
+		habits: sections.get(key) as HabitDefinition[],
+	}));
+}
+
+/**
+ * Human-readable label for a section header. Group names pass through;
+ * palette colours get their translated names, custom colours show their
+ * value, and the catch-all section gets a translated placeholder.
+ */
+export function sectionLabel(key: string, groupBy: GroupByMode): string {
+	if (groupBy === "color") {
+		if (!key) {
+			return t("No color");
+		}
+		const label = PALETTE_LABELS[key];
+		return label ? t(label) : key;
+	}
+	return key || t("Ungrouped");
 }

@@ -1,4 +1,5 @@
 import {
+	AbstractInputSuggest,
 	App,
 	ButtonComponent,
 	ColorComponent,
@@ -53,6 +54,34 @@ const WEEKDAYS: readonly { label: string; value: number }[] = [
 	{ label: "Saturday", value: 6 },
 	{ label: "Sunday", value: 0 },
 ];
+
+/** Suggests existing group names while typing in the group field. */
+class GroupSuggest extends AbstractInputSuggest<string> {
+	constructor(
+		app: App,
+		private textInputEl: HTMLInputElement,
+		private groups: () => string[],
+	) {
+		super(app, textInputEl);
+	}
+
+	getSuggestions(query: string): string[] {
+		const needle = query.toLowerCase();
+		return this.groups().filter((group) =>
+			group.toLowerCase().includes(needle),
+		);
+	}
+
+	renderSuggestion(group: string, el: HTMLElement): void {
+		el.setText(group);
+	}
+
+	selectSuggestion(group: string): void {
+		this.textInputEl.value = group;
+		this.textInputEl.trigger("input");
+		this.close();
+	}
+}
 
 /** A placeholder example shown to hint at how a habit type is used. */
 interface HabitExample {
@@ -161,6 +190,7 @@ export class HabitModal extends Modal {
 	private targetsOpen = false;
 	private color = "var(--interactive-accent)";
 	private icon = "";
+	private group = "";
 	private exampleIndex = 0;
 	private editing: HabitDefinition | null = null;
 
@@ -202,6 +232,7 @@ export class HabitModal extends Modal {
 			this.monthlyPerfect = editing.monthlyPerfect;
 			this.icon = editing.icon;
 			this.color = editing.color || "var(--interactive-accent)";
+			this.group = editing.group;
 		}
 	}
 
@@ -393,6 +424,25 @@ export class HabitModal extends Modal {
 		this.renderColorPicker(contentEl);
 
 		new Setting(contentEl)
+			.setName(t("Group"))
+			.setDesc(
+				t(
+					"Optional group used to build dashboard sections — for example an area of responsibility.",
+				),
+			)
+			.addText((text) => {
+				text
+					.setPlaceholder(t("e.g. Health"))
+					.setValue(this.group)
+					.onChange((value) => {
+						this.group = value;
+					});
+				new GroupSuggest(this.app, text.inputEl, () =>
+					this.existingGroups(),
+				);
+			});
+
+		new Setting(contentEl)
 			.addButton((button) =>
 				button.setButtonText(t("Cancel")).onClick(() => this.close()),
 			)
@@ -419,6 +469,7 @@ export class HabitModal extends Modal {
 							monthlyPerfect: this.monthlyPerfect,
 							icon: this.icon,
 							color: this.color,
+							group: this.group.trim(),
 						};
 						const file = this.editing
 							? await this.store.updateHabit(this.editing, options)
@@ -429,6 +480,18 @@ export class HabitModal extends Modal {
 						}
 					}),
 			);
+	}
+
+	/** Unique group names already in use, for the group suggestions. */
+	private existingGroups(): string[] {
+		const groups = new Set<string>();
+		for (const habit of this.store.getHabits()) {
+			const group = habit.group.trim();
+			if (group) {
+				groups.add(group);
+			}
+		}
+		return Array.from(groups).sort((a, b) => a.localeCompare(b));
 	}
 
 	/** The example pool matching the current goal direction and type. */

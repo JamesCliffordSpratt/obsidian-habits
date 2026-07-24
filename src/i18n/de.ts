@@ -20,7 +20,6 @@ export const de: Record<string, string> = {
 		"Moment.js-Format, mit dem das Datum aus dem Namen einer täglichen Notiz gelesen wird, zum Beispiel YYYY-MM-DD oder YYYYMMDD.",
 
 	// Sorting
-	Sorting: "Sortierung",
 	"Sort habits by": "Gewohnheiten sortieren nach",
 	"The base order of habit cards in the dashboard and side panel.":
 		"Die Grundreihenfolge der Gewohnheitskarten im Dashboard und im Seitenpanel.",
@@ -35,6 +34,17 @@ export const de: Record<string, string> = {
 		"Erledigte Karten ans Ende verschieben",
 	"Completed habits drift to the end of the queue and paused ones park behind them. Turn this off to keep every card in its sorted position.":
 		"Erledigte Gewohnheiten wandern ans Ende der Warteschlange, pausierte dahinter. Deaktiviere dies, damit jede Karte an ihrer sortierten Position bleibt.",
+	"Sorting & grouping": "Sortierung & Gruppierung",
+	"Group habits by": "Gewohnheiten gruppieren nach",
+	"Show habits in sections: by their group name (set on each habit), or by accent color.":
+		"Zeigt Gewohnheiten in Abschnitten: nach ihrem Gruppennamen (bei jeder Gewohnheit festgelegt) oder nach Akzentfarbe.",
+	Off: "Aus",
+	Group: "Gruppe",
+	Ungrouped: "Ohne Gruppe",
+	"No color": "Ohne Farbe",
+	"Optional group used to build dashboard sections — for example an area of responsibility.":
+		"Optionale Gruppe für Abschnitte im Dashboard — zum Beispiel ein Verantwortungsbereich.",
+	"e.g. Health": "z. B. Gesundheit",
 	"Dashboard layout": "Dashboard-Layout",
 	"How to move through your habit cards: a paged carousel with arrows, a grid that wraps onto new rows, or a fixed-height grid that scrolls vertically.":
 		"Wie du durch deine Gewohnheitskarten navigierst: ein seitenweises Karussell mit Pfeilen, ein Raster, das in neue Zeilen umbricht, oder ein Raster mit fester Höhe, das vertikal scrollt.",
