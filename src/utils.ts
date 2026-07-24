@@ -1,5 +1,6 @@
 import { moment, type Component } from "obsidian";
 import { t } from "./i18n";
+import type { HabitDefinition, HabitSortMode } from "./types";
 
 /**
  * Invoke `onTrigger` when the user holds a touch on `el` for half a second
@@ -239,4 +240,112 @@ export function parseNoteDate(name: string, format: string): Date | null {
 	// note name is exactly the date.
 	const whole = parseMoment(name, trimmed, true);
 	return whole.isValid() ? whole.toDate() : null;
+}
+
+/**
+ * Hue (0–360) of a habit's accent colour, used to order colours so
+ * similar ones sit together. Only hex colours are parsed — that is what
+ * the habit modal's colour picker produces; anything else returns `null`
+ * and sorts after the coloured habits.
+ */
+function colorHue(color: string): number | null {
+	const match = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(color.trim());
+	if (!match) {
+		return null;
+	}
+	let hex = match[1];
+	if (hex.length === 3) {
+		hex = hex.replace(/./g, (c) => c + c);
+	}
+	const r = parseInt(hex.slice(0, 2), 16) / 255;
+	const g = parseInt(hex.slice(2, 4), 16) / 255;
+	const b = parseInt(hex.slice(4, 6), 16) / 255;
+	const max = Math.max(r, g, b);
+	const min = Math.min(r, g, b);
+	if (max === min) {
+		// Greys have no hue; park them just after the coloured habits.
+		return 360;
+	}
+	const d = max - min;
+	let hue: number;
+	if (max === r) {
+		hue = ((g - b) / d + (g < b ? 6 : 0)) * 60;
+	} else if (max === g) {
+		hue = ((b - r) / d + 2) * 60;
+	} else {
+		hue = ((r - g) / d + 4) * 60;
+	}
+	return hue;
+}
+
+/** The most recent day a habit was logged, or "" when it never was. */
+function lastLoggedDay(habit: HabitDefinition): string {
+	let latest = "";
+	for (const day of Object.keys(habit.records)) {
+		if (day > latest) {
+			latest = day;
+		}
+	}
+	return latest;
+}
+
+/**
+ * Order habits for display. `habits` arrives name-sorted from the store,
+ * and every mode falls back to that name order for ties, so the result
+ * is always stable. `manualOrder` holds note paths as arranged in
+ * settings; habits missing from it (created since) go to the end.
+ */
+export function sortHabits(
+	habits: HabitDefinition[],
+	mode: HabitSortMode,
+	manualOrder: readonly string[],
+): HabitDefinition[] {
+	const sorted = [...habits];
+	switch (mode) {
+		case "color": {
+			sorted.sort((a, b) => {
+				const ha = a.color ? colorHue(a.color) : null;
+				const hb = b.color ? colorHue(b.color) : null;
+				if (ha === null && hb === null) {
+					return a.name.localeCompare(b.name);
+				}
+				if (ha === null || hb === null) {
+					return ha === null ? 1 : -1;
+				}
+				return ha - hb || a.name.localeCompare(b.name);
+			});
+			break;
+		}
+		case "startDate": {
+			sorted.sort(
+				(a, b) =>
+					a.startDate.localeCompare(b.startDate) ||
+					a.name.localeCompare(b.name),
+			);
+			break;
+		}
+		case "lastLogged": {
+			sorted.sort(
+				(a, b) =>
+					lastLoggedDay(b).localeCompare(lastLoggedDay(a)) ||
+					a.name.localeCompare(b.name),
+			);
+			break;
+		}
+		case "manual": {
+			const position = new Map(
+				manualOrder.map((path, index) => [path, index]),
+			);
+			sorted.sort((a, b) => {
+				const pa = position.get(a.path) ?? Number.MAX_SAFE_INTEGER;
+				const pb = position.get(b.path) ?? Number.MAX_SAFE_INTEGER;
+				return pa - pb || a.name.localeCompare(b.name);
+			});
+			break;
+		}
+		case "name":
+			// Already the store's order; nothing to do.
+			break;
+	}
+	return sorted;
 }

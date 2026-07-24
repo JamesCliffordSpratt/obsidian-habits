@@ -3,12 +3,16 @@ import {
 	App,
 	PluginSettingTab,
 	requireApiVersion,
+	setIcon,
 	Setting,
 	TFolder,
 	type SettingDefinitionItem,
 } from "obsidian";
 import { t } from "./i18n";
 import type HabitsPlugin from "./main";
+import type { HabitSortMode } from "./types";
+import { sortHabits } from "./utils";
+import { applyHabitIcon } from "./ui/icon-suggest-modal";
 
 /** Suggests matching vault folders while typing in a folder field. */
 class FolderSuggest extends AbstractInputSuggest<TFolder> {
@@ -97,6 +101,20 @@ export interface HabitsPluginSettings {
 	dashboardLayout: DashboardLayout;
 	/** How many cards are visible at once in the carousel on wide screens. */
 	cardsPerView: number;
+	/** The base order of habit cards. `name` is the original behaviour. */
+	sortMode: HabitSortMode;
+	/**
+	 * Note paths in the order the user arranged them in settings. Only
+	 * consulted when `sortMode` is `manual`; habits missing from the list
+	 * (created since it was arranged) go to the end.
+	 */
+	manualOrder: string[];
+	/**
+	 * When true (the original behaviour), completed habits drift to the
+	 * end of the queue and paused ones park behind them. When false every
+	 * card keeps its sorted position.
+	 */
+	statusOrdering: boolean;
 	/** How many cards are visible at once on phone-sized screens (1–2). */
 	mobileCardsPerView: number;
 	/**
@@ -125,6 +143,9 @@ export const DEFAULT_SETTINGS: HabitsPluginSettings = {
 	habitsFolder: "Habits",
 	dashboardLayout: "carousel",
 	cardsPerView: 4,
+	sortMode: "name",
+	manualOrder: [],
+	statusOrdering: true,
 	mobileCardsPerView: 2,
 	followDailyNoteDate: true,
 	dailyNoteDateFormat: "YYYY-MM-DD",
@@ -275,6 +296,52 @@ export class HabitsSettingTab extends PluginSettingTab {
 				},
 			},
 			{
+				type: "group",
+				heading: t("Sorting"),
+				items: [
+					{
+						name: t("Sort habits by"),
+						desc: t(
+							"The base order of habit cards in the dashboard and side panel.",
+						),
+						control: {
+							type: "dropdown",
+							key: "sortMode",
+							options: {
+								name: t("Name (A–Z)"),
+								color: t("Color"),
+								startDate: t("Start date"),
+								lastLogged: t("Last logged"),
+								manual: t("Manual"),
+							},
+							defaultValue: DEFAULT_SETTINGS.sortMode,
+						},
+					},
+					{
+						name: t("Manual order"),
+						desc: t(
+							"Drag the cards into the order you want. New habits join the end of the list.",
+						),
+						visible: () =>
+							this.plugin.settings.sortMode === "manual",
+						render: (setting: Setting) => {
+							this.renderManualOrderEditor(setting);
+						},
+					},
+					{
+						name: t("Move completed cards to the end"),
+						desc: t(
+							"Completed habits drift to the end of the queue and paused ones park behind them. Turn this off to keep every card in its sorted position.",
+						),
+						control: {
+							type: "toggle",
+							key: "statusOrdering",
+							defaultValue: DEFAULT_SETTINGS.statusOrdering,
+						},
+					},
+				],
+			},
+			{
 				name: t("Stats page carousel"),
 				desc: t(
 					"Show the per-habit stats as pages you can flip through instead of one long list.",
@@ -419,6 +486,12 @@ export class HabitsSettingTab extends PluginSettingTab {
 		}
 		const trimmed = value.trim();
 		switch (key) {
+			case "sortMode":
+				return ["name", "color", "startDate", "lastLogged", "manual"].includes(
+					trimmed,
+				)
+					? trimmed
+					: "name";
 			case "dashboardLayout":
 				return trimmed === "grid" || trimmed === "vertical"
 					? trimmed
@@ -434,6 +507,98 @@ export class HabitsSettingTab extends PluginSettingTab {
 			default:
 				return trimmed;
 		}
+	}
+
+	/**
+	 * The drag-to-reorder editor shown when sorting is manual: one slim
+	 * row per habit that can be dragged (mouse or touch) into place. The
+	 * arranged order is stored as note paths in `manualOrder`.
+	 */
+	private renderManualOrderEditor(setting: Setting): void {
+		setting.settingEl.addClass("habits-order-setting");
+		const list = setting.settingEl.createDiv({
+			cls: "habits-order-list",
+		});
+		this.buildOrderList(list);
+	}
+
+	private buildOrderList(list: HTMLElement): void {
+		list.empty();
+		const habits = sortHabits(
+			this.plugin.store.getHabits().filter((habit) => !habit.stopped),
+			"manual",
+			this.plugin.settings.manualOrder,
+		);
+		for (const habit of habits) {
+			const row = list.createDiv({ cls: "habits-order-row" });
+			row.dataset.path = habit.path;
+			if (habit.color) {
+				row.setCssProps({ "--habits-accent": habit.color });
+			}
+			const grip = row.createSpan({ cls: "habits-order-grip" });
+			setIcon(grip, "grip-vertical");
+			if (habit.icon) {
+				const icon = row.createSpan({ cls: "habits-order-icon" });
+				applyHabitIcon(icon, habit.icon);
+			}
+			row.createSpan({ cls: "habits-order-name", text: habit.name });
+			this.registerRowDrag(row, list);
+		}
+	}
+
+	/**
+	 * Pointer-based dragging (rather than HTML5 drag events) so the rows
+	 * can be rearranged by touch on mobile as well as by mouse.
+	 */
+	private registerRowDrag(row: HTMLElement, list: HTMLElement): void {
+		row.addEventListener("pointerdown", (evt: PointerEvent) => {
+			if (evt.button !== 0) {
+				return;
+			}
+			evt.preventDefault();
+			row.setPointerCapture(evt.pointerId);
+			row.addClass("is-dragging");
+
+			const onMove = (e: PointerEvent): void => {
+				const rows = Array.from(
+					list.querySelectorAll<HTMLElement>(".habits-order-row"),
+				).filter((el) => el !== row);
+				const next = rows.find(
+					(el) =>
+						e.clientY <
+						el.getBoundingClientRect().top + el.offsetHeight / 2,
+				);
+				if (next) {
+					list.insertBefore(row, next);
+				} else {
+					list.appendChild(row);
+				}
+			};
+			const onUp = (): void => {
+				row.removeClass("is-dragging");
+				row.removeEventListener("pointermove", onMove);
+				row.removeEventListener("pointerup", onUp);
+				row.removeEventListener("pointercancel", onUp);
+				void this.persistOrder(list);
+			};
+			row.addEventListener("pointermove", onMove);
+			row.addEventListener("pointerup", onUp);
+			row.addEventListener("pointercancel", onUp);
+		});
+	}
+
+	/** Store the DOM order of the rows as the new manual order. */
+	private async persistOrder(list: HTMLElement): Promise<void> {
+		const paths: string[] = [];
+		for (const el of Array.from(
+			list.querySelectorAll<HTMLElement>(".habits-order-row"),
+		)) {
+			if (el.dataset.path) {
+				paths.push(el.dataset.path);
+			}
+		}
+		this.plugin.settings.manualOrder = paths;
+		await this.plugin.saveSettings();
 	}
 
 	/** Imperative fallback for Obsidian versions older than 1.13. */
@@ -569,6 +734,69 @@ export class HabitsSettingTab extends PluginSettingTab {
 					.onChange(async (value) => {
 						this.plugin.settings.mobileCardsPerView =
 							Number(value);
+						await this.plugin.saveSettings();
+					}),
+			);
+
+		new Setting(containerEl).setName(t("Sorting")).setHeading();
+
+		new Setting(containerEl)
+			.setName(t("Sort habits by"))
+			.setDesc(
+				t(
+					"The base order of habit cards in the dashboard and side panel.",
+				),
+			)
+			.addDropdown((dropdown) =>
+				dropdown
+					.addOption("name", t("Name (A–Z)"))
+					.addOption("color", t("Color"))
+					.addOption("startDate", t("Start date"))
+					.addOption("lastLogged", t("Last logged"))
+					.addOption("manual", t("Manual"))
+					.setValue(this.plugin.settings.sortMode)
+					.onChange(async (value) => {
+						this.plugin.settings.sortMode = [
+							"name",
+							"color",
+							"startDate",
+							"lastLogged",
+							"manual",
+						].includes(value)
+							? (value as HabitSortMode)
+							: "name";
+						await this.plugin.saveSettings();
+						manualOrderSetting.settingEl.toggle(
+							this.plugin.settings.sortMode === "manual",
+						);
+					}),
+			);
+
+		// Always rendered, shown only while sorting is manual.
+		const manualOrderSetting = new Setting(containerEl)
+			.setName(t("Manual order"))
+			.setDesc(
+				t(
+					"Drag the cards into the order you want. New habits join the end of the list.",
+				),
+			);
+		this.renderManualOrderEditor(manualOrderSetting);
+		manualOrderSetting.settingEl.toggle(
+			this.plugin.settings.sortMode === "manual",
+		);
+
+		new Setting(containerEl)
+			.setName(t("Move completed cards to the end"))
+			.setDesc(
+				t(
+					"Completed habits drift to the end of the queue and paused ones park behind them. Turn this off to keep every card in its sorted position.",
+				),
+			)
+			.addToggle((toggle) =>
+				toggle
+					.setValue(this.plugin.settings.statusOrdering)
+					.onChange(async (value) => {
+						this.plugin.settings.statusOrdering = value;
 						await this.plugin.saveSettings();
 					}),
 			);

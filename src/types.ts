@@ -29,6 +29,22 @@ export type HabitFrequency = "daily" | "weekly" | "monthly";
 export type GoalDirection = "min" | "max";
 
 /**
+ * The base order of habit cards in the dashboard and side panel.
+ *
+ * - `name`: alphabetical by note name (the original behaviour).
+ * - `color`: by accent colour hue, so similar colours sit together.
+ * - `startDate`: oldest habit first — the order habits were created in.
+ * - `lastLogged`: most recently logged first.
+ * - `manual`: the order the user arranged in settings.
+ */
+export type HabitSortMode =
+	| "name"
+	| "color"
+	| "startDate"
+	| "lastLogged"
+	| "manual";
+
+/**
  * A period during which a habit was paused (inclusive of both ends).
  * An empty `end` means the pause is still ongoing.
  */

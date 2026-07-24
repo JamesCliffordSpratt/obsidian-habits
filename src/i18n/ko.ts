@@ -18,6 +18,22 @@ export const ko: Record<string, string> = {
 	"Daily note date format": "데일리 노트 날짜 형식",
 	"Moment.js format used to read the date from a daily note's name, such as YYYY-MM-DD or YYYYMMDD.":
 		"데일리 노트 이름에서 날짜를 읽는 데 사용하는 Moment.js 형식입니다. 예: YYYY-MM-DD, YYYYMMDD.",
+
+	// Sorting
+	Sorting: "정렬",
+	"Sort habits by": "습관 정렬 기준",
+	"The base order of habit cards in the dashboard and side panel.":
+		"대시보드와 사이드 패널에서 습관 카드의 기본 순서.",
+	"Name (A–Z)": "이름(A–Z)",
+	Color: "색상",
+	"Last logged": "마지막 기록",
+	Manual: "수동",
+	"Manual order": "수동 순서",
+	"Drag the cards into the order you want. New habits join the end of the list.":
+		"카드를 원하는 순서로 드래그하세요. 새 습관은 목록 끝에 추가됩니다.",
+	"Move completed cards to the end": "완료된 카드를 끝으로 이동",
+	"Completed habits drift to the end of the queue and paused ones park behind them. Turn this off to keep every card in its sorted position.":
+		"완료된 습관은 대기열 끝으로 이동하고 일시정지된 습관은 그 뒤에 놓입니다. 끄면 모든 카드가 정렬된 위치를 유지합니다.",
 	"Dashboard layout": "대시보드 레이아웃",
 	"How to move through your habit cards: a paged carousel with arrows, a grid that wraps onto new rows, or a fixed-height grid that scrolls vertically.":
 		"습관 카드 탐색 방식: 화살표로 넘기는 캐러셀, 새 줄로 이어지는 그리드, 또는 고정 높이에서 세로로 스크롤되는 그리드.",

@@ -151,6 +151,58 @@
 	scroll-margin-top: 8px;
 }
 
+/* Manual sort order editor in settings: one slim draggable row per
+   habit, mirroring the card's accent stripe and icon. `touch-action:
+   none` lets pointer events drive the drag on touchscreens too. */
+.habits-order-setting {
+	display: block;
+}
+
+.habits-order-list {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	margin-top: 0.75rem;
+}
+
+.habits-order-row {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	padding: 6px 10px;
+	background: var(--background-primary);
+	border: 1px solid var(--background-modifier-border);
+	border-left: 3px solid
+		var(--habits-accent, var(--background-modifier-border));
+	border-radius: var(--radius-s);
+	cursor: grab;
+	touch-action: none;
+	-webkit-user-select: none;
+	user-select: none;
+}
+
+.habits-order-row.is-dragging {
+	opacity: 0.85;
+	cursor: grabbing;
+	box-shadow: var(--shadow-s);
+	z-index: 2;
+	position: relative;
+}
+
+.habits-order-grip,
+.habits-order-icon {
+	display: flex;
+	align-items: center;
+	color: var(--text-muted);
+}
+
+.habits-order-name {
+	flex: 1;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
 .habits-card {
 	position: relative;
 	overflow: hidden;

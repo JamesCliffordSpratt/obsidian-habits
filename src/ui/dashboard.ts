@@ -34,6 +34,7 @@ import {
 	fromDateKey,
 	parseNoteDate,
 	registerLongPress,
+	sortHabits,
 	toDateKey,
 } from "../utils";
 
@@ -177,9 +178,12 @@ export class HabitsDashboard extends MarkdownRenderChild {
 
 	/** Reload habits from disk and rebuild the whole dashboard. */
 	private reload(): void {
-		this.habits = this.store
-			.getHabits()
-			.filter((habit) => !habit.stopped);
+		const settings = this.getSettings();
+		this.habits = sortHabits(
+			this.store.getHabits().filter((habit) => !habit.stopped),
+			settings.sortMode,
+			settings.manualOrder,
+		);
 		this.index = Math.min(this.index, Math.max(0, this.habits.length - 1));
 		this.render();
 	}
@@ -840,6 +844,11 @@ export class HabitsDashboard extends MarkdownRenderChild {
 		const due = this.habits.filter((habit) =>
 			this.isDueOnSelected(habit),
 		);
+		// With status ordering off, every card keeps its sorted position —
+		// nothing moves as habits are completed or paused.
+		if (!this.getSettings().statusOrdering) {
+			return due;
+		}
 		const active = due.filter((habit) => !this.isPausedOnSelected(habit));
 		return [
 			...active.filter((habit) => !this.isComplete(habit)),
@@ -1021,11 +1030,13 @@ export class HabitsDashboard extends MarkdownRenderChild {
 		overlay: HTMLElement,
 	): Promise<void> {
 		const track = card.parentElement;
-		// Grid layouts have no queue to slide along: the overlay fades out
-		// and the re-render moves the card to the end of the grid.
+		// Grid layouts have no queue to slide along, and with status
+		// ordering off the card is not going anywhere: the overlay simply
+		// fades out in place.
 		if (
 			!track ||
 			track.hasClass("habits-grid") ||
+			!this.getSettings().statusOrdering ||
 			track.lastElementChild === card
 		) {
 			overlay.addClass("is-leaving");

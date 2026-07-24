@@ -12,7 +12,7 @@ import type { HabitStore } from "../habit-store";
 import type { HabitsPluginSettings } from "../settings";
 import type { HabitDefinition } from "../types";
 import { isComplete, isDue, isPausedOn, limitOf } from "../stats";
-import { registerLongPress, toDateKey } from "../utils";
+import { registerLongPress, sortHabits, toDateKey } from "../utils";
 import { t } from "../i18n";
 import { HabitModal } from "./habit-modal";
 import { ConfirmModal } from "./confirm-modal";
@@ -122,9 +122,12 @@ export class HabitsPanelView extends ItemView {
 	}
 
 	private reload(): void {
-		this.habits = this.store
-			.getHabits()
-			.filter((habit) => !habit.stopped);
+		const settings = this.getSettings();
+		this.habits = sortHabits(
+			this.store.getHabits().filter((habit) => !habit.stopped),
+			settings.sortMode,
+			settings.manualOrder,
+		);
 		this.render();
 	}
 
@@ -155,6 +158,10 @@ export class HabitsPanelView extends ItemView {
 	 */
 	private ordered(): HabitDefinition[] {
 		const due = this.habits.filter((habit) => this.isDueToday(habit));
+		// With status ordering off, every row keeps its sorted position.
+		if (!this.getSettings().statusOrdering) {
+			return due;
+		}
 		const active = due.filter((habit) => !this.isPausedToday(habit));
 		return [
 			...active.filter((habit) => !this.isDone(habit)),

@@ -21,7 +21,8 @@ export default class HabitsPlugin extends Plugin {
 	settings: HabitsPluginSettings = DEFAULT_SETTINGS;
 	/** Plugin-internal event bus (e.g. "settings-changed"). */
 	readonly events = new Events();
-	private store!: HabitStore;
+	/** Public so the settings tab can list habits for the order editor. */
+	store!: HabitStore;
 
 	async onload(): Promise<void> {
 		await this.loadSettings();
@@ -98,6 +99,18 @@ export default class HabitsPlugin extends Plugin {
 				).open();
 			},
 		});
+
+		// Keep the manual sort order pointing at the right notes when a
+		// habit is renamed or moved.
+		this.registerEvent(
+			this.app.vault.on("rename", (file, oldPath) => {
+				const index = this.settings.manualOrder.indexOf(oldPath);
+				if (index >= 0) {
+					this.settings.manualOrder[index] = file.path;
+					void this.saveData(this.settings);
+				}
+			}),
+		);
 
 		this.addCommand({
 			id: "insert-dashboard",

@@ -18,6 +18,22 @@ export const zh: Record<string, string> = {
 	"Daily note date format": "日记日期格式",
 	"Moment.js format used to read the date from a daily note's name, such as YYYY-MM-DD or YYYYMMDD.":
 		"用于从日记名称中读取日期的 Moment.js 格式，例如 YYYY-MM-DD 或 YYYYMMDD。",
+
+	// Sorting
+	Sorting: "排序",
+	"Sort habits by": "习惯排序方式",
+	"The base order of habit cards in the dashboard and side panel.":
+		"仪表盘和侧边面板中习惯卡片的基本顺序。",
+	"Name (A–Z)": "名称(A–Z)",
+	Color: "颜色",
+	"Last logged": "最近记录",
+	Manual: "手动",
+	"Manual order": "手动排序",
+	"Drag the cards into the order you want. New habits join the end of the list.":
+		"拖动卡片调整顺序。新习惯会添加到列表末尾。",
+	"Move completed cards to the end": "将已完成的卡片移到末尾",
+	"Completed habits drift to the end of the queue and paused ones park behind them. Turn this off to keep every card in its sorted position.":
+		"已完成的习惯会移到队列末尾,暂停的习惯排在其后。关闭后,所有卡片保持排序位置不变。",
 	"Dashboard layout": "仪表盘布局",
 	"How to move through your habit cards: a paged carousel with arrows, a grid that wraps onto new rows, or a fixed-height grid that scrolls vertically.":
 		"浏览习惯卡片的方式:带箭头的分页轮播、自动换行的网格,或固定高度、垂直滚动的网格。",

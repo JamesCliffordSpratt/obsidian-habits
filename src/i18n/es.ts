@@ -18,6 +18,23 @@ export const es: Record<string, string> = {
 	"Daily note date format": "Formato de fecha de la nota diaria",
 	"Moment.js format used to read the date from a daily note's name, such as YYYY-MM-DD or YYYYMMDD.":
 		"Formato de Moment.js usado para leer la fecha del nombre de una nota diaria, por ejemplo YYYY-MM-DD o YYYYMMDD.",
+
+	// Sorting
+	Sorting: "Ordenación",
+	"Sort habits by": "Ordenar hábitos por",
+	"The base order of habit cards in the dashboard and side panel.":
+		"El orden base de las tarjetas de hábitos en el panel principal y el panel lateral.",
+	"Name (A–Z)": "Nombre (A–Z)",
+	Color: "Color",
+	"Last logged": "Último registro",
+	Manual: "Manual",
+	"Manual order": "Orden manual",
+	"Drag the cards into the order you want. New habits join the end of the list.":
+		"Arrastra las tarjetas en el orden que quieras. Los hábitos nuevos se añaden al final de la lista.",
+	"Move completed cards to the end":
+		"Mover las tarjetas completadas al final",
+	"Completed habits drift to the end of the queue and paused ones park behind them. Turn this off to keep every card in its sorted position.":
+		"Los hábitos completados se desplazan al final de la cola y los pausados quedan detrás. Desactívalo para que cada tarjeta mantenga su posición ordenada.",
 	"Dashboard layout": "Diseño del panel",
 	"How to move through your habit cards: a paged carousel with arrows, a grid that wraps onto new rows, or a fixed-height grid that scrolls vertically.":
 		"Cómo navegar por tus tarjetas de hábitos: un carrusel paginado con flechas, una cuadrícula que salta a nuevas filas o una cuadrícula de altura fija con desplazamiento vertical.",

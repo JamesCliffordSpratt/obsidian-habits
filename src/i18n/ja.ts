@@ -18,6 +18,22 @@ export const ja: Record<string, string> = {
 	"Daily note date format": "デイリーノートの日付形式",
 	"Moment.js format used to read the date from a daily note's name, such as YYYY-MM-DD or YYYYMMDD.":
 		"デイリーノート名から日付を読み取るための Moment.js 形式。例：YYYY-MM-DD、YYYYMMDD。",
+
+	// Sorting
+	Sorting: "並べ替え",
+	"Sort habits by": "習慣の並び順",
+	"The base order of habit cards in the dashboard and side panel.":
+		"ダッシュボードとサイドパネルでのカードの基本的な並び順。",
+	"Name (A–Z)": "名前(A–Z)",
+	Color: "色",
+	"Last logged": "最終記録",
+	Manual: "手動",
+	"Manual order": "手動の順序",
+	"Drag the cards into the order you want. New habits join the end of the list.":
+		"カードをドラッグして好きな順序に並べます。新しい習慣はリストの最後に追加されます。",
+	"Move completed cards to the end": "完了したカードを最後に移動",
+	"Completed habits drift to the end of the queue and paused ones park behind them. Turn this off to keep every card in its sorted position.":
+		"完了した習慣はキューの最後へ移動し、一時停止中の習慣はその後ろに並びます。オフにすると、すべてのカードが並び順の位置に留まります。",
 	"Dashboard layout": "ダッシュボードのレイアウト",
 	"How to move through your habit cards: a paged carousel with arrows, a grid that wraps onto new rows, or a fixed-height grid that scrolls vertically.":
 		"カードの表示方法:矢印で切り替えるカルーセル、行を折り返すグリッド、または高さ固定で縦にスクロールするグリッド。",
