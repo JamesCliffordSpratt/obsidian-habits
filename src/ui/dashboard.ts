@@ -495,7 +495,7 @@ export class HabitsDashboard extends MarkdownRenderChild {
 		this.lastPerView = perRow;
 		wrap.setCssProps({ "--habits-per-row": String(perRow) });
 
-		const showHeaders = settings.groupsEnabled;
+		const showHeaders = this.sectioned();
 		for (const section of this.sections()) {
 			if (showHeaders) {
 				this.renderSectionHeader(wrap, section.key);
@@ -913,16 +913,26 @@ export class HabitsDashboard extends MarkdownRenderChild {
 		);
 	}
 
+	/**
+	 * Whether the dashboard partitions into group sections. Sections
+	 * only make sense while sorting by group — any other sort (manual
+	 * especially) must be honoured exactly, so grouping then stays
+	 * visual-only via the card lips.
+	 */
+	private sectioned(): boolean {
+		const settings = this.getSettings();
+		return settings.groupsEnabled && settings.sortMode === "group";
+	}
+
 	/** Grouped sections before any status ordering. */
 	private rawSections(): HabitSection[] {
 		const due = this.habits.filter((habit) =>
 			this.isDueOnSelected(habit),
 		);
-		const settings = this.getSettings();
 		return groupHabits(
 			due,
-			settings.groupsEnabled,
-			settings.groupOrder,
+			this.sectioned(),
+			this.getSettings().groupOrder,
 		).filter((section) => section.habits.length > 0);
 	}
 

@@ -170,11 +170,24 @@ export class HabitsPanelView extends ItemView {
 		return this.sections().flatMap((section) => section.habits);
 	}
 
+	/**
+	 * Whether the panel partitions into group sections; mirrors the
+	 * dashboard — sections only while sorting by group, so other sort
+	 * orders (manual especially) are honoured exactly.
+	 */
+	private sectioned(): boolean {
+		const settings = this.getSettings();
+		return settings.groupsEnabled && settings.sortMode === "group";
+	}
+
 	/** Sections mirroring the dashboard's grouping behaviour. */
 	private sections(): HabitSection[] {
 		const due = this.habits.filter((habit) => this.isDueToday(habit));
-		const settings = this.getSettings();
-		return groupHabits(due, settings.groupsEnabled, settings.groupOrder)
+		return groupHabits(
+			due,
+			this.sectioned(),
+			this.getSettings().groupOrder,
+		)
 			.map((section) => ({
 				key: section.key,
 				habits: this.applyStatusOrder(section.habits),
@@ -271,7 +284,7 @@ export class HabitsPanelView extends ItemView {
 		const list = root.createDiv({ cls: "habits-panel-list" });
 		const settings = this.getSettings();
 		for (const section of this.sections()) {
-			if (settings.groupsEnabled) {
+			if (this.sectioned()) {
 				const header = list.createDiv({
 					cls: "habits-panel-group",
 				});
