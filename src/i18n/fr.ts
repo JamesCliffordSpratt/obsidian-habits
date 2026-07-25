@@ -58,8 +58,8 @@ export const fr: Record<string, string> = {
 	"Show habits in sections by their group, with a group lip on each card.":
 		"Affiche les habitudes en sections selon leur groupe, avec un bandeau de groupe sur chaque carte.",
 	"Group order": "Ordre des groupes",
-	"Drag the groups into the order their sections should appear in.":
-		"Faites glisser les groupes dans l'ordre d'affichage de leurs sections.",
+	"Drag the groups into the order you want. Sections follow the same order.":
+		"Faites glisser les groupes dans l'ordre souhaité. Les sections suivent le même ordre.",
 	"Manage groups": "Gérer les groupes",
 	"See every habit by group and drag cards between groups.":
 		"Voyez chaque habitude par groupe et faites glisser les cartes entre les groupes.",

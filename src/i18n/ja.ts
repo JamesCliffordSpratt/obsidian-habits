@@ -56,8 +56,8 @@ export const ja: Record<string, string> = {
 	"Show habits in sections by their group, with a group lip on each card.":
 		"習慣をグループごとのセクションで表示し、各カードにグループバーを付けます。",
 	"Group order": "グループの順序",
-	"Drag the groups into the order their sections should appear in.":
-		"セクションを表示したい順にグループをドラッグします。",
+	"Drag the groups into the order you want. Sections follow the same order.":
+		"グループを好きな順序にドラッグします。セクションも同じ順序に従います。",
 	"Manage groups": "グループを管理",
 	"See every habit by group and drag cards between groups.":
 		"グループごとに習慣を確認し、カードをグループ間でドラッグできます。",

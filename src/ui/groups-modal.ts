@@ -36,6 +36,7 @@ export class GroupsModal extends Modal {
 			settings.sortMode,
 			settings.manualOrder,
 			settings.groups,
+			settings.groupOrder,
 		);
 		this.build();
 	}

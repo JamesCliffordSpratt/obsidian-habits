@@ -237,32 +237,21 @@
 	white-space: nowrap;
 }
 
-/* Group badge on stats rows, echoing the card lip. */
-.habits-stats-group {
-	display: inline-flex;
-	align-items: center;
-	gap: 0.25rem;
-	margin-left: 0.4rem;
-	padding: 0.1rem 0.45rem;
-	border-radius: var(--radius-s);
-	background: var(--background-secondary);
-	background: color-mix(
-		in srgb,
-		var(--habits-group-color, var(--habits-accent, var(--text-muted)))
-			14%,
-		transparent
-	);
-	color: var(--text-muted);
-	font-size: var(--font-ui-smaller);
-	font-weight: 600;
-	min-width: 0;
+/* Group lip on stats rows: the card lip re-margined to sit flush with
+   the stats row's own padding. */
+.habits-stats-group-lip {
+	margin: -0.7rem -0.8rem 0;
 }
 
-.habits-stats-group-name {
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
-	max-width: 10em;
+/* Vertical layout: the stats list caps its height and scrolls in
+   place — shorter than the dashboard's cap, so the stats block stays
+   compact inside a note. */
+.habits-stats-list.is-scrollable {
+	max-height: min(45vh, 340px);
+	overflow-y: auto;
+	overflow-x: hidden;
+	overscroll-behavior: contain;
+	padding-right: 4px;
 }
 
 /* Groups manager modal: one dashed container per group, habits as

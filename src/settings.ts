@@ -367,6 +367,7 @@ export class HabitsSettingTab extends PluginSettingTab {
 								color: t("Color"),
 								startDate: t("Start date"),
 								lastLogged: t("Last logged"),
+								group: t("Group"),
 								manual: t("Manual"),
 							},
 							defaultValue: DEFAULT_SETTINGS.sortMode,
@@ -381,6 +382,17 @@ export class HabitsSettingTab extends PluginSettingTab {
 							this.plugin.settings.sortMode === "manual",
 						render: (setting: Setting) => {
 							this.renderManualOrderEditor(setting);
+						},
+					},
+					{
+						name: t("Group order"),
+						desc: t(
+							"Drag the groups into the order you want. Sections follow the same order.",
+						),
+						visible: () =>
+							this.plugin.settings.sortMode === "group",
+						render: (setting: Setting) => {
+							this.renderGroupOrderEditor(setting);
 						},
 					},
 					{
@@ -409,16 +421,6 @@ export class HabitsSettingTab extends PluginSettingTab {
 							type: "toggle",
 							key: "groupsEnabled",
 							defaultValue: DEFAULT_SETTINGS.groupsEnabled,
-						},
-					},
-					{
-						name: t("Group order"),
-						desc: t(
-							"Drag the groups into the order their sections should appear in.",
-						),
-						visible: () => this.plugin.settings.groupsEnabled,
-						render: (setting: Setting) => {
-							this.renderGroupOrderEditor(setting);
 						},
 					},
 					{
@@ -558,9 +560,14 @@ export class HabitsSettingTab extends PluginSettingTab {
 		const trimmed = value.trim();
 		switch (key) {
 			case "sortMode":
-				return ["name", "color", "startDate", "lastLogged", "manual"].includes(
-					trimmed,
-				)
+				return [
+					"name",
+					"color",
+					"startDate",
+					"lastLogged",
+					"group",
+					"manual",
+				].includes(trimmed)
 					? trimmed
 					: "name";
 			case "dashboardLayout":
@@ -600,6 +607,7 @@ export class HabitsSettingTab extends PluginSettingTab {
 			"manual",
 			this.plugin.settings.manualOrder,
 			this.plugin.settings.groups,
+			this.plugin.settings.groupOrder,
 		);
 		for (const habit of habits) {
 			const row = list.createDiv({ cls: "habits-order-row" });
@@ -946,6 +954,7 @@ export class HabitsSettingTab extends PluginSettingTab {
 					.addOption("color", t("Color"))
 					.addOption("startDate", t("Start date"))
 					.addOption("lastLogged", t("Last logged"))
+					.addOption("group", t("Group"))
 					.addOption("manual", t("Manual"))
 					.setValue(this.plugin.settings.sortMode)
 					.onChange(async (value) => {
@@ -954,6 +963,7 @@ export class HabitsSettingTab extends PluginSettingTab {
 							"color",
 							"startDate",
 							"lastLogged",
+							"group",
 							"manual",
 						].includes(value)
 							? (value as HabitSortMode)
@@ -961,6 +971,9 @@ export class HabitsSettingTab extends PluginSettingTab {
 						await this.plugin.saveSettings();
 						manualOrderSetting.settingEl.toggle(
 							this.plugin.settings.sortMode === "manual",
+						);
+						groupOrderSetting.settingEl.toggle(
+							this.plugin.settings.sortMode === "group",
 						);
 					}),
 			);
@@ -976,6 +989,19 @@ export class HabitsSettingTab extends PluginSettingTab {
 		this.renderManualOrderEditor(manualOrderSetting);
 		manualOrderSetting.settingEl.toggle(
 			this.plugin.settings.sortMode === "manual",
+		);
+
+		// Always rendered, shown only while sorting by group.
+		const groupOrderSetting = new Setting(containerEl)
+			.setName(t("Group order"))
+			.setDesc(
+				t(
+					"Drag the groups into the order you want. Sections follow the same order.",
+				),
+			);
+		this.renderGroupOrderEditor(groupOrderSetting);
+		groupOrderSetting.settingEl.toggle(
+			this.plugin.settings.sortMode === "group",
 		);
 
 		new Setting(containerEl)
@@ -1015,15 +1041,6 @@ export class HabitsSettingTab extends PluginSettingTab {
 
 		// The group tools only matter while groups are on.
 		const groupDetails = containerEl.createDiv();
-		this.renderGroupOrderEditor(
-			new Setting(groupDetails)
-				.setName(t("Group order"))
-				.setDesc(
-					t(
-						"Drag the groups into the order their sections should appear in.",
-					),
-				),
-		);
 		new Setting(groupDetails)
 			.setName(t("Manage groups"))
 			.setDesc(

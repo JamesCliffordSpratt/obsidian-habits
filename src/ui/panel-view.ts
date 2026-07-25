@@ -136,6 +136,7 @@ export class HabitsPanelView extends ItemView {
 			settings.sortMode,
 			settings.manualOrder,
 			settings.groups,
+			settings.groupOrder,
 		);
 		this.render();
 	}

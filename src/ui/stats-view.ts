@@ -53,10 +53,15 @@ export function renderStatsView(
 	 */
 	rowsPerPage?: number,
 	/**
-	 * When set, grouping is enabled: rows show a group badge and use
+	 * When set, grouping is enabled: rows carry a group lip and use
 	 * the group colour where the habit opted into it.
 	 */
 	groups?: Record<string, GroupStyle>,
+	/**
+	 * Vertical layout: cap the list's height and scroll it in place,
+	 * saving space in the note.
+	 */
+	scrollable?: boolean,
 ): void {
 	container.empty();
 	container.addClass("habits-stats");
@@ -178,6 +183,9 @@ export function renderStatsView(
 		}
 	} else {
 		list = container.createDiv({ cls: "habits-stats-list" });
+		if (scrollable) {
+			list.addClass("is-scrollable");
+		}
 	}
 
 	habits.forEach((habit, i) => {
@@ -191,6 +199,31 @@ export function renderStatsView(
 			row.setCssProps({ "--habits-accent": accent });
 		}
 
+		// With grouping on, the row carries the same group lip as the
+		// dashboard cards, flush along its top edge.
+		const groupName = habit.group.trim();
+		if (groups && groupName) {
+			const lip = row.createDiv({
+				cls: "habits-card-group-lip habits-stats-group-lip",
+			});
+			const style = groups[groupName];
+			if (style?.color) {
+				lip.setCssProps({
+					"--habits-group-color": style.color,
+				});
+			}
+			if (style?.icon) {
+				const icon = lip.createSpan({
+					cls: "habits-card-group-icon",
+				});
+				applyHabitIcon(icon, style.icon);
+			}
+			lip.createSpan({
+				cls: "habits-card-group-name",
+				text: groupName,
+			});
+		}
+
 		const top = row.createDiv({ cls: "habits-stats-row-top" });
 		const name = top.createDiv({ cls: "habits-stats-name" });
 		if (habit.icon) {
@@ -198,28 +231,6 @@ export function renderStatsView(
 			applyHabitIcon(icon, habit.icon);
 		}
 		name.createSpan({ text: habit.name });
-		// With grouping on, a small badge names the habit's group so the
-		// stats rows carry the same context as the dashboard cards.
-		const groupName = habit.group.trim();
-		if (groups && groupName) {
-			const badge = top.createSpan({ cls: "habits-stats-group" });
-			const style = groups[groupName];
-			if (style?.color) {
-				badge.setCssProps({
-					"--habits-group-color": style.color,
-				});
-			}
-			if (style?.icon) {
-				const icon = badge.createSpan({
-					cls: "habits-card-group-icon",
-				});
-				applyHabitIcon(icon, style.icon);
-			}
-			badge.createSpan({
-				cls: "habits-stats-group-name",
-				text: groupName,
-			});
-		}
 		const streak = top.createSpan({ cls: "habits-stats-streak" });
 		const flame = streak.createSpan({ cls: "habits-stats-flame" });
 		setIcon(flame, "flame");

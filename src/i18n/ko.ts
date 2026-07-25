@@ -56,8 +56,8 @@ export const ko: Record<string, string> = {
 	"Show habits in sections by their group, with a group lip on each card.":
 		"습관을 그룹별 섹션으로 표시하고 각 카드에 그룹 표시줄을 붙입니다.",
 	"Group order": "그룹 순서",
-	"Drag the groups into the order their sections should appear in.":
-		"섹션이 표시될 순서대로 그룹을 드래그하세요.",
+	"Drag the groups into the order you want. Sections follow the same order.":
+		"그룹을 원하는 순서로 드래그하세요. 섹션도 같은 순서를 따릅니다.",
 	"Manage groups": "그룹 관리",
 	"See every habit by group and drag cards between groups.":
 		"그룹별로 습관을 보고 카드를 그룹 간에 드래그하세요.",

@@ -344,6 +344,7 @@ export function sortHabits(
 	mode: HabitSortMode,
 	manualOrder: readonly string[],
 	groups: Record<string, GroupStyle> = {},
+	groupOrder: readonly string[] = [],
 ): HabitDefinition[] {
 	const sorted = [...habits];
 	switch (mode) {
@@ -377,6 +378,27 @@ export function sortHabits(
 					lastLoggedDay(b).localeCompare(lastLoggedDay(a)) ||
 					a.name.localeCompare(b.name),
 			);
+			break;
+		}
+		case "group": {
+			// Group-mates stay adjacent, ordered by the arranged group
+			// order; ungrouped habits trail, matching the section order.
+			const position = new Map(
+				groupOrder.map((name, index) => [name, index]),
+			);
+			sorted.sort((a, b) => {
+				const ga = a.group.trim();
+				const gb = b.group.trim();
+				if (ga === gb) {
+					return a.name.localeCompare(b.name);
+				}
+				if (!ga || !gb) {
+					return !ga ? 1 : -1;
+				}
+				const pa = position.get(ga) ?? Number.MAX_SAFE_INTEGER;
+				const pb = position.get(gb) ?? Number.MAX_SAFE_INTEGER;
+				return pa - pb || ga.localeCompare(gb);
+			});
 			break;
 		}
 		case "manual": {

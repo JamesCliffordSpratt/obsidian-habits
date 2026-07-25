@@ -35,6 +35,7 @@ export type GoalDirection = "min" | "max";
  * - `color`: by accent colour hue, so similar colours sit together.
  * - `startDate`: oldest habit first — the order habits were created in.
  * - `lastLogged`: most recently logged first.
+ * - `group`: by group, following the arranged group order.
  * - `manual`: the order the user arranged in settings.
  */
 export type HabitSortMode =
@@ -42,6 +43,7 @@ export type HabitSortMode =
 	| "color"
 	| "startDate"
 	| "lastLogged"
+	| "group"
 	| "manual";
 
 /**

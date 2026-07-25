@@ -57,8 +57,8 @@ export const de: Record<string, string> = {
 	"Show habits in sections by their group, with a group lip on each card.":
 		"Zeigt Gewohnheiten in Abschnitten nach Gruppe, mit einer Gruppenleiste auf jeder Karte.",
 	"Group order": "Gruppenreihenfolge",
-	"Drag the groups into the order their sections should appear in.":
-		"Ziehe die Gruppen in die Reihenfolge, in der ihre Abschnitte erscheinen sollen.",
+	"Drag the groups into the order you want. Sections follow the same order.":
+		"Ziehe die Gruppen in die gewünschte Reihenfolge. Abschnitte folgen derselben Reihenfolge.",
 	"Manage groups": "Gruppen verwalten",
 	"See every habit by group and drag cards between groups.":
 		"Zeigt alle Gewohnheiten nach Gruppe und erlaubt das Ziehen von Karten zwischen Gruppen.",

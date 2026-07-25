@@ -188,6 +188,7 @@ export class HabitsDashboard extends MarkdownRenderChild {
 			settings.sortMode,
 			settings.manualOrder,
 			settings.groups,
+			settings.groupOrder,
 		);
 		this.index = Math.min(this.index, Math.max(0, this.habits.length - 1));
 		this.render();
@@ -217,6 +218,7 @@ export class HabitsDashboard extends MarkdownRenderChild {
 					? settings.statsRowsPerPage
 					: undefined,
 				settings.groupsEnabled ? settings.groups : undefined,
+				settings.dashboardLayout === "vertical",
 			);
 			return;
 		}

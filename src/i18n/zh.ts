@@ -55,8 +55,8 @@ export const zh: Record<string, string> = {
 	"Show habits in sections by their group, with a group lip on each card.":
 		"按分组分区显示习惯,并在每张卡片上显示分组条。",
 	"Group order": "分组顺序",
-	"Drag the groups into the order their sections should appear in.":
-		"拖动分组以调整其分区的显示顺序。",
+	"Drag the groups into the order you want. Sections follow the same order.":
+		"拖动分组以调整顺序。分区遵循相同顺序。",
 	"Manage groups": "管理分组",
 	"See every habit by group and drag cards between groups.":
 		"按分组查看所有习惯,并在分组间拖动卡片。",
