@@ -1,8 +1,8 @@
 import { Notice, setIcon } from "obsidian";
 import { t } from "../i18n";
 import type { AiSummarySettings } from "../settings";
-import type { HabitDefinition } from "../types";
-import { addDays, toDateKey } from "../utils";
+import type { GroupStyle, HabitDefinition } from "../types";
+import { addDays, habitAccent, toDateKey } from "../utils";
 import { applyHabitIcon } from "./icon-suggest-modal";
 import {
 	buildStatsDigest,
@@ -52,6 +52,11 @@ export function renderStatsView(
 	 * this many rows. Left unset, all rows render as one flat list.
 	 */
 	rowsPerPage?: number,
+	/**
+	 * When set, grouping is enabled: rows show a group badge and use
+	 * the group colour where the habit opted into it.
+	 */
+	groups?: Record<string, GroupStyle>,
 ): void {
 	container.empty();
 	container.addClass("habits-stats");
@@ -181,8 +186,9 @@ export function renderStatsView(
 			? pages[Math.floor(i / pageSize)]
 			: (list as HTMLElement);
 		const row = parent.createDiv({ cls: "habits-stats-row" });
-		if (habit.color) {
-			row.setCssProps({ "--habits-accent": habit.color });
+		const accent = habitAccent(habit, groups ?? {});
+		if (accent) {
+			row.setCssProps({ "--habits-accent": accent });
 		}
 
 		const top = row.createDiv({ cls: "habits-stats-row-top" });
@@ -192,6 +198,28 @@ export function renderStatsView(
 			applyHabitIcon(icon, habit.icon);
 		}
 		name.createSpan({ text: habit.name });
+		// With grouping on, a small badge names the habit's group so the
+		// stats rows carry the same context as the dashboard cards.
+		const groupName = habit.group.trim();
+		if (groups && groupName) {
+			const badge = top.createSpan({ cls: "habits-stats-group" });
+			const style = groups[groupName];
+			if (style?.color) {
+				badge.setCssProps({
+					"--habits-group-color": style.color,
+				});
+			}
+			if (style?.icon) {
+				const icon = badge.createSpan({
+					cls: "habits-card-group-icon",
+				});
+				applyHabitIcon(icon, style.icon);
+			}
+			badge.createSpan({
+				cls: "habits-stats-group-name",
+				text: groupName,
+			});
+		}
 		const streak = top.createSpan({ cls: "habits-stats-streak" });
 		const flame = streak.createSpan({ cls: "habits-stats-flame" });
 		setIcon(flame, "flame");

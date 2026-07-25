@@ -33,20 +33,41 @@ export const ja: Record<string, string> = {
 	"Move completed cards to the end": "完了したカードを最後に移動",
 	"Completed habits drift to the end of the queue and paused ones park behind them. Turn this off to keep every card in its sorted position.":
 		"完了した習慣はキューの最後へ移動し、一時停止中の習慣はその後ろに並びます。オフにすると、すべてのカードが並び順の位置に留まります。",
-	"Sorting & grouping": "並べ替えとグループ化",
-	"Group habits by": "習慣のグループ化",
-	"Show habits in sections: by their group name (set on each habit), or by accent color.":
-		"習慣をセクションで表示します:グループ名(各習慣で設定)またはアクセントカラーごと。",
-	Off: "オフ",
 	Group: "グループ",
 	Ungrouped: "グループなし",
-	"No color": "色なし",
 	"Optional group used to build dashboard sections — for example an area of responsibility.":
 		"ダッシュボードのセクションを作るための任意のグループ — 例えば責任範囲など。",
 	"e.g. Health": "例:健康",
+	"Group color": "グループの色",
+	"Optional color shared by every habit in this group.":
+		"このグループのすべての習慣で共有される任意の色。",
+	"Group icon": "グループのアイコン",
+	"Shown in the group lip on cards and in section headers.":
+		"カードのグループバーとセクション見出しに表示されます。",
+	"Use group color for this card": "このカードにグループの色を使う",
+	"Show this card in the group color instead of its own.":
+		"このカードを自身の色ではなくグループの色で表示します。",
+	General: "一般",
+	Sorting: "並べ替え",
+	Groups: "グループ",
+	"How to move through your habit cards: a paged carousel with arrows, a grid that wraps onto new rows, or a fixed-height grid that scrolls vertically. The stats page follows the same choice.":
+		"カードの表示方法:矢印で切り替えるカルーセル、行を折り返すグリッド、または高さ固定で縦にスクロールするグリッド。統計ページも同じ設定に従います。",
+	"Enable groups": "グループを有効にする",
+	"Show habits in sections by their group, with a group lip on each card.":
+		"習慣をグループごとのセクションで表示し、各カードにグループバーを付けます。",
+	"Group order": "グループの順序",
+	"Drag the groups into the order their sections should appear in.":
+		"セクションを表示したい順にグループをドラッグします。",
+	"Manage groups": "グループを管理",
+	"See every habit by group and drag cards between groups.":
+		"グループごとに習慣を確認し、カードをグループ間でドラッグできます。",
+	Open: "開く",
+	"New group": "新しいグループ",
+	Add: "追加",
+	"Drag habits between groups to reassign them.":
+		"習慣をグループ間でドラッグして割り当て直します。",
+	"No habits": "習慣なし",
 	"Dashboard layout": "ダッシュボードのレイアウト",
-	"How to move through your habit cards: a paged carousel with arrows, a grid that wraps onto new rows, or a fixed-height grid that scrolls vertically.":
-		"カードの表示方法:矢印で切り替えるカルーセル、行を折り返すグリッド、または高さ固定で縦にスクロールするグリッド。",
 	Carousel: "カルーセル",
 	Grid: "グリッド",
 	"Vertical scroll": "縦スクロール",
@@ -362,9 +383,6 @@ export const ja: Record<string, string> = {
 	"started tracking on {date}": "{date} にトラッキング開始",
 
 	// Stats carousel
-	"Stats page carousel": "統計ページのカルーセル",
-	"Show the per-habit stats as pages you can flip through instead of one long list.":
-		"習慣ごとの統計を1つの長いリストではなく、めくれるページとして表示します。",
 	"Stats rows per page": "1ページあたりの統計行数",
 	"How many habits each stats page shows.":
 		"各統計ページに表示する習慣の数。",

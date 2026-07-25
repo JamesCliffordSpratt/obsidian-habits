@@ -26,7 +26,11 @@ export default class HabitsPlugin extends Plugin {
 
 	async onload(): Promise<void> {
 		await this.loadSettings();
-		this.store = new HabitStore(this.app, () => this.settings);
+		this.store = new HabitStore(
+			this.app,
+			() => this.settings,
+			() => this.saveSettings(),
+		);
 
 		this.addSettingTab(new HabitsSettingTab(this.app, this));
 
@@ -163,6 +167,7 @@ export default class HabitsPlugin extends Plugin {
 			...DEFAULT_AI_SUMMARY,
 			...(data?.aiSummary ?? {}),
 		};
+		this.settings.groups = { ...(data?.groups ?? {}) };
 	}
 
 	async saveSettings(): Promise<void> {

@@ -10,9 +10,10 @@ import {
 } from "obsidian";
 import { t } from "./i18n";
 import type HabitsPlugin from "./main";
-import type { GroupByMode, HabitSortMode } from "./types";
-import { sortHabits } from "./utils";
+import type { GroupStyle, HabitSortMode } from "./types";
+import { habitAccent, sortHabits } from "./utils";
 import { applyHabitIcon } from "./ui/icon-suggest-modal";
+import { GroupsModal } from "./ui/groups-modal";
 
 /** Suggests matching vault folders while typing in a folder field. */
 class FolderSuggest extends AbstractInputSuggest<TFolder> {
@@ -115,8 +116,18 @@ export interface HabitsPluginSettings {
 	 * card keeps its sorted position.
 	 */
 	statusOrdering: boolean;
-	/** How habits are gathered into visual sections. `off` by default. */
-	groupBy: GroupByMode;
+	/**
+	 * Show habits in sections by their group, with a group lip on each
+	 * card. Off by default.
+	 */
+	groupsEnabled: boolean;
+	/** Shared group styling (colour, icon), keyed by group name. */
+	groups: Record<string, GroupStyle>;
+	/**
+	 * Group names in the order their sections should appear. Groups
+	 * missing from the list append alphabetically.
+	 */
+	groupOrder: string[];
 	/** How many cards are visible at once on phone-sized screens (1–2). */
 	mobileCardsPerView: number;
 	/**
@@ -131,9 +142,11 @@ export interface HabitsPluginSettings {
 	dailyNoteDateFormat: string;
 	/** Show the comment flap on dashboard cards. */
 	enableComments: boolean;
-	/** Split the stats page's habit rows into carousel pages. */
-	statsCarousel: boolean;
-	/** How many habit rows each stats carousel page shows. */
+	/**
+	 * How many habit rows each stats carousel page shows. Only applies
+	 * while the layout is `carousel`; grid and vertical layouts show the
+	 * stats as one flat list.
+	 */
 	statsRowsPerPage: number;
 	/** Opt-in switches for features that are still being tested. */
 	experimental: ExperimentalFlags;
@@ -148,12 +161,13 @@ export const DEFAULT_SETTINGS: HabitsPluginSettings = {
 	sortMode: "name",
 	manualOrder: [],
 	statusOrdering: true,
-	groupBy: "off",
+	groupsEnabled: false,
+	groups: {},
+	groupOrder: [],
 	mobileCardsPerView: 2,
 	followDailyNoteDate: true,
 	dailyNoteDateFormat: "YYYY-MM-DD",
 	enableComments: true,
-	statsCarousel: false,
 	statsRowsPerPage: 4,
 	experimental: { ...DEFAULT_EXPERIMENTAL },
 	aiSummary: { ...DEFAULT_AI_SUMMARY },
@@ -213,94 +227,132 @@ export class HabitsSettingTab extends PluginSettingTab {
 			this.plugin.settings.experimental.aiSummaries;
 		return [
 			{
-				name: t("Habits folder"),
-				desc: t(
-					"Folder where each habit is stored as its own note. It is created automatically if it does not exist.",
-				),
-				control: {
-					type: "folder",
-					key: "habitsFolder",
-					placeholder: DEFAULT_SETTINGS.habitsFolder,
-					defaultValue: DEFAULT_SETTINGS.habitsFolder,
-				},
-			},
-			{
-				name: t("Follow daily note date"),
-				desc: t(
-					"When a dashboard is embedded in a daily note (a note whose name contains a date like 2026-07-01), open it on that note's date instead of today.",
-				),
-				control: {
-					type: "toggle",
-					key: "followDailyNoteDate",
-					defaultValue: DEFAULT_SETTINGS.followDailyNoteDate,
-				},
-			},
-			{
-				name: t("Daily note date format"),
-				desc: t(
-					"Moment.js format used to read the date from a daily note's name, such as YYYY-MM-DD or YYYYMMDD.",
-				),
-				control: {
-					type: "text",
-					key: "dailyNoteDateFormat",
-					placeholder: DEFAULT_SETTINGS.dailyNoteDateFormat,
-					defaultValue: DEFAULT_SETTINGS.dailyNoteDateFormat,
-				},
-			},
-			{
-				name: t("Comments on cards"),
-				desc: t(
-					"Show a comment flap on dashboard cards for jotting a note about any day.",
-				),
-				control: {
-					type: "toggle",
-					key: "enableComments",
-					defaultValue: DEFAULT_SETTINGS.enableComments,
-				},
-			},
-			{
-				name: t("Dashboard layout"),
-				desc: t(
-					"How to move through your habit cards: a paged carousel with arrows, a grid that wraps onto new rows, or a fixed-height grid that scrolls vertically.",
-				),
-				control: {
-					type: "dropdown",
-					key: "dashboardLayout",
-					options: {
-						carousel: t("Carousel"),
-						grid: t("Grid"),
-						vertical: t("Vertical scroll"),
+				type: "group",
+				heading: t("General"),
+				items: [
+					{
+						name: t("Habits folder"),
+						desc: t(
+							"Folder where each habit is stored as its own note. It is created automatically if it does not exist.",
+						),
+						control: {
+							type: "folder",
+							key: "habitsFolder",
+							placeholder: DEFAULT_SETTINGS.habitsFolder,
+							defaultValue: DEFAULT_SETTINGS.habitsFolder,
+						},
 					},
-					defaultValue: DEFAULT_SETTINGS.dashboardLayout,
-				},
-			},
-			{
-				name: t("Cards per view"),
-				desc: t(
-					"How many habit cards fit side by side on wider screens.",
-				),
-				control: {
-					type: "dropdown",
-					key: "cardsPerView",
-					options: { "1": "1", "2": "2", "3": "3", "4": "4" },
-					defaultValue: String(DEFAULT_SETTINGS.cardsPerView),
-				},
-			},
-			{
-				name: t("Cards per view on mobile"),
-				desc: t(
-					"How many habit cards fit side by side on phone-sized screens.",
-				),
-				control: {
-					type: "dropdown",
-					key: "mobileCardsPerView",
-					options: { "1": "1", "2": "2" },
-					defaultValue: String(DEFAULT_SETTINGS.mobileCardsPerView),
-				},
+					{
+						name: t("Follow daily note date"),
+						desc: t(
+							"When a dashboard is embedded in a daily note (a note whose name contains a date like 2026-07-01), open it on that note's date instead of today.",
+						),
+						control: {
+							type: "toggle",
+							key: "followDailyNoteDate",
+							defaultValue: DEFAULT_SETTINGS.followDailyNoteDate,
+						},
+					},
+					{
+						name: t("Daily note date format"),
+						desc: t(
+							"Moment.js format used to read the date from a daily note's name, such as YYYY-MM-DD or YYYYMMDD.",
+						),
+						control: {
+							type: "text",
+							key: "dailyNoteDateFormat",
+							placeholder: DEFAULT_SETTINGS.dailyNoteDateFormat,
+							defaultValue: DEFAULT_SETTINGS.dailyNoteDateFormat,
+						},
+					},
+					{
+						name: t("Comments on cards"),
+						desc: t(
+							"Show a comment flap on dashboard cards for jotting a note about any day.",
+						),
+						control: {
+							type: "toggle",
+							key: "enableComments",
+							defaultValue: DEFAULT_SETTINGS.enableComments,
+						},
+					},
+				],
 			},
 			{
 				type: "group",
-				heading: t("Sorting & grouping"),
+				heading: t("Layout"),
+				items: [
+					{
+						name: t("Dashboard layout"),
+						desc: t(
+							"How to move through your habit cards: a paged carousel with arrows, a grid that wraps onto new rows, or a fixed-height grid that scrolls vertically. The stats page follows the same choice.",
+						),
+						control: {
+							type: "dropdown",
+							key: "dashboardLayout",
+							options: {
+								carousel: t("Carousel"),
+								grid: t("Grid"),
+								vertical: t("Vertical scroll"),
+							},
+							defaultValue: DEFAULT_SETTINGS.dashboardLayout,
+						},
+					},
+					{
+						name: t("Cards per view"),
+						desc: t(
+							"How many habit cards fit side by side on wider screens.",
+						),
+						control: {
+							type: "dropdown",
+							key: "cardsPerView",
+							options: { "1": "1", "2": "2", "3": "3", "4": "4" },
+							defaultValue: String(DEFAULT_SETTINGS.cardsPerView),
+						},
+					},
+					{
+						name: t("Cards per view on mobile"),
+						desc: t(
+							"How many habit cards fit side by side on phone-sized screens.",
+						),
+						control: {
+							type: "dropdown",
+							key: "mobileCardsPerView",
+							options: { "1": "1", "2": "2" },
+							defaultValue: String(
+								DEFAULT_SETTINGS.mobileCardsPerView,
+							),
+						},
+					},
+					{
+						name: t("Stats rows per page"),
+						desc: t("How many habits each stats page shows."),
+						visible: () =>
+							this.plugin.settings.dashboardLayout ===
+							"carousel",
+						control: {
+							type: "dropdown",
+							key: "statsRowsPerPage",
+							options: {
+								"1": "1",
+								"2": "2",
+								"3": "3",
+								"4": "4",
+								"5": "5",
+								"6": "6",
+								"7": "7",
+								"8": "8",
+							},
+							defaultValue: String(
+								DEFAULT_SETTINGS.statsRowsPerPage,
+							),
+						},
+					},
+				],
+			},
+			{
+				type: "group",
+				heading: t("Sorting"),
 				items: [
 					{
 						name: t("Sort habits by"),
@@ -332,22 +384,6 @@ export class HabitsSettingTab extends PluginSettingTab {
 						},
 					},
 					{
-						name: t("Group habits by"),
-						desc: t(
-							"Show habits in sections: by their group name (set on each habit), or by accent color.",
-						),
-						control: {
-							type: "dropdown",
-							key: "groupBy",
-							options: {
-								off: t("Off"),
-								group: t("Group"),
-								color: t("Color"),
-							},
-							defaultValue: DEFAULT_SETTINGS.groupBy,
-						},
-					},
-					{
 						name: t("Move completed cards to the end"),
 						desc: t(
 							"Completed habits drift to the end of the queue and paused ones park behind them. Turn this off to keep every card in its sorted position.",
@@ -361,35 +397,51 @@ export class HabitsSettingTab extends PluginSettingTab {
 				],
 			},
 			{
-				name: t("Stats page carousel"),
-				desc: t(
-					"Show the per-habit stats as pages you can flip through instead of one long list.",
-				),
-				control: {
-					type: "toggle",
-					key: "statsCarousel",
-					defaultValue: DEFAULT_SETTINGS.statsCarousel,
-				},
-			},
-			{
-				name: t("Stats rows per page"),
-				desc: t("How many habits each stats page shows."),
-				visible: () => this.plugin.settings.statsCarousel,
-				control: {
-					type: "dropdown",
-					key: "statsRowsPerPage",
-					options: {
-						"1": "1",
-						"2": "2",
-						"3": "3",
-						"4": "4",
-						"5": "5",
-						"6": "6",
-						"7": "7",
-						"8": "8",
+				type: "group",
+				heading: t("Groups"),
+				items: [
+					{
+						name: t("Enable groups"),
+						desc: t(
+							"Show habits in sections by their group, with a group lip on each card.",
+						),
+						control: {
+							type: "toggle",
+							key: "groupsEnabled",
+							defaultValue: DEFAULT_SETTINGS.groupsEnabled,
+						},
 					},
-					defaultValue: String(DEFAULT_SETTINGS.statsRowsPerPage),
-				},
+					{
+						name: t("Group order"),
+						desc: t(
+							"Drag the groups into the order their sections should appear in.",
+						),
+						visible: () => this.plugin.settings.groupsEnabled,
+						render: (setting: Setting) => {
+							this.renderGroupOrderEditor(setting);
+						},
+					},
+					{
+						name: t("Manage groups"),
+						desc: t(
+							"See every habit by group and drag cards between groups.",
+						),
+						visible: () => this.plugin.settings.groupsEnabled,
+						render: (setting: Setting) => {
+							setting.addButton((button) =>
+								button
+									.setButtonText(t("Open"))
+									.onClick(() => {
+										new GroupsModal(
+											this.app,
+											this.plugin.store,
+											() => this.plugin.settings,
+										).open();
+									}),
+							);
+						},
+					},
+				],
 			},
 			{
 				type: "group",
@@ -511,10 +563,6 @@ export class HabitsSettingTab extends PluginSettingTab {
 				)
 					? trimmed
 					: "name";
-			case "groupBy":
-				return trimmed === "group" || trimmed === "color"
-					? trimmed
-					: "off";
 			case "dashboardLayout":
 				return trimmed === "grid" || trimmed === "vertical"
 					? trimmed
@@ -551,12 +599,14 @@ export class HabitsSettingTab extends PluginSettingTab {
 			this.plugin.store.getHabits().filter((habit) => !habit.stopped),
 			"manual",
 			this.plugin.settings.manualOrder,
+			this.plugin.settings.groups,
 		);
 		for (const habit of habits) {
 			const row = list.createDiv({ cls: "habits-order-row" });
 			row.dataset.path = habit.path;
-			if (habit.color) {
-				row.setCssProps({ "--habits-accent": habit.color });
+			const accent = habitAccent(habit, this.plugin.settings.groups);
+			if (accent) {
+				row.setCssProps({ "--habits-accent": accent });
 			}
 			const grip = row.createSpan({ cls: "habits-order-grip" });
 			setIcon(grip, "grip-vertical");
@@ -565,8 +615,83 @@ export class HabitsSettingTab extends PluginSettingTab {
 				applyHabitIcon(icon, habit.icon);
 			}
 			row.createSpan({ cls: "habits-order-name", text: habit.name });
-			this.registerRowDrag(row, list);
+			this.registerRowDrag(row, list, ".habits-order-row", () => {
+				void this.persistOrder(list);
+			});
 		}
+	}
+
+	/**
+	 * The drag-to-reorder editor for group sections, shown while groups
+	 * are enabled. Stores the arranged names in `groupOrder`.
+	 */
+	private renderGroupOrderEditor(setting: Setting): void {
+		setting.settingEl.addClass("habits-order-setting");
+		const list = setting.settingEl.createDiv({
+			cls: "habits-order-list",
+		});
+		this.buildGroupOrderList(list);
+	}
+
+	/** Every known group: in use by a habit, styled, or already ordered. */
+	private knownGroups(): string[] {
+		const names = new Set<string>();
+		for (const habit of this.plugin.store.getHabits()) {
+			const group = habit.group.trim();
+			if (group && !habit.stopped) {
+				names.add(group);
+			}
+		}
+		for (const name of Object.keys(this.plugin.settings.groups)) {
+			names.add(name);
+		}
+		const position = new Map(
+			this.plugin.settings.groupOrder.map((name, index) => [
+				name,
+				index,
+			]),
+		);
+		return Array.from(names).sort((a, b) => {
+			const pa = position.get(a) ?? Number.MAX_SAFE_INTEGER;
+			const pb = position.get(b) ?? Number.MAX_SAFE_INTEGER;
+			return pa - pb || a.localeCompare(b);
+		});
+	}
+
+	private buildGroupOrderList(list: HTMLElement): void {
+		list.empty();
+		for (const name of this.knownGroups()) {
+			const row = list.createDiv({ cls: "habits-order-row" });
+			row.dataset.group = name;
+			const style = this.plugin.settings.groups[name];
+			if (style?.color) {
+				row.setCssProps({ "--habits-accent": style.color });
+			}
+			const grip = row.createSpan({ cls: "habits-order-grip" });
+			setIcon(grip, "grip-vertical");
+			if (style?.icon) {
+				const icon = row.createSpan({ cls: "habits-order-icon" });
+				applyHabitIcon(icon, style.icon);
+			}
+			row.createSpan({ cls: "habits-order-name", text: name });
+			this.registerRowDrag(row, list, ".habits-order-row", () => {
+				void this.persistGroupOrder(list);
+			});
+		}
+	}
+
+	/** Store the DOM order of the rows as the new group order. */
+	private async persistGroupOrder(list: HTMLElement): Promise<void> {
+		const names: string[] = [];
+		for (const el of Array.from(
+			list.querySelectorAll<HTMLElement>(".habits-order-row"),
+		)) {
+			if (el.dataset.group) {
+				names.push(el.dataset.group);
+			}
+		}
+		this.plugin.settings.groupOrder = names;
+		await this.plugin.saveSettings();
 	}
 
 	/**
@@ -576,7 +701,12 @@ export class HabitsSettingTab extends PluginSettingTab {
 	 * re-inserts the row into the list, which would clear any pointer
 	 * capture on it and kill the drag mid-flight.
 	 */
-	private registerRowDrag(row: HTMLElement, list: HTMLElement): void {
+	private registerRowDrag(
+		row: HTMLElement,
+		list: HTMLElement,
+		selector: string,
+		onDrop: () => void,
+	): void {
 		row.addEventListener("pointerdown", (evt: PointerEvent) => {
 			if (evt.button !== 0) {
 				return;
@@ -587,7 +717,7 @@ export class HabitsSettingTab extends PluginSettingTab {
 
 			const onMove = (e: PointerEvent): void => {
 				const rows = Array.from(
-					list.querySelectorAll<HTMLElement>(".habits-order-row"),
+					list.querySelectorAll<HTMLElement>(selector),
 				).filter((el) => el !== row);
 				const next = rows.find(
 					(el) =>
@@ -607,7 +737,7 @@ export class HabitsSettingTab extends PluginSettingTab {
 				win.removeEventListener("pointermove", onMove);
 				win.removeEventListener("pointerup", onUp);
 				win.removeEventListener("pointercancel", onUp);
-				void this.persistOrder(list);
+				onDrop();
 			};
 			win.addEventListener("pointermove", onMove);
 			win.addEventListener("pointerup", onUp);
@@ -633,6 +763,8 @@ export class HabitsSettingTab extends PluginSettingTab {
 	display(): void {
 		const { containerEl } = this;
 		containerEl.empty();
+
+		new Setting(containerEl).setName(t("General")).setHeading();
 
 		new Setting(containerEl)
 			.setName(t("Habits folder"))
@@ -703,11 +835,13 @@ export class HabitsSettingTab extends PluginSettingTab {
 					}),
 			);
 
+		new Setting(containerEl).setName(t("Layout")).setHeading();
+
 		new Setting(containerEl)
 			.setName(t("Dashboard layout"))
 			.setDesc(
 				t(
-					"How to move through your habit cards: a paged carousel with arrows, a grid that wraps onto new rows, or a fixed-height grid that scrolls vertically.",
+					"How to move through your habit cards: a paged carousel with arrows, a grid that wraps onto new rows, or a fixed-height grid that scrolls vertically. The stats page follows the same choice.",
 				),
 			)
 			.addDropdown((dropdown) =>
@@ -722,6 +856,9 @@ export class HabitsSettingTab extends PluginSettingTab {
 								? value
 								: "carousel";
 						await this.plugin.saveSettings();
+						// The stats page-size option only applies to the
+						// carousel layout.
+						renderStatsOptions();
 					}),
 			);
 
@@ -766,9 +903,35 @@ export class HabitsSettingTab extends PluginSettingTab {
 					}),
 			);
 
-		new Setting(containerEl)
-			.setName(t("Sorting & grouping"))
-			.setHeading();
+		// In its own container so changing the layout can redraw just
+		// this block instead of the whole tab.
+		const statsDetails = containerEl.createDiv();
+		const renderStatsOptions = (): void => {
+			statsDetails.empty();
+			if (this.plugin.settings.dashboardLayout !== "carousel") {
+				return;
+			}
+			new Setting(statsDetails)
+				.setName(t("Stats rows per page"))
+				.setDesc(t("How many habits each stats page shows."))
+				.addDropdown((dropdown) => {
+					for (let n = 1; n <= 8; n++) {
+						dropdown.addOption(String(n), String(n));
+					}
+					dropdown
+						.setValue(
+							String(this.plugin.settings.statsRowsPerPage),
+						)
+						.onChange(async (value) => {
+							this.plugin.settings.statsRowsPerPage =
+								Number(value);
+							await this.plugin.saveSettings();
+						});
+				});
+		};
+		renderStatsOptions();
+
+		new Setting(containerEl).setName(t("Sorting")).setHeading();
 
 		new Setting(containerEl)
 			.setName(t("Sort habits by"))
@@ -816,28 +979,6 @@ export class HabitsSettingTab extends PluginSettingTab {
 		);
 
 		new Setting(containerEl)
-			.setName(t("Group habits by"))
-			.setDesc(
-				t(
-					"Show habits in sections: by their group name (set on each habit), or by accent color.",
-				),
-			)
-			.addDropdown((dropdown) =>
-				dropdown
-					.addOption("off", t("Off"))
-					.addOption("group", t("Group"))
-					.addOption("color", t("Color"))
-					.setValue(this.plugin.settings.groupBy)
-					.onChange(async (value) => {
-						this.plugin.settings.groupBy =
-							value === "group" || value === "color"
-								? value
-								: "off";
-						await this.plugin.saveSettings();
-					}),
-			);
-
-		new Setting(containerEl)
 			.setName(t("Move completed cards to the end"))
 			.setDesc(
 				t(
@@ -853,51 +994,51 @@ export class HabitsSettingTab extends PluginSettingTab {
 					}),
 			);
 
+		new Setting(containerEl).setName(t("Groups")).setHeading();
+
 		new Setting(containerEl)
-			.setName(t("Stats page carousel"))
+			.setName(t("Enable groups"))
 			.setDesc(
 				t(
-					"Show the per-habit stats as pages you can flip through instead of one long list.",
+					"Show habits in sections by their group, with a group lip on each card.",
 				),
 			)
 			.addToggle((toggle) =>
 				toggle
-					.setValue(this.plugin.settings.statsCarousel)
+					.setValue(this.plugin.settings.groupsEnabled)
 					.onChange(async (value) => {
-						this.plugin.settings.statsCarousel = value;
+						this.plugin.settings.groupsEnabled = value;
 						await this.plugin.saveSettings();
-						// Show or hide the page-size option with the toggle.
-						renderCarouselOptions();
+						groupDetails.toggle(value);
 					}),
 			);
 
-		// The page-size option lives in its own container so toggling the
-		// carousel can redraw just this block instead of the whole tab.
-		const carouselDetails = containerEl.createDiv();
-		const renderCarouselOptions = (): void => {
-			carouselDetails.empty();
-			if (!this.plugin.settings.statsCarousel) {
-				return;
-			}
-			new Setting(carouselDetails)
-				.setName(t("Stats rows per page"))
-				.setDesc(t("How many habits each stats page shows."))
-				.addDropdown((dropdown) => {
-					for (let n = 1; n <= 8; n++) {
-						dropdown.addOption(String(n), String(n));
-					}
-					dropdown
-						.setValue(
-							String(this.plugin.settings.statsRowsPerPage),
-						)
-						.onChange(async (value) => {
-							this.plugin.settings.statsRowsPerPage =
-								Number(value);
-							await this.plugin.saveSettings();
-						});
-				});
-		};
-		renderCarouselOptions();
+		// The group tools only matter while groups are on.
+		const groupDetails = containerEl.createDiv();
+		this.renderGroupOrderEditor(
+			new Setting(groupDetails)
+				.setName(t("Group order"))
+				.setDesc(
+					t(
+						"Drag the groups into the order their sections should appear in.",
+					),
+				),
+		);
+		new Setting(groupDetails)
+			.setName(t("Manage groups"))
+			.setDesc(
+				t("See every habit by group and drag cards between groups."),
+			)
+			.addButton((button) =>
+				button.setButtonText(t("Open")).onClick(() => {
+					new GroupsModal(
+						this.app,
+						this.plugin.store,
+						() => this.plugin.settings,
+					).open();
+				}),
+			);
+		groupDetails.toggle(this.plugin.settings.groupsEnabled);
 
 		this.displayExperimental(containerEl);
 	}

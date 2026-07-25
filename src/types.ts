@@ -45,14 +45,16 @@ export type HabitSortMode =
 	| "manual";
 
 /**
- * How habits are gathered into visual sections.
- *
- * - `off`: no sections (the original behaviour).
- * - `group`: by each habit's optional group name — whatever the user's
- *   system calls its areas (PARA areas, identity vs outcome habits, …).
- * - `color`: by accent colour.
+ * Shared styling for a group, stored once in the plugin settings (keyed
+ * by group name) so every member card stays in step and renaming a
+ * habit's group re-links it instead of duplicating style per note.
  */
-export type GroupByMode = "off" | "group" | "color";
+export interface GroupStyle {
+	/** Optional accent colour shared by the group ("" = none). */
+	color: string;
+	/** Optional Lucide icon id or emoji shown in group lips and headers. */
+	icon: string;
+}
 
 /**
  * A period during which a habit was paused (inclusive of both ends).
@@ -124,6 +126,11 @@ export interface HabitDefinition {
 	 * of responsibility). Empty means ungrouped.
 	 */
 	group: string;
+	/**
+	 * When true and the habit's group has a colour, the card is shown in
+	 * the group colour instead of its own.
+	 */
+	useGroupColor: boolean;
 	/** Date the habit started, as `YYYY-MM-DD`. */
 	startDate: string;
 	/** True while an open pause exists. Paused days are skipped by stats. */
@@ -163,4 +170,5 @@ export interface NewHabitOptions {
 	icon: string;
 	color: string;
 	group: string;
+	useGroupColor: boolean;
 }

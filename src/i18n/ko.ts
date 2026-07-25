@@ -33,20 +33,41 @@ export const ko: Record<string, string> = {
 	"Move completed cards to the end": "완료된 카드를 끝으로 이동",
 	"Completed habits drift to the end of the queue and paused ones park behind them. Turn this off to keep every card in its sorted position.":
 		"완료된 습관은 대기열 끝으로 이동하고 일시정지된 습관은 그 뒤에 놓입니다. 끄면 모든 카드가 정렬된 위치를 유지합니다.",
-	"Sorting & grouping": "정렬 및 그룹화",
-	"Group habits by": "습관 그룹화 기준",
-	"Show habits in sections: by their group name (set on each habit), or by accent color.":
-		"습관을 섹션으로 표시합니다: 그룹 이름(각 습관에서 설정) 또는 강조 색상별.",
-	Off: "끄기",
 	Group: "그룹",
 	Ungrouped: "그룹 없음",
-	"No color": "색상 없음",
 	"Optional group used to build dashboard sections — for example an area of responsibility.":
 		"대시보드 섹션을 만들기 위한 선택적 그룹 — 예를 들어 책임 영역.",
 	"e.g. Health": "예: 건강",
+	"Group color": "그룹 색상",
+	"Optional color shared by every habit in this group.":
+		"이 그룹의 모든 습관이 공유하는 선택적 색상.",
+	"Group icon": "그룹 아이콘",
+	"Shown in the group lip on cards and in section headers.":
+		"카드의 그룹 표시줄과 섹션 머리글에 표시됩니다.",
+	"Use group color for this card": "이 카드에 그룹 색상 사용",
+	"Show this card in the group color instead of its own.":
+		"이 카드를 자체 색상 대신 그룹 색상으로 표시합니다.",
+	General: "일반",
+	Sorting: "정렬",
+	Groups: "그룹",
+	"How to move through your habit cards: a paged carousel with arrows, a grid that wraps onto new rows, or a fixed-height grid that scrolls vertically. The stats page follows the same choice.":
+		"습관 카드 탐색 방식: 화살표로 넘기는 캐러셀, 새 줄로 이어지는 그리드, 또는 고정 높이에서 세로로 스크롤되는 그리드. 통계 페이지도 같은 설정을 따릅니다.",
+	"Enable groups": "그룹 사용",
+	"Show habits in sections by their group, with a group lip on each card.":
+		"습관을 그룹별 섹션으로 표시하고 각 카드에 그룹 표시줄을 붙입니다.",
+	"Group order": "그룹 순서",
+	"Drag the groups into the order their sections should appear in.":
+		"섹션이 표시될 순서대로 그룹을 드래그하세요.",
+	"Manage groups": "그룹 관리",
+	"See every habit by group and drag cards between groups.":
+		"그룹별로 습관을 보고 카드를 그룹 간에 드래그하세요.",
+	Open: "열기",
+	"New group": "새 그룹",
+	Add: "추가",
+	"Drag habits between groups to reassign them.":
+		"습관을 그룹 간에 드래그하여 다시 지정하세요.",
+	"No habits": "습관 없음",
 	"Dashboard layout": "대시보드 레이아웃",
-	"How to move through your habit cards: a paged carousel with arrows, a grid that wraps onto new rows, or a fixed-height grid that scrolls vertically.":
-		"습관 카드 탐색 방식: 화살표로 넘기는 캐러셀, 새 줄로 이어지는 그리드, 또는 고정 높이에서 세로로 스크롤되는 그리드.",
 	Carousel: "캐러셀",
 	Grid: "그리드",
 	"Vertical scroll": "세로 스크롤",
@@ -362,9 +383,6 @@ export const ko: Record<string, string> = {
 	"started tracking on {date}": "{date}에 추적 시작",
 
 	// Stats carousel
-	"Stats page carousel": "통계 페이지 캐러셀",
-	"Show the per-habit stats as pages you can flip through instead of one long list.":
-		"습관별 통계를 긴 목록 대신 넘겨 볼 수 있는 페이지로 표시합니다.",
 	"Stats rows per page": "페이지당 통계 행 수",
 	"How many habits each stats page shows.":
 		"각 통계 페이지에 표시할 습관 수입니다.",

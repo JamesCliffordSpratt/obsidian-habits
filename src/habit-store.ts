@@ -1,6 +1,7 @@
 import { App, normalizePath, Notice, TFile, TFolder } from "obsidian";
 import type { HabitsPluginSettings } from "./settings";
 import type {
+	GroupStyle,
 	HabitDefinition,
 	HabitFrequency,
 	HabitPause,
@@ -41,10 +42,48 @@ export class HabitStore {
 	constructor(
 		private app: App,
 		private getSettings: () => HabitsPluginSettings,
+		private saveSettings: () => Promise<void>,
 	) {}
 
 	private get folderPath(): string {
 		return normalizePath(this.getSettings().habitsFolder);
+	}
+
+	/** Shared styling (colour, icon) for a group, if any is stored. */
+	getGroupStyle(name: string): GroupStyle | undefined {
+		return this.getSettings().groups[name.trim()];
+	}
+
+	/**
+	 * Store or clear a group's shared styling. Passing a style with no
+	 * colour and no icon (or `null`) removes the entry.
+	 */
+	async setGroupStyle(
+		name: string,
+		style: GroupStyle | null,
+	): Promise<void> {
+		const key = name.trim();
+		if (!key) {
+			return;
+		}
+		const groups = this.getSettings().groups;
+		const existing = groups[key];
+		if (style && (style.color || style.icon)) {
+			if (
+				existing &&
+				existing.color === style.color &&
+				existing.icon === style.icon
+			) {
+				return;
+			}
+			groups[key] = { color: style.color, icon: style.icon };
+		} else {
+			if (!existing) {
+				return;
+			}
+			delete groups[key];
+		}
+		await this.saveSettings();
 	}
 
 	/** Create the habits folder if it does not already exist. */
@@ -104,6 +143,7 @@ export class HabitStore {
 			icon: typeof fm.icon === "string" ? fm.icon : "",
 			color: typeof fm.color === "string" ? fm.color : "",
 			group: typeof fm.group === "string" ? fm.group : "",
+			useGroupColor: fm.useGroupColor === true,
 			startDate: typeof fm.startDate === "string" ? fm.startDate : "",
 			paused: pauses.some((pause) => pause.end === ""),
 			pauses,
@@ -477,6 +517,9 @@ export class HabitStore {
 			if (options.group) {
 				fm.group = options.group;
 			}
+			if (options.useGroupColor) {
+				fm.useGroupColor = true;
+			}
 			fm.startDate = toDateKey(new Date());
 			fm.records = {};
 		});
@@ -580,10 +623,44 @@ export class HabitStore {
 			} else {
 				delete fm.group;
 			}
+			if (options.useGroupColor) {
+				fm.useGroupColor = true;
+			} else {
+				delete fm.useGroupColor;
+			}
 		});
 
 		new Notice(t('Updated "{name}".', { name: cleanName }));
 		return file;
+	}
+
+	/**
+	 * Reassign a habit to a group (or ungroup it with ""), writing the
+	 * note's frontmatter. Leaving a group also clears the group-colour
+	 * override, which would otherwise silently point at the old group.
+	 */
+	async setHabitGroup(
+		habit: HabitDefinition,
+		group: string,
+	): Promise<void> {
+		const file = this.fileForHabit(habit);
+		if (!file) {
+			return;
+		}
+		const cleaned = group.trim();
+		await this.app.fileManager.processFrontMatter(file, (frontmatter) => {
+			const fm = frontmatter as Record<string, unknown>;
+			if (cleaned) {
+				fm.group = cleaned;
+			} else {
+				delete fm.group;
+				delete fm.useGroupColor;
+			}
+		});
+		habit.group = cleaned;
+		if (!cleaned) {
+			habit.useGroupColor = false;
+		}
 	}
 
 	/** Move a habit's note to the trash (respecting the user's settings). */

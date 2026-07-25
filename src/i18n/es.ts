@@ -34,20 +34,42 @@ export const es: Record<string, string> = {
 		"Mover las tarjetas completadas al final",
 	"Completed habits drift to the end of the queue and paused ones park behind them. Turn this off to keep every card in its sorted position.":
 		"Los hábitos completados se desplazan al final de la cola y los pausados quedan detrás. Desactívalo para que cada tarjeta mantenga su posición ordenada.",
-	"Sorting & grouping": "Ordenación y agrupación",
-	"Group habits by": "Agrupar hábitos por",
-	"Show habits in sections: by their group name (set on each habit), or by accent color.":
-		"Muestra los hábitos en secciones: por su nombre de grupo (definido en cada hábito) o por color de acento.",
-	Off: "Desactivado",
 	Group: "Grupo",
 	Ungrouped: "Sin grupo",
-	"No color": "Sin color",
 	"Optional group used to build dashboard sections — for example an area of responsibility.":
 		"Grupo opcional para crear secciones en el panel — por ejemplo, un área de responsabilidad.",
 	"e.g. Health": "p. ej. Salud",
+	"Group color": "Color del grupo",
+	"Optional color shared by every habit in this group.":
+		"Color opcional compartido por todos los hábitos de este grupo.",
+	"Group icon": "Icono del grupo",
+	"Shown in the group lip on cards and in section headers.":
+		"Se muestra en la pestaña de grupo de las tarjetas y en los encabezados de sección.",
+	"Use group color for this card":
+		"Usar el color del grupo para esta tarjeta",
+	"Show this card in the group color instead of its own.":
+		"Muestra esta tarjeta con el color del grupo en lugar del suyo.",
+	General: "General",
+	Sorting: "Ordenación",
+	Groups: "Grupos",
+	"How to move through your habit cards: a paged carousel with arrows, a grid that wraps onto new rows, or a fixed-height grid that scrolls vertically. The stats page follows the same choice.":
+		"Cómo navegar por tus tarjetas de hábitos: un carrusel paginado con flechas, una cuadrícula que salta a nuevas filas o una cuadrícula de altura fija con desplazamiento vertical. La página de estadísticas sigue la misma elección.",
+	"Enable groups": "Activar grupos",
+	"Show habits in sections by their group, with a group lip on each card.":
+		"Muestra los hábitos en secciones según su grupo, con una pestaña de grupo en cada tarjeta.",
+	"Group order": "Orden de los grupos",
+	"Drag the groups into the order their sections should appear in.":
+		"Arrastra los grupos en el orden en que deben aparecer sus secciones.",
+	"Manage groups": "Gestionar grupos",
+	"See every habit by group and drag cards between groups.":
+		"Ve todos los hábitos por grupo y arrastra tarjetas entre grupos.",
+	Open: "Abrir",
+	"New group": "Nuevo grupo",
+	Add: "Añadir",
+	"Drag habits between groups to reassign them.":
+		"Arrastra hábitos entre grupos para reasignarlos.",
+	"No habits": "Sin hábitos",
 	"Dashboard layout": "Diseño del panel",
-	"How to move through your habit cards: a paged carousel with arrows, a grid that wraps onto new rows, or a fixed-height grid that scrolls vertically.":
-		"Cómo navegar por tus tarjetas de hábitos: un carrusel paginado con flechas, una cuadrícula que salta a nuevas filas o una cuadrícula de altura fija con desplazamiento vertical.",
 	Carousel: "Carrusel",
 	Grid: "Cuadrícula",
 	"Vertical scroll": "Desplazamiento vertical",
@@ -362,9 +384,6 @@ export const es: Record<string, string> = {
 	"started tracking on {date}": "seguimiento iniciado el {date}",
 
 	// Stats carousel
-	"Stats page carousel": "Carrusel en la página de estadísticas",
-	"Show the per-habit stats as pages you can flip through instead of one long list.":
-		"Muestra las estadísticas por hábito como páginas para hojear en lugar de una lista larga.",
 	"Stats rows per page": "Filas de estadísticas por página",
 	"How many habits each stats page shows.":
 		"Cuántos hábitos muestra cada página de estadísticas.",

@@ -182,6 +182,158 @@
 	background: var(--background-modifier-border);
 }
 
+.habits-group-icon {
+	display: flex;
+	align-items: center;
+	color: var(--habits-accent, var(--text-muted));
+	flex-shrink: 0;
+}
+
+.habits-group-icon svg {
+	width: 14px;
+	height: 14px;
+}
+
+/* Lip along the top edge of a card naming its group, tinted with the
+   group colour when one is set. Sits flush against the card edges by
+   cancelling the card's padding. */
+.habits-card-group-lip {
+	align-self: stretch;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.3rem;
+	margin: -1.1rem -0.65rem 0;
+	padding: 0.3rem 0.6rem;
+	border-radius: var(--radius-m) var(--radius-m) 0 0;
+	background: var(--background-secondary);
+	background: color-mix(
+		in srgb,
+		var(--habits-group-color, var(--habits-accent, var(--text-muted)))
+			14%,
+		transparent
+	);
+	color: var(--text-muted);
+	font-size: var(--font-ui-smaller);
+	font-weight: 600;
+	min-width: 0;
+}
+
+.habits-card-group-lip .habits-card-group-icon {
+	display: flex;
+	align-items: center;
+	color: var(--habits-group-color, var(--habits-accent, var(--text-muted)));
+	flex-shrink: 0;
+}
+
+.habits-card-group-lip .habits-card-group-icon svg {
+	width: 13px;
+	height: 13px;
+}
+
+.habits-card-group-name {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+/* Group badge on stats rows, echoing the card lip. */
+.habits-stats-group {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.25rem;
+	margin-left: 0.4rem;
+	padding: 0.1rem 0.45rem;
+	border-radius: var(--radius-s);
+	background: var(--background-secondary);
+	background: color-mix(
+		in srgb,
+		var(--habits-group-color, var(--habits-accent, var(--text-muted)))
+			14%,
+		transparent
+	);
+	color: var(--text-muted);
+	font-size: var(--font-ui-smaller);
+	font-weight: 600;
+	min-width: 0;
+}
+
+.habits-stats-group-name {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	max-width: 10em;
+}
+
+/* Groups manager modal: one dashed container per group, habits as
+   draggable chips. The container under the pointer highlights while a
+   chip is being dragged. */
+.habits-groups-hint {
+	color: var(--text-muted);
+	font-size: var(--font-ui-small);
+	margin: 0 0 0.5rem;
+}
+
+.habits-groups-board {
+	display: flex;
+	flex-direction: column;
+	gap: 0.6rem;
+	margin-top: 0.75rem;
+}
+
+.habits-groups-section {
+	border: 1px dashed var(--background-modifier-border);
+	border-radius: var(--radius-m);
+	padding: 0.6rem;
+}
+
+.habits-groups-section.is-drop-target {
+	border-color: var(--interactive-accent);
+	background: color-mix(
+		in srgb,
+		var(--interactive-accent) 8%,
+		transparent
+	);
+}
+
+.habits-groups-chips {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.4rem;
+	margin-top: 0.45rem;
+}
+
+.habits-groups-chip {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.35rem;
+	padding: 0.25rem 0.6rem;
+	background: var(--background-primary);
+	border: 1px solid var(--background-modifier-border);
+	border-left: 3px solid
+		var(--habits-accent, var(--background-modifier-border));
+	border-radius: var(--radius-s);
+	cursor: grab;
+	touch-action: none;
+	-webkit-user-select: none;
+	user-select: none;
+}
+
+.habits-groups-chip.is-dragging {
+	opacity: 0.6;
+	cursor: grabbing;
+}
+
+.habits-groups-chip-icon {
+	display: flex;
+	align-items: center;
+}
+
+.habits-groups-empty {
+	color: var(--text-faint);
+	font-size: var(--font-ui-smaller);
+}
+
 .habits-panel-group {
 	display: flex;
 	align-items: center;
@@ -1363,6 +1515,11 @@
 	.habits-card {
 		padding: 0.75rem 0.6rem;
 		gap: 0.6rem;
+	}
+
+	/* Match the tighter card padding so the lip stays flush. */
+	.habits-card-group-lip {
+		margin: -0.75rem -0.6rem 0;
 	}
 
 	.habits-card-title {

@@ -14,6 +14,7 @@ import type { HabitDefinition } from "../types";
 import { isComplete, isDue, isPausedOn, limitOf } from "../stats";
 import {
 	groupHabits,
+	habitAccent,
 	registerLongPress,
 	sectionLabel,
 	sortHabits,
@@ -134,6 +135,7 @@ export class HabitsPanelView extends ItemView {
 			this.store.getHabits().filter((habit) => !habit.stopped),
 			settings.sortMode,
 			settings.manualOrder,
+			settings.groups,
 		);
 		this.render();
 	}
@@ -170,7 +172,8 @@ export class HabitsPanelView extends ItemView {
 	/** Sections mirroring the dashboard's grouping behaviour. */
 	private sections(): HabitSection[] {
 		const due = this.habits.filter((habit) => this.isDueToday(habit));
-		return groupHabits(due, this.getSettings().groupBy)
+		const settings = this.getSettings();
+		return groupHabits(due, settings.groupsEnabled, settings.groupOrder)
 			.map((section) => ({
 				key: section.key,
 				habits: this.applyStatusOrder(section.habits),
@@ -265,26 +268,33 @@ export class HabitsPanelView extends ItemView {
 		}
 
 		const list = root.createDiv({ cls: "habits-panel-list" });
-		const groupBy = this.getSettings().groupBy;
+		const settings = this.getSettings();
 		for (const section of this.sections()) {
-			if (groupBy !== "off") {
+			if (settings.groupsEnabled) {
 				const header = list.createDiv({
 					cls: "habits-panel-group",
 				});
-				if (groupBy === "color") {
+				const style = settings.groups[section.key];
+				if (style?.icon) {
+					const icon = header.createSpan({
+						cls: "habits-group-icon",
+					});
+					applyHabitIcon(icon, style.icon);
+					if (style.color) {
+						icon.setCssProps({
+							"--habits-accent": style.color,
+						});
+					}
+				} else if (style?.color) {
 					const swatch = header.createSpan({
 						cls: "habits-group-swatch",
 					});
-					if (section.key) {
-						swatch.setCssProps({
-							"--habits-accent": section.key,
-						});
-					} else {
-						swatch.addClass("is-none");
-					}
+					swatch.setCssProps({
+						"--habits-accent": style.color,
+					});
 				}
 				header.createSpan({
-					text: sectionLabel(section.key, groupBy),
+					text: sectionLabel(section.key),
 				});
 			}
 			for (const habit of section.habits) {
@@ -295,8 +305,9 @@ export class HabitsPanelView extends ItemView {
 
 	private renderRow(list: HTMLElement, habit: HabitDefinition): void {
 		const row = list.createDiv({ cls: "habits-panel-row" });
-		if (habit.color) {
-			row.setCssProps({ "--habits-accent": habit.color });
+		const accent = habitAccent(habit, this.getSettings().groups);
+		if (accent) {
+			row.setCssProps({ "--habits-accent": accent });
 		}
 		this.registerDomEvent(row, "contextmenu", (evt: MouseEvent) => {
 			evt.preventDefault();

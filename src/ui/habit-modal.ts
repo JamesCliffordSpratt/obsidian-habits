@@ -191,6 +191,12 @@ export class HabitModal extends Modal {
 	private color = "var(--interactive-accent)";
 	private icon = "";
 	private group = "";
+	private groupColor = "";
+	private groupIcon = "";
+	private useGroupColor = false;
+	/** Group whose saved style is currently loaded, to avoid clobbering
+	 * fresh picks with a reload on every keystroke. */
+	private loadedGroupName: string | null = null;
 	private exampleIndex = 0;
 	private editing: HabitDefinition | null = null;
 
@@ -199,6 +205,9 @@ export class HabitModal extends Modal {
 	private iconButton: ButtonComponent | null = null;
 	private customPicker: ColorComponent | null = null;
 	private colorSwatches: { value: string; el: HTMLElement }[] = [];
+	private groupStyleEl: HTMLElement | null = null;
+	private groupIconButton: ButtonComponent | null = null;
+	private groupSwatches: { value: string; el: HTMLElement }[] = [];
 
 	constructor(
 		app: App,
@@ -233,6 +242,7 @@ export class HabitModal extends Modal {
 			this.icon = editing.icon;
 			this.color = editing.color || "var(--interactive-accent)";
 			this.group = editing.group;
+			this.useGroupColor = editing.useGroupColor;
 		}
 	}
 
@@ -436,11 +446,21 @@ export class HabitModal extends Modal {
 					.setValue(this.group)
 					.onChange((value) => {
 						this.group = value;
+						this.loadGroupStyle();
+						this.updateGroupStyleUi();
+						this.updatePreview();
 					});
 				new GroupSuggest(this.app, text.inputEl, () =>
 					this.existingGroups(),
 				);
 			});
+
+		this.groupStyleEl = contentEl.createDiv({
+			cls: "habits-group-style",
+		});
+		this.renderGroupStyle(this.groupStyleEl);
+		this.loadGroupStyle();
+		this.updateGroupStyleUi();
 
 		new Setting(contentEl)
 			.addButton((button) =>
@@ -470,16 +490,172 @@ export class HabitModal extends Modal {
 							icon: this.icon,
 							color: this.color,
 							group: this.group.trim(),
+							useGroupColor:
+								this.useGroupColor &&
+								this.group.trim() !== "",
 						};
 						const file = this.editing
 							? await this.store.updateHabit(this.editing, options)
 							: await this.store.createHabit(options);
 						if (file) {
+							if (options.group) {
+								await this.store.setGroupStyle(options.group, {
+									color: this.groupColor,
+									icon: this.groupIcon,
+								});
+							}
 							this.close();
 							this.onCreated();
 						}
 					}),
 			);
+	}
+
+	/**
+	 * Group styling rows shown while a group name is present: a shared
+	 * colour, a shared icon, and the per-habit override toggle. Colour
+	 * and icon are stored once per group (in the plugin settings), so
+	 * changing them here restyles every card in the group.
+	 */
+	private renderGroupStyle(container: HTMLElement): void {
+		container.empty();
+
+		const colorSetting = new Setting(container)
+			.setName(t("Group color"))
+			.setDesc(t("Optional color shared by every habit in this group."));
+		const swatches = colorSetting.controlEl.createDiv({
+			cls: "habits-swatches",
+		});
+		this.groupSwatches = [];
+		for (const swatch of THEME_COLORS) {
+			const el = swatches.createEl("button", {
+				cls: "habits-swatch",
+				attr: { type: "button", "aria-label": t(swatch.label) },
+			});
+			el.setCssProps({ "--habits-swatch": swatch.value });
+			el.addEventListener("click", () => {
+				// Clicking the selected swatch clears the group colour.
+				this.groupColor =
+					this.groupColor === swatch.value ? "" : swatch.value;
+				this.updateGroupStyleUi();
+				this.updatePreview();
+			});
+			this.groupSwatches.push({ value: swatch.value, el });
+		}
+		colorSetting.addColorPicker((picker) => {
+			if (this.groupColor.startsWith("#")) {
+				picker.setValue(this.groupColor);
+			}
+			picker.onChange((value) => {
+				this.groupColor = value;
+				this.updateGroupStyleUi();
+				this.updatePreview();
+			});
+		});
+
+		new Setting(container)
+			.setName(t("Group icon"))
+			.setDesc(
+				t("Shown in the group lip on cards and in section headers."),
+			)
+			.addButton((button) => {
+				this.groupIconButton = button;
+				this.updateGroupIconButton();
+				button.onClick(() => {
+					new IconSuggestModal(this.app, (icon) => {
+						this.groupIcon = icon;
+						this.updateGroupIconButton();
+					}).open();
+				});
+			})
+			.addButton((button) =>
+				button
+					.setButtonText(t("Emoji"))
+					.setTooltip(t("Choose an emoji"))
+					.onClick(() => {
+						new EmojiSuggestModal(this.app, (emoji) => {
+							this.groupIcon = emoji;
+							this.updateGroupIconButton();
+						}).open();
+					}),
+			)
+			.addExtraButton((extra) =>
+				extra
+					.setIcon("x")
+					.setTooltip(t("Clear icon"))
+					.onClick(() => {
+						this.groupIcon = "";
+						this.updateGroupIconButton();
+					}),
+			);
+
+		new Setting(container)
+			.setName(t("Use group color for this card"))
+			.setDesc(t("Show this card in the group color instead of its own."))
+			.addToggle((toggle) =>
+				toggle.setValue(this.useGroupColor).onChange((value) => {
+					this.useGroupColor = value;
+					this.updatePreview();
+				}),
+			);
+	}
+
+	/**
+	 * When the group name changes to one with a saved style, load it;
+	 * otherwise keep whatever the user has picked so far.
+	 */
+	private loadGroupStyle(): void {
+		const name = this.group.trim();
+		if (name === this.loadedGroupName) {
+			return;
+		}
+		this.loadedGroupName = name;
+		const style = name ? this.store.getGroupStyle(name) : undefined;
+		if (style) {
+			this.groupColor = style.color;
+			this.groupIcon = style.icon;
+		}
+	}
+
+	private updateGroupStyleUi(): void {
+		this.groupStyleEl?.toggle(this.group.trim() !== "");
+		for (const swatch of this.groupSwatches) {
+			swatch.el.toggleClass(
+				"is-selected",
+				swatch.value === this.groupColor,
+			);
+		}
+		this.updateGroupIconButton();
+	}
+
+	private updateGroupIconButton(): void {
+		const button = this.groupIconButton;
+		if (!button) {
+			return;
+		}
+		button.buttonEl.empty();
+		const glyph = button.buttonEl.createSpan({
+			cls: "habits-button-icon",
+		});
+		if (this.groupIcon) {
+			applyHabitIcon(glyph, this.groupIcon);
+			button.buttonEl.createSpan({
+				text: isLucideIcon(this.groupIcon)
+					? iconLabel(this.groupIcon)
+					: t("Emoji"),
+			});
+		} else {
+			setIcon(glyph, "image-plus");
+			button.buttonEl.createSpan({ text: t("Choose icon") });
+		}
+	}
+
+	/** The colour the card will actually show, honouring the override. */
+	private effectiveColor(): string {
+		if (this.useGroupColor && this.group.trim() && this.groupColor) {
+			return this.groupColor;
+		}
+		return this.color;
 	}
 
 	/** Unique group names already in use, for the group suggestions. */
@@ -722,7 +898,8 @@ export class HabitModal extends Modal {
 				setIcon(this.previewIconEl, "circle-dashed");
 			}
 			this.previewIconEl.setCssProps({
-				"--habits-accent": this.color || "var(--interactive-accent)",
+				"--habits-accent":
+					this.effectiveColor() || "var(--interactive-accent)",
 			});
 		}
 		if (this.previewNameEl) {

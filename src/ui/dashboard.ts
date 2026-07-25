@@ -33,6 +33,7 @@ import {
 	friendlyDateLabel,
 	fromDateKey,
 	groupHabits,
+	habitAccent,
 	parseNoteDate,
 	registerLongPress,
 	sectionLabel,
@@ -186,6 +187,7 @@ export class HabitsDashboard extends MarkdownRenderChild {
 			this.store.getHabits().filter((habit) => !habit.stopped),
 			settings.sortMode,
 			settings.manualOrder,
+			settings.groups,
 		);
 		this.index = Math.min(this.index, Math.max(0, this.habits.length - 1));
 		this.render();
@@ -211,9 +213,10 @@ export class HabitsDashboard extends MarkdownRenderChild {
 				settings.experimental.aiSummaries
 					? settings.aiSummary
 					: undefined,
-				settings.statsCarousel
+				settings.dashboardLayout === "carousel"
 					? settings.statsRowsPerPage
 					: undefined,
+				settings.groupsEnabled ? settings.groups : undefined,
 			);
 			return;
 		}
@@ -490,7 +493,7 @@ export class HabitsDashboard extends MarkdownRenderChild {
 		this.lastPerView = perRow;
 		wrap.setCssProps({ "--habits-per-row": String(perRow) });
 
-		const showHeaders = settings.groupBy !== "off";
+		const showHeaders = settings.groupsEnabled;
 		for (const section of this.sections()) {
 			if (showHeaders) {
 				this.renderSectionHeader(wrap, section.key);
@@ -506,23 +509,25 @@ export class HabitsDashboard extends MarkdownRenderChild {
 		}
 	}
 
-	/** Section header: a colour swatch (colour mode) plus a label. */
+	/** Section header: the group's icon or colour swatch, plus a label. */
 	private renderSectionHeader(container: HTMLElement, key: string): void {
-		const groupBy = this.getSettings().groupBy;
+		const style = this.getSettings().groups[key];
 		const header = container.createDiv({ cls: "habits-group-header" });
-		if (groupBy === "color") {
+		if (style?.icon) {
+			const icon = header.createSpan({ cls: "habits-group-icon" });
+			applyHabitIcon(icon, style.icon);
+			if (style.color) {
+				icon.setCssProps({ "--habits-accent": style.color });
+			}
+		} else if (style?.color) {
 			const swatch = header.createSpan({
 				cls: "habits-group-swatch",
 			});
-			if (key) {
-				swatch.setCssProps({ "--habits-accent": key });
-			} else {
-				swatch.addClass("is-none");
-			}
+			swatch.setCssProps({ "--habits-accent": style.color });
 		}
 		header.createSpan({
 			cls: "habits-group-label",
-			text: sectionLabel(key, groupBy),
+			text: sectionLabel(key),
 		});
 	}
 
@@ -667,9 +672,32 @@ export class HabitsDashboard extends MarkdownRenderChild {
 	}
 
 	private renderCard(track: HTMLElement, habit: HabitDefinition): void {
+		const settings = this.getSettings();
 		const card = track.createDiv({ cls: "habits-card" });
-		if (habit.color) {
-			card.setCssProps({ "--habits-accent": habit.color });
+		const accent = habitAccent(habit, settings.groups);
+		if (accent) {
+			card.setCssProps({ "--habits-accent": accent });
+		}
+		// A lip along the top edge names the habit's group. Shown while
+		// grouping by group — it is what carries the group context in the
+		// carousel, which has no section headers.
+		const groupName = habit.group.trim();
+		if (settings.groupsEnabled && groupName) {
+			const lip = card.createDiv({ cls: "habits-card-group-lip" });
+			const style = settings.groups[groupName];
+			if (style?.color) {
+				lip.setCssProps({ "--habits-group-color": style.color });
+			}
+			if (style?.icon) {
+				const icon = lip.createSpan({
+					cls: "habits-card-group-icon",
+				});
+				applyHabitIcon(icon, style.icon);
+			}
+			lip.createSpan({
+				cls: "habits-card-group-name",
+				text: groupName,
+			});
 		}
 		setTooltip(card, t("Right-click or long-press for more options"));
 		this.registerDomEvent(card, "contextmenu", (evt: MouseEvent) => {
@@ -871,26 +899,41 @@ export class HabitsDashboard extends MarkdownRenderChild {
 	 * order), then completed habits, with paused habits parked at the end.
 	 * Weekly and monthly habits appear only on the days they are due.
 	 */
+	/**
+	 * Flat order for the carousel (and for the "anything due?" check).
+	 * Groups stay adjacent, but the status partition applies across the
+	 * whole queue: the carousel has no visible sections, so a completed
+	 * card slides to the very end of the line, not just of its group.
+	 */
 	private orderedHabits(): HabitDefinition[] {
-		return this.sections().flatMap((section) => section.habits);
+		return this.applyStatusOrder(
+			this.rawSections().flatMap((section) => section.habits),
+		);
 	}
 
-	/**
-	 * Visual sections for the selected day. Without grouping there is a
-	 * single unnamed section; with it, one per group or colour. Status
-	 * ordering applies within each section, so completed habits sink to
-	 * the end of their own section rather than escaping it.
-	 */
-	private sections(): HabitSection[] {
+	/** Grouped sections before any status ordering. */
+	private rawSections(): HabitSection[] {
 		const due = this.habits.filter((habit) =>
 			this.isDueOnSelected(habit),
 		);
-		return groupHabits(due, this.getSettings().groupBy)
-			.map((section) => ({
-				key: section.key,
-				habits: this.applyStatusOrder(section.habits),
-			}))
-			.filter((section) => section.habits.length > 0);
+		const settings = this.getSettings();
+		return groupHabits(
+			due,
+			settings.groupsEnabled,
+			settings.groupOrder,
+		).filter((section) => section.habits.length > 0);
+	}
+
+	/**
+	 * Visual sections for the grid layouts. Status ordering applies
+	 * within each section, so completed habits sink to the end of their
+	 * own section rather than escaping it.
+	 */
+	private sections(): HabitSection[] {
+		return this.rawSections().map((section) => ({
+			key: section.key,
+			habits: this.applyStatusOrder(section.habits),
+		}));
 	}
 
 	/** Status partition applied to an already-sorted run of due habits. */

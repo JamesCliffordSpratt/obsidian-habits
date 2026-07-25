@@ -1,7 +1,7 @@
 import { moment, type Component } from "obsidian";
 import { t } from "./i18n";
 import type {
-	GroupByMode,
+	GroupStyle,
 	HabitDefinition,
 	HabitSortMode,
 } from "./types";
@@ -264,19 +264,6 @@ const PALETTE_HUES: Record<string, number> = {
 	"var(--color-pink)": 330,
 };
 
-/** English labels for the palette; translated at display time. */
-const PALETTE_LABELS: Record<string, string> = {
-	"var(--interactive-accent)": "Accent",
-	"var(--color-red)": "Red",
-	"var(--color-orange)": "Orange",
-	"var(--color-yellow)": "Yellow",
-	"var(--color-green)": "Green",
-	"var(--color-cyan)": "Cyan",
-	"var(--color-blue)": "Blue",
-	"var(--color-purple)": "Purple",
-	"var(--color-pink)": "Pink",
-};
-
 /**
  * Hue (0–360) of a habit's accent colour, used to order colours so
  * similar ones sit together. Handles the theme-palette CSS variables the
@@ -318,6 +305,23 @@ function colorHue(color: string): number | null {
 	return hue;
 }
 
+/**
+ * The colour a habit's card actually shows: the group colour when the
+ * habit opted into it and its group has one, its own colour otherwise.
+ */
+export function habitAccent(
+	habit: HabitDefinition,
+	groups: Record<string, GroupStyle>,
+): string {
+	if (habit.useGroupColor) {
+		const style = groups[habit.group.trim()];
+		if (style?.color) {
+			return style.color;
+		}
+	}
+	return habit.color;
+}
+
 /** The most recent day a habit was logged, or "" when it never was. */
 function lastLoggedDay(habit: HabitDefinition): string {
 	let latest = "";
@@ -339,13 +343,16 @@ export function sortHabits(
 	habits: HabitDefinition[],
 	mode: HabitSortMode,
 	manualOrder: readonly string[],
+	groups: Record<string, GroupStyle> = {},
 ): HabitDefinition[] {
 	const sorted = [...habits];
 	switch (mode) {
 		case "color": {
 			sorted.sort((a, b) => {
-				const ha = a.color ? colorHue(a.color) : null;
-				const hb = b.color ? colorHue(b.color) : null;
+				const ca = habitAccent(a, groups);
+				const cb = habitAccent(b, groups);
+				const ha = ca ? colorHue(ca) : null;
+				const hb = cb ? colorHue(cb) : null;
 				if (ha === null && hb === null) {
 					return a.name.localeCompare(b.name);
 				}
@@ -401,21 +408,23 @@ export interface HabitSection {
 }
 
 /**
- * Gather habits into sections, preserving the incoming (sorted) order
- * within each section. Sections are ordered alphabetically for groups
- * and by hue for colours; the catch-all section always comes last.
+ * Gather habits into sections by group name, preserving the incoming
+ * (sorted) order within each section. Sections follow the user's
+ * arranged `groupOrder`; groups missing from it append alphabetically,
+ * and the catch-all "ungrouped" section always comes last. When
+ * grouping is disabled, everything lands in one unnamed section.
  */
 export function groupHabits(
 	habits: HabitDefinition[],
-	groupBy: GroupByMode,
+	enabled: boolean,
+	groupOrder: readonly string[] = [],
 ): HabitSection[] {
-	if (groupBy === "off") {
+	if (!enabled) {
 		return [{ key: "", habits }];
 	}
 	const sections = new Map<string, HabitDefinition[]>();
 	for (const habit of habits) {
-		const key =
-			groupBy === "color" ? habit.color.trim() : habit.group.trim();
+		const key = habit.group.trim();
 		const bucket = sections.get(key);
 		if (bucket) {
 			bucket.push(habit);
@@ -423,23 +432,17 @@ export function groupHabits(
 			sections.set(key, [habit]);
 		}
 	}
+	const position = new Map(
+		groupOrder.map((name, index) => [name, index]),
+	);
 	const keys = Array.from(sections.keys()).sort((a, b) => {
 		// The catch-all section always trails.
 		if (a === "" || b === "") {
 			return a === "" ? 1 : -1;
 		}
-		if (groupBy === "color") {
-			const ha = colorHue(a);
-			const hb = colorHue(b);
-			if (ha === null && hb === null) {
-				return a.localeCompare(b);
-			}
-			if (ha === null || hb === null) {
-				return ha === null ? 1 : -1;
-			}
-			return ha - hb || a.localeCompare(b);
-		}
-		return a.localeCompare(b);
+		const pa = position.get(a) ?? Number.MAX_SAFE_INTEGER;
+		const pb = position.get(b) ?? Number.MAX_SAFE_INTEGER;
+		return pa - pb || a.localeCompare(b);
 	});
 	return keys.map((key) => ({
 		key,
@@ -447,18 +450,7 @@ export function groupHabits(
 	}));
 }
 
-/**
- * Human-readable label for a section header. Group names pass through;
- * palette colours get their translated names, custom colours show their
- * value, and the catch-all section gets a translated placeholder.
- */
-export function sectionLabel(key: string, groupBy: GroupByMode): string {
-	if (groupBy === "color") {
-		if (!key) {
-			return t("No color");
-		}
-		const label = PALETTE_LABELS[key];
-		return label ? t(label) : key;
-	}
+/** Label for a section header; the catch-all gets a placeholder. */
+export function sectionLabel(key: string): string {
 	return key || t("Ungrouped");
 }

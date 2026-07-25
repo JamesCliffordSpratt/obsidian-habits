@@ -33,20 +33,39 @@ export const zh: Record<string, string> = {
 	"Move completed cards to the end": "将已完成的卡片移到末尾",
 	"Completed habits drift to the end of the queue and paused ones park behind them. Turn this off to keep every card in its sorted position.":
 		"已完成的习惯会移到队列末尾,暂停的习惯排在其后。关闭后,所有卡片保持排序位置不变。",
-	"Sorting & grouping": "排序与分组",
-	"Group habits by": "习惯分组方式",
-	"Show habits in sections: by their group name (set on each habit), or by accent color.":
-		"按分区显示习惯:按分组名称(在每个习惯中设置)或按强调色。",
-	Off: "关闭",
 	Group: "分组",
 	Ungrouped: "未分组",
-	"No color": "无颜色",
 	"Optional group used to build dashboard sections — for example an area of responsibility.":
 		"用于在仪表盘中创建分区的可选分组 — 例如某个职责领域。",
 	"e.g. Health": "例如:健康",
+	"Group color": "分组颜色",
+	"Optional color shared by every habit in this group.": "该分组中所有习惯共享的可选颜色。",
+	"Group icon": "分组图标",
+	"Shown in the group lip on cards and in section headers.":
+		"显示在卡片的分组条和分区标题中。",
+	"Use group color for this card": "此卡片使用分组颜色",
+	"Show this card in the group color instead of its own.":
+		"以分组颜色而非自身颜色显示此卡片。",
+	General: "常规",
+	Sorting: "排序",
+	Groups: "分组",
+	"How to move through your habit cards: a paged carousel with arrows, a grid that wraps onto new rows, or a fixed-height grid that scrolls vertically. The stats page follows the same choice.":
+		"浏览习惯卡片的方式:带箭头的分页轮播、自动换行的网格,或固定高度、垂直滚动的网格。统计页面遵循相同设置。",
+	"Enable groups": "启用分组",
+	"Show habits in sections by their group, with a group lip on each card.":
+		"按分组分区显示习惯,并在每张卡片上显示分组条。",
+	"Group order": "分组顺序",
+	"Drag the groups into the order their sections should appear in.":
+		"拖动分组以调整其分区的显示顺序。",
+	"Manage groups": "管理分组",
+	"See every habit by group and drag cards between groups.":
+		"按分组查看所有习惯,并在分组间拖动卡片。",
+	Open: "打开",
+	"New group": "新建分组",
+	Add: "添加",
+	"Drag habits between groups to reassign them.": "在分组之间拖动习惯以重新分配。",
+	"No habits": "没有习惯",
 	"Dashboard layout": "仪表盘布局",
-	"How to move through your habit cards: a paged carousel with arrows, a grid that wraps onto new rows, or a fixed-height grid that scrolls vertically.":
-		"浏览习惯卡片的方式:带箭头的分页轮播、自动换行的网格,或固定高度、垂直滚动的网格。",
 	Carousel: "轮播",
 	Grid: "网格",
 	"Vertical scroll": "垂直滚动",
@@ -354,9 +373,6 @@ export const zh: Record<string, string> = {
 	"started tracking on {date}": "自 {date} 开始跟踪",
 
 	// Stats carousel
-	"Stats page carousel": "统计页轮播",
-	"Show the per-habit stats as pages you can flip through instead of one long list.":
-		"将每个习惯的统计显示为可翻页的页面，而不是一个长列表。",
 	"Stats rows per page": "每页统计行数",
 	"How many habits each stats page shows.": "每页统计显示多少个习惯。",
 };
