@@ -107,8 +107,18 @@ export class GroupsModal extends Modal {
 					const cleaned = pending.trim();
 					if (cleaned && !this.groupNames().includes(cleaned)) {
 						this.newGroups.push(cleaned);
+						// Open the new group's style editor right away so
+						// its colour and icon are part of creating it.
+						this.editingGroup = cleaned;
 					}
 					this.build();
+					this.contentEl
+						.querySelector<HTMLElement>(
+							`.habits-groups-section[data-group="${CSS.escape(
+								cleaned,
+							)}"]`,
+						)
+						?.scrollIntoView({ block: "nearest" });
 				}),
 		);
 
