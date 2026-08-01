@@ -64,8 +64,8 @@ export const ja: Record<string, string> = {
 	Open: "開く",
 	"New group": "新しいグループ",
 	Add: "追加",
-	"Drag habits between groups to reassign them.":
-		"習慣をグループ間でドラッグして割り当て直します。",
+	"Drag habits between groups to reassign them, or within a group to reorder them.":
+		"習慣をグループ間でドラッグして割り当て直すか、グループ内でドラッグして並べ替えます。",
 	"No habits": "習慣なし",
 	"Dashboard layout": "ダッシュボードのレイアウト",
 	Carousel: "カルーセル",

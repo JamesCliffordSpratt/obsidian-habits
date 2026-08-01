@@ -383,14 +383,23 @@ export function sortHabits(
 		case "group": {
 			// Group-mates stay adjacent, ordered by the arranged group
 			// order; ungrouped habits trail, matching the section order.
+			// Within a group, the manual order (arranged by dragging in
+			// the groups manager) wins, then names.
 			const position = new Map(
 				groupOrder.map((name, index) => [name, index]),
+			);
+			const cardPosition = new Map(
+				manualOrder.map((path, index) => [path, index]),
 			);
 			sorted.sort((a, b) => {
 				const ga = a.group.trim();
 				const gb = b.group.trim();
 				if (ga === gb) {
-					return a.name.localeCompare(b.name);
+					const ca =
+						cardPosition.get(a.path) ?? Number.MAX_SAFE_INTEGER;
+					const cb =
+						cardPosition.get(b.path) ?? Number.MAX_SAFE_INTEGER;
+					return ca - cb || a.name.localeCompare(b.name);
 				}
 				if (!ga || !gb) {
 					return !ga ? 1 : -1;

@@ -63,7 +63,8 @@ export const zh: Record<string, string> = {
 	Open: "打开",
 	"New group": "新建分组",
 	Add: "添加",
-	"Drag habits between groups to reassign them.": "在分组之间拖动习惯以重新分配。",
+	"Drag habits between groups to reassign them, or within a group to reorder them.":
+		"在分组之间拖动习惯以重新分配,或在分组内拖动以调整顺序。",
 	"No habits": "没有习惯",
 	"Dashboard layout": "仪表盘布局",
 	Carousel: "轮播",

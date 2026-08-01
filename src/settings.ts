@@ -438,6 +438,8 @@ export class HabitsSettingTab extends PluginSettingTab {
 											this.app,
 											this.plugin.store,
 											() => this.plugin.settings,
+											() =>
+												this.plugin.saveSettings(),
 										).open();
 									}),
 							);
@@ -1052,6 +1054,7 @@ export class HabitsSettingTab extends PluginSettingTab {
 						this.app,
 						this.plugin.store,
 						() => this.plugin.settings,
+						() => this.plugin.saveSettings(),
 					).open();
 				}),
 			);

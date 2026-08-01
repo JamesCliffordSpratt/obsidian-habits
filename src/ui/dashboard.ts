@@ -537,20 +537,40 @@ export class HabitsDashboard extends MarkdownRenderChild {
 	 * Cap the vertical-scroll grid at about a row and a half, so a partial
 	 * row peeks out below the fold as the "there is more" cue. Measured
 	 * from the first card after layout, so the cap follows the theme's
-	 * actual card height. Skipped when everything already fits.
+	 * actual card height.
+	 *
+	 * The dashboard often re-renders while it is not laid out (Obsidian
+	 * hides embeds during note navigation, and habit edits reload at any
+	 * time), in which case the card measures 0 and the cap cannot be
+	 * computed. A ResizeObserver retries once layout returns; until
+	 * then, a CSS fallback cap keeps the widget scrollable rather than
+	 * letting it silently sprawl into a full grid.
 	 */
 	private capVerticalHeight(grid: HTMLElement): void {
-		window.requestAnimationFrame(() => {
+		const apply = (): boolean => {
 			const card = grid.querySelector<HTMLElement>(".habits-card");
-			if (!card) {
+			if (!card || card.offsetHeight === 0) {
+				// Not laid out yet (hidden or detached).
+				return false;
+			}
+			grid.setCssProps({
+				"--habits-vertical-max": `${Math.round(
+					card.offsetHeight * 1.55,
+				)}px`,
+			});
+			return true;
+		};
+		window.requestAnimationFrame(() => {
+			if (apply()) {
 				return;
 			}
-			const cap = Math.round(card.offsetHeight * 1.55);
-			if (grid.scrollHeight > cap) {
-				grid.setCssProps({
-					"--habits-vertical-max": `${cap}px`,
-				});
-			}
+			const observer = new ResizeObserver(() => {
+				if (apply()) {
+					observer.disconnect();
+				}
+			});
+			observer.observe(grid);
+			this.register(() => observer.disconnect());
 		});
 	}
 

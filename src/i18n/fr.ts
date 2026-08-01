@@ -66,8 +66,8 @@ export const fr: Record<string, string> = {
 	Open: "Ouvrir",
 	"New group": "Nouveau groupe",
 	Add: "Ajouter",
-	"Drag habits between groups to reassign them.":
-		"Faites glisser les habitudes entre les groupes pour les réaffecter.",
+	"Drag habits between groups to reassign them, or within a group to reorder them.":
+		"Faites glisser les habitudes entre les groupes pour les réaffecter, ou au sein d'un groupe pour les réordonner.",
 	"No habits": "Aucune habitude",
 	"Dashboard layout": "Disposition du tableau de bord",
 	Carousel: "Carrousel",

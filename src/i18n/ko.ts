@@ -64,8 +64,8 @@ export const ko: Record<string, string> = {
 	Open: "열기",
 	"New group": "새 그룹",
 	Add: "추가",
-	"Drag habits between groups to reassign them.":
-		"습관을 그룹 간에 드래그하여 다시 지정하세요.",
+	"Drag habits between groups to reassign them, or within a group to reorder them.":
+		"습관을 그룹 간에 드래그하여 다시 지정하거나, 그룹 안에서 드래그하여 순서를 바꾸세요.",
 	"No habits": "습관 없음",
 	"Dashboard layout": "대시보드 레이아웃",
 	Carousel: "캐러셀",

@@ -24,6 +24,7 @@ export class GroupsModal extends Modal {
 		app: App,
 		private store: HabitStore,
 		private getSettings: () => HabitsPluginSettings,
+		private saveSettings: () => Promise<void>,
 	) {
 		super(app);
 	}
@@ -31,9 +32,11 @@ export class GroupsModal extends Modal {
 	onOpen(): void {
 		this.modalEl.addClass("habits-groups-modal");
 		const settings = this.getSettings();
+		// Always the group-sorted view: partitioned by group with the
+		// manual order inside each — exactly what dragging edits.
 		this.habits = sortHabits(
 			this.store.getHabits().filter((habit) => !habit.stopped),
-			settings.sortMode,
+			"group",
 			settings.manualOrder,
 			settings.groups,
 			settings.groupOrder,
@@ -76,7 +79,9 @@ export class GroupsModal extends Modal {
 		new Setting(contentEl).setName(t("Groups")).setHeading();
 		contentEl.createEl("p", {
 			cls: "habits-groups-hint",
-			text: t("Drag habits between groups to reassign them."),
+			text: t(
+				"Drag habits between groups to reassign them, or within a group to reorder them.",
+			),
 		});
 
 		let pending = "";
@@ -142,6 +147,7 @@ export class GroupsModal extends Modal {
 		}
 		for (const habit of members) {
 			const chip = chips.createDiv({ cls: "habits-groups-chip" });
+			chip.dataset.path = habit.path;
 			const accent = habitAccent(habit, settings.groups);
 			if (accent) {
 				chip.setCssProps({ "--habits-accent": accent });
@@ -161,8 +167,11 @@ export class GroupsModal extends Modal {
 	}
 
 	/**
-	 * Pointer-based dragging between group containers. Listeners sit on
-	 * the window so the drag survives any DOM churn, mirroring the
+	 * Pointer-based dragging, both between containers (reassign) and
+	 * within one (reorder). The chip moves live in the DOM as a preview:
+	 * inside the container under the pointer it slots between chips by
+	 * position, so dropping simply keeps what is shown. Listeners sit on
+	 * the window so the drag survives the DOM churn, mirroring the
 	 * settings tab's order editors.
 	 */
 	private registerChipDrag(
@@ -181,10 +190,9 @@ export class GroupsModal extends Modal {
 					".habits-groups-section",
 				),
 			);
-			let target: HTMLElement | null = null;
 
 			const onMove = (e: PointerEvent): void => {
-				target =
+				const target =
 					containers.find((el) => {
 						const rect = el.getBoundingClientRect();
 						return (
@@ -195,11 +203,39 @@ export class GroupsModal extends Modal {
 						);
 					}) ?? null;
 				for (const el of containers) {
-					el.toggleClass(
-						"is-drop-target",
-						el === target &&
-							el.dataset.group !== habit.group.trim(),
+					el.toggleClass("is-drop-target", el === target);
+				}
+				if (!target) {
+					return;
+				}
+				const chipsEl = target.querySelector<HTMLElement>(
+					".habits-groups-chips",
+				);
+				if (!chipsEl) {
+					return;
+				}
+				// Slot the chip before the first sibling that sits after
+				// the pointer in the wrapped flow (further down, or on
+				// the same line past its midpoint).
+				const siblings = Array.from(
+					chipsEl.querySelectorAll<HTMLElement>(
+						".habits-groups-chip",
+					),
+				).filter((el) => el !== chip);
+				const next = siblings.find((el) => {
+					const rect = el.getBoundingClientRect();
+					return (
+						e.clientY < rect.top ||
+						(e.clientY <= rect.bottom &&
+							e.clientX < rect.left + rect.width / 2)
 					);
+				});
+				if (next) {
+					if (next !== chip.nextElementSibling) {
+						chipsEl.insertBefore(chip, next);
+					}
+				} else if (chipsEl.lastElementChild !== chip) {
+					chipsEl.appendChild(chip);
 				}
 			};
 			const onUp = (): void => {
@@ -210,16 +246,50 @@ export class GroupsModal extends Modal {
 				for (const el of containers) {
 					el.removeClass("is-drop-target");
 				}
-				const group = target?.dataset.group;
-				if (group !== undefined && group !== habit.group.trim()) {
-					void this.store
-						.setHabitGroup(habit, group)
-						.then(() => this.build());
-				}
+				void this.commitDrag(chip, habit);
 			};
 			win.addEventListener("pointermove", onMove);
 			win.addEventListener("pointerup", onUp);
 			win.addEventListener("pointercancel", onUp);
 		});
+	}
+
+	/**
+	 * Persist whatever the drag preview shows: the chip's container is
+	 * its (possibly new) group, and the chips' DOM order across all
+	 * containers becomes the manual order — which group-sorted views use
+	 * within each section.
+	 */
+	private async commitDrag(
+		chip: HTMLElement,
+		habit: HabitDefinition,
+	): Promise<void> {
+		const section = chip.closest<HTMLElement>(".habits-groups-section");
+		const group = section?.dataset.group;
+		if (group !== undefined && group !== habit.group.trim()) {
+			await this.store.setHabitGroup(habit, group);
+		}
+		const paths: string[] = [];
+		for (const el of Array.from(
+			this.contentEl.querySelectorAll<HTMLElement>(
+				".habits-groups-chip",
+			),
+		)) {
+			if (el.dataset.path) {
+				paths.push(el.dataset.path);
+			}
+		}
+		const settings = this.getSettings();
+		settings.manualOrder = paths;
+		await this.saveSettings();
+		// Re-sort the cached list so the rebuild shows the new order.
+		this.habits = sortHabits(
+			this.habits,
+			"group",
+			settings.manualOrder,
+			settings.groups,
+			settings.groupOrder,
+		);
+		this.build();
 	}
 }
