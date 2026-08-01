@@ -928,9 +928,11 @@ export class HabitsDashboard extends MarkdownRenderChild {
 	 * card slides to the very end of the line, not just of its group.
 	 */
 	private orderedHabits(): HabitDefinition[] {
-		return this.applyStatusOrder(
-			this.rawSections().flatMap((section) => section.habits),
-		);
+		const flat: HabitDefinition[] = [];
+		for (const section of this.rawSections()) {
+			flat.push(...section.habits);
+		}
+		return this.applyStatusOrder(flat);
 	}
 
 	/**

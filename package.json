@@ -25,6 +25,9 @@
 		"chart.js": "^4.4.0",
 		"jspdf": "^4.2.1"
 	},
+	"overrides": {
+		"dompurify": "^3.4.12"
+	},
 	"devDependencies": {
 		"@types/node": "^22.0.0",
 		"@typescript-eslint/parser": "^8.0.0",

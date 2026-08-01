@@ -167,7 +167,11 @@ export class HabitsPanelView extends ItemView {
 	 * monthly habits are included only on the days they are due.
 	 */
 	private ordered(): HabitDefinition[] {
-		return this.sections().flatMap((section) => section.habits);
+		const flat: HabitDefinition[] = [];
+		for (const section of this.sections()) {
+			flat.push(...section.habits);
+		}
+		return flat;
 	}
 
 	/**

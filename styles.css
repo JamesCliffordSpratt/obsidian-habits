@@ -208,7 +208,6 @@
 	margin: -1.1rem -0.65rem 0;
 	padding: 0.3rem 0.6rem;
 	border-radius: var(--radius-m) var(--radius-m) 0 0;
-	background: var(--background-secondary);
 	background: color-mix(
 		in srgb,
 		var(--habits-group-color, var(--habits-accent, var(--text-muted)))
