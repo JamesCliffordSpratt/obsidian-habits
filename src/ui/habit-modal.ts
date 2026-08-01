@@ -28,7 +28,7 @@ import { t } from "../i18n";
  * variable (rather than a fixed hex) means a habit's colour follows the
  * user's theme and updates automatically if they switch themes.
  */
-const THEME_COLORS: readonly { label: string; value: string }[] = [
+export const THEME_COLORS: readonly { label: string; value: string }[] = [
 	{ label: "Accent", value: "var(--interactive-accent)" },
 	{ label: "Red", value: "var(--color-red)" },
 	{ label: "Orange", value: "var(--color-orange)" },

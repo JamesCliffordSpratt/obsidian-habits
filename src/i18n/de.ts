@@ -68,6 +68,11 @@ export const de: Record<string, string> = {
 	"Drag habits between groups to reassign them, or within a group to reorder them.":
 		"Ziehe Gewohnheiten zwischen Gruppen, um sie neu zuzuordnen, oder innerhalb einer Gruppe, um sie zu sortieren.",
 	"No habits": "Keine Gewohnheiten",
+	"Edit group style": "Gruppenstil bearbeiten",
+	"Delete group": "Gruppe löschen",
+	'Delete "{name}"? Its habits are kept and become ungrouped.':
+		'Gruppe "{name}" löschen? Ihre Gewohnheiten bleiben erhalten und werden gruppenlos.',
+	Delete: "Löschen",
 	"Dashboard layout": "Dashboard-Layout",
 	Carousel: "Karussell",
 	Grid: "Raster",

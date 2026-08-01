@@ -67,6 +67,11 @@ export const ko: Record<string, string> = {
 	"Drag habits between groups to reassign them, or within a group to reorder them.":
 		"습관을 그룹 간에 드래그하여 다시 지정하거나, 그룹 안에서 드래그하여 순서를 바꾸세요.",
 	"No habits": "습관 없음",
+	"Edit group style": "그룹 스타일 편집",
+	"Delete group": "그룹 삭제",
+	'Delete "{name}"? Its habits are kept and become ungrouped.':
+		'"{name}"을(를) 삭제할까요? 습관은 유지되며 그룹 없음이 됩니다.',
+	Delete: "삭제",
 	"Dashboard layout": "대시보드 레이아웃",
 	Carousel: "캐러셀",
 	Grid: "그리드",

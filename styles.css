@@ -287,6 +287,27 @@
 	);
 }
 
+.habits-groups-actions {
+	margin-left: auto;
+	display: flex;
+	gap: 2px;
+}
+
+.habits-groups-actions .habits-icon-button.is-active {
+	color: var(--interactive-accent);
+}
+
+/* Inline group style editor (colour + icon) inside a section. */
+.habits-groups-style {
+	margin-top: 0.4rem;
+	border-top: 1px solid var(--background-modifier-border);
+}
+
+.habits-groups-style .setting-item {
+	border: none;
+	padding: 0.45rem 0;
+}
+
 .habits-groups-chips {
 	display: flex;
 	flex-wrap: wrap;

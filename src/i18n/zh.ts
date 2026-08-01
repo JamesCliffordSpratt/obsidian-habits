@@ -66,6 +66,11 @@ export const zh: Record<string, string> = {
 	"Drag habits between groups to reassign them, or within a group to reorder them.":
 		"在分组之间拖动习惯以重新分配,或在分组内拖动以调整顺序。",
 	"No habits": "没有习惯",
+	"Edit group style": "编辑分组样式",
+	"Delete group": "删除分组",
+	'Delete "{name}"? Its habits are kept and become ungrouped.':
+		"删除“{name}”?其习惯将保留并变为未分组。",
+	Delete: "删除",
 	"Dashboard layout": "仪表盘布局",
 	Carousel: "轮播",
 	Grid: "网格",

@@ -67,6 +67,11 @@ export const ja: Record<string, string> = {
 	"Drag habits between groups to reassign them, or within a group to reorder them.":
 		"習慣をグループ間でドラッグして割り当て直すか、グループ内でドラッグして並べ替えます。",
 	"No habits": "習慣なし",
+	"Edit group style": "グループのスタイルを編集",
+	"Delete group": "グループを削除",
+	'Delete "{name}"? Its habits are kept and become ungrouped.':
+		"「{name}」を削除しますか?習慣は保持され、グループなしになります。",
+	Delete: "削除",
 	"Dashboard layout": "ダッシュボードのレイアウト",
 	Carousel: "カルーセル",
 	Grid: "グリッド",

@@ -1,10 +1,18 @@
-import { App, Modal, Setting } from "obsidian";
+import { App, Modal, Setting, setIcon } from "obsidian";
 import type { HabitStore } from "../habit-store";
 import type { HabitsPluginSettings } from "../settings";
-import type { HabitDefinition } from "../types";
+import type { GroupStyle, HabitDefinition } from "../types";
 import { t } from "../i18n";
 import { habitAccent, sectionLabel, sortHabits } from "../utils";
-import { applyHabitIcon } from "./icon-suggest-modal";
+import {
+	applyHabitIcon,
+	IconSuggestModal,
+	iconLabel,
+	isLucideIcon,
+} from "./icon-suggest-modal";
+import { EmojiSuggestModal } from "./emoji-suggest-modal";
+import { ConfirmModal } from "./confirm-modal";
+import { THEME_COLORS } from "./habit-modal";
 
 /**
  * Overview of every habit by group, opened from the plugin settings.
@@ -19,6 +27,8 @@ export class GroupsModal extends Modal {
 	private habits: HabitDefinition[] = [];
 	/** Groups created in this session that have no members yet. */
 	private newGroups: string[] = [];
+	/** Group whose inline style editor is open, if any. */
+	private editingGroup: string | null = null;
 
 	constructor(
 		app: App,
@@ -134,6 +144,43 @@ export class GroupsModal extends Modal {
 			text: sectionLabel(group),
 		});
 
+		// Style editing and deletion apply to real groups only, not the
+		// ungrouped catch-all.
+		if (group) {
+			const actions = header.createDiv({
+				cls: "habits-groups-actions",
+			});
+			const edit = actions.createEl("button", {
+				cls: "habits-icon-button",
+				attr: {
+					type: "button",
+					"aria-label": t("Edit group style"),
+				},
+			});
+			setIcon(edit, "pencil");
+			edit.toggleClass("is-active", this.editingGroup === group);
+			edit.addEventListener("click", () => {
+				this.editingGroup =
+					this.editingGroup === group ? null : group;
+				this.build();
+			});
+			const remove = actions.createEl("button", {
+				cls: "habits-icon-button",
+				attr: {
+					type: "button",
+					"aria-label": t("Delete group"),
+				},
+			});
+			setIcon(remove, "trash");
+			remove.addEventListener("click", () => {
+				this.confirmDelete(group);
+			});
+		}
+
+		if (group && this.editingGroup === group) {
+			this.renderStyleEditor(section, group);
+		}
+
 		const chips = section.createDiv({ cls: "habits-groups-chips" });
 		const members = this.habits.filter(
 			(habit) => habit.group.trim() === group,
@@ -164,6 +211,153 @@ export class GroupsModal extends Modal {
 			});
 			this.registerChipDrag(chip, habit);
 		}
+	}
+
+	/** The group's stored style, or an empty one. */
+	private styleOf(group: string): GroupStyle {
+		return this.getSettings().groups[group] ?? { color: "", icon: "" };
+	}
+
+	/** Persist a style change and repaint (headers, chips, editor). */
+	private async setStyle(group: string, style: GroupStyle): Promise<void> {
+		await this.store.setGroupStyle(group, style);
+		this.build();
+	}
+
+	/**
+	 * Inline editor for a group's shared colour and icon — the same
+	 * palette and pickers as the habit editor, saving on every change.
+	 */
+	private renderStyleEditor(section: HTMLElement, group: string): void {
+		const wrap = section.createDiv({ cls: "habits-groups-style" });
+
+		const colorSetting = new Setting(wrap).setName(t("Group color"));
+		const swatches = colorSetting.controlEl.createDiv({
+			cls: "habits-swatches",
+		});
+		for (const swatch of THEME_COLORS) {
+			const el = swatches.createEl("button", {
+				cls: "habits-swatch",
+				attr: { type: "button", "aria-label": t(swatch.label) },
+			});
+			el.setCssProps({ "--habits-swatch": swatch.value });
+			el.toggleClass(
+				"is-selected",
+				this.styleOf(group).color === swatch.value,
+			);
+			el.addEventListener("click", () => {
+				const style = this.styleOf(group);
+				// Clicking the selected swatch clears the colour.
+				void this.setStyle(group, {
+					color:
+						style.color === swatch.value ? "" : swatch.value,
+					icon: style.icon,
+				});
+			});
+		}
+		colorSetting.addColorPicker((picker) => {
+			const current = this.styleOf(group).color;
+			if (current.startsWith("#")) {
+				picker.setValue(current);
+			}
+			picker.onChange((value) => {
+				void this.setStyle(group, {
+					color: value,
+					icon: this.styleOf(group).icon,
+				});
+			});
+		});
+
+		new Setting(wrap)
+			.setName(t("Group icon"))
+			.addButton((button) => {
+				const icon = this.styleOf(group).icon;
+				button.buttonEl.empty();
+				const glyph = button.buttonEl.createSpan({
+					cls: "habits-button-icon",
+				});
+				if (icon) {
+					applyHabitIcon(glyph, icon);
+					button.buttonEl.createSpan({
+						text: isLucideIcon(icon)
+							? iconLabel(icon)
+							: t("Emoji"),
+					});
+				} else {
+					setIcon(glyph, "image-plus");
+					button.buttonEl.createSpan({ text: t("Choose icon") });
+				}
+				button.onClick(() => {
+					new IconSuggestModal(this.app, (picked) => {
+						void this.setStyle(group, {
+							color: this.styleOf(group).color,
+							icon: picked,
+						});
+					}).open();
+				});
+			})
+			.addButton((button) =>
+				button
+					.setButtonText(t("Emoji"))
+					.setTooltip(t("Choose an emoji"))
+					.onClick(() => {
+						new EmojiSuggestModal(this.app, (emoji) => {
+							void this.setStyle(group, {
+								color: this.styleOf(group).color,
+								icon: emoji,
+							});
+						}).open();
+					}),
+			)
+			.addExtraButton((extra) =>
+				extra
+					.setIcon("x")
+					.setTooltip(t("Clear icon"))
+					.onClick(() => {
+						void this.setStyle(group, {
+							color: this.styleOf(group).color,
+							icon: "",
+						});
+					}),
+			);
+	}
+
+	/**
+	 * Delete a group after confirmation: member habits are kept and
+	 * become ungrouped; the stored style and order entry are removed.
+	 */
+	private confirmDelete(group: string): void {
+		new ConfirmModal(this.app, {
+			title: t("Delete group"),
+			message: t(
+				'Delete "{name}"? Its habits are kept and become ungrouped.',
+				{ name: group },
+			),
+			confirmText: t("Delete"),
+			danger: true,
+			onConfirm: async () => {
+				for (const habit of this.habits) {
+					if (habit.group.trim() === group) {
+						await this.store.setHabitGroup(habit, "");
+					}
+				}
+				await this.store.setGroupStyle(group, null);
+				const settings = this.getSettings();
+				if (settings.groupOrder.includes(group)) {
+					settings.groupOrder = settings.groupOrder.filter(
+						(name) => name !== group,
+					);
+					await this.saveSettings();
+				}
+				this.newGroups = this.newGroups.filter(
+					(name) => name !== group,
+				);
+				if (this.editingGroup === group) {
+					this.editingGroup = null;
+				}
+				this.build();
+			},
+		}).open();
 	}
 
 	/**
