@@ -30,6 +30,7 @@ import {
 import { applyHabitIcon } from "./icon-suggest-modal";
 import {
 	addDays,
+	formatTimeOfDay,
 	friendlyDateLabel,
 	fromDateKey,
 	groupHabits,
@@ -876,8 +877,22 @@ export class HabitsDashboard extends MarkdownRenderChild {
 		});
 	}
 
-	/** A short "due" descriptor for non-daily cards; empty for daily. */
+	/**
+	 * The card's schedule line: the due descriptor for non-daily habits,
+	 * the planned time when one is set, or both joined with a dot. Empty
+	 * for a daily habit with no time, which keeps the original layout.
+	 */
 	private frequencyLabel(habit: HabitDefinition): string {
+		const schedule = this.scheduleLabel(habit);
+		const time = habit.time ? formatTimeOfDay(habit.time) : "";
+		if (schedule && time) {
+			return `${schedule} · ${time}`;
+		}
+		return schedule || time;
+	}
+
+	/** A short "due" descriptor for non-daily habits; empty for daily. */
+	private scheduleLabel(habit: HabitDefinition): string {
 		if (habit.frequency === "weekly") {
 			if (habit.weekdays.length === 1) {
 				return t("Every {day}", {

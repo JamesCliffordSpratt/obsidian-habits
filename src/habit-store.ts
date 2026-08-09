@@ -140,6 +140,7 @@ export class HabitStore {
 				2,
 				365,
 			),
+			time: this.readTime(fm.time),
 			target: this.readNumber(fm.target, 1),
 			unit: typeof fm.unit === "string" ? fm.unit : "",
 			weeklyTarget: this.readNumber(fm.weeklyTarget, 0),
@@ -197,6 +198,22 @@ export class HabitStore {
 			days.add(1);
 		}
 		return [...days].sort((a, b) => a - b);
+	}
+
+	/**
+	 * Parse an optional time of day. Anything that isn't a valid `H:mm` or
+	 * `HH:mm` string is treated as "no time" rather than an error, and the
+	 * hour is zero-padded so times sort and compare as plain strings.
+	 */
+	private readTime(value: unknown): string {
+		if (typeof value !== "string") {
+			return "";
+		}
+		const match = /^([01]?\d|2[0-3]):([0-5]\d)$/.exec(value.trim());
+		if (!match) {
+			return "";
+		}
+		return `${match[1].padStart(2, "0")}:${match[2]}`;
 	}
 
 	/** Clamp, deduplicate and sort a weekday list, defaulting to Monday. */
@@ -535,6 +552,9 @@ export class HabitStore {
 				fm.goalDirection = "max";
 			}
 			this.writeFrequency(fm, options);
+			if (options.time) {
+				fm.time = options.time;
+			}
 			if (options.type !== "binary") {
 				// A limit of 0 is meaningful ("none at all"), so max habits
 				// always write the field even when it is zero.
@@ -621,6 +641,11 @@ export class HabitStore {
 				delete fm.goalDirection;
 			}
 			this.writeFrequency(fm, options);
+			if (options.time) {
+				fm.time = options.time;
+			} else {
+				delete fm.time;
+			}
 			if (options.type === "binary") {
 				delete fm.target;
 			} else {

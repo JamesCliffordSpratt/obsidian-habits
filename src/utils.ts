@@ -53,6 +53,24 @@ export function registerLongPress(
 	component.registerDomEvent(el, "touchcancel", clear);
 }
 
+/**
+ * Locale-aware display form of a 24-hour `HH:mm` time of day (e.g. "9:00 PM"
+ * or "21:00", following the system locale). Invalid input is returned as-is.
+ */
+export function formatTimeOfDay(time: string): string {
+	const match = /^(\d{2}):(\d{2})$/.exec(time);
+	if (!match) {
+		return time;
+	}
+	return new Date(
+		2024,
+		0,
+		1,
+		Number(match[1]),
+		Number(match[2]),
+	).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+}
+
 /** Format a date as a `YYYY-MM-DD` key using local time. */
 export function toDateKey(date: Date): string {
 	const year = date.getFullYear();

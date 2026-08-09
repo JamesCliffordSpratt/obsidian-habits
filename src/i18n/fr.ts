@@ -333,6 +333,10 @@ export const fr: Record<string, string> = {
 	Frequency: "Fréquence",
 	Daily: "Quotidien",
 	"Days of week": "Jours de la semaine",
+	"Time of day": "Heure de la journée",
+	"Optional time this habit is planned for. Shown on the habit's card.":
+		"Heure facultative prévue pour cette habitude. Affichée sur la carte de l'habitude.",
+	"Clear time": "Effacer l'heure",
 	"Every N days": "Tous les N jours",
 	"Repeat every": "Répéter tous les",
 	"Day of month": "Jour du mois",

@@ -331,6 +331,10 @@ export const ko: Record<string, string> = {
 	Frequency: "주기",
 	Daily: "매일",
 	"Days of week": "요일",
+	"Time of day": "시간",
+	"Optional time this habit is planned for. Shown on the habit's card.":
+		"이 습관을 실행할 예정 시간(선택)입니다. 습관 카드에 표시됩니다.",
+	"Clear time": "시간 지우기",
 	"Every N days": "N일마다",
 	"Repeat every": "반복 주기",
 	"Day of month": "날짜(일)",

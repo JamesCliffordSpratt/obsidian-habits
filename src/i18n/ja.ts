@@ -331,6 +331,10 @@ export const ja: Record<string, string> = {
 	Frequency: "頻度",
 	Daily: "毎日",
 	"Days of week": "曜日",
+	"Time of day": "時刻",
+	"Optional time this habit is planned for. Shown on the habit's card.":
+		"この習慣を行う予定時刻（任意）。習慣のカードに表示されます。",
+	"Clear time": "時刻をクリア",
 	"Every N days": "N日ごと",
 	"Repeat every": "繰り返し間隔",
 	"Day of month": "日にち",

@@ -326,6 +326,10 @@ export const zh: Record<string, string> = {
 	Frequency: "频率",
 	Daily: "每天",
 	"Days of week": "星期几",
+	"Time of day": "时间",
+	"Optional time this habit is planned for. Shown on the habit's card.":
+		"此习惯计划进行的时间（可选）。显示在习惯卡片上。",
+	"Clear time": "清除时间",
 	"Every N days": "每 N 天",
 	"Repeat every": "重复间隔",
 	"Day of month": "每月日期",

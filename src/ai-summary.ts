@@ -122,6 +122,9 @@ export function buildStatsDigest(
 		} else if (habit.frequency !== "daily") {
 			parts.push(`due ${habit.frequency}`);
 		}
+		if (habit.time) {
+			parts.push(`planned at ${habit.time}`);
+		}
 		parts.push(`${Math.round(s.rate * 100)}% rate`);
 		parts.push(`current streak ${s.current}, best ${s.best}`);
 		// Weekly/monthly goals don't apply to an arbitrary custom range.

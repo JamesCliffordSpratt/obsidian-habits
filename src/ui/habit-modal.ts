@@ -192,6 +192,7 @@ export class HabitModal extends Modal {
 	private weekdays: number[] = [new Date().getDay()];
 	private monthDay = new Date().getDate();
 	private intervalDays = 2;
+	private time = "";
 	private target = 1;
 	private unit = "";
 	private weeklyTarget = 0;
@@ -241,6 +242,7 @@ export class HabitModal extends Modal {
 			} else if (editing.frequency === "interval") {
 				this.intervalDays = editing.intervalDays;
 			}
+			this.time = editing.time;
 			// A limit habit's target may legitimately be 0 ("none at all");
 			// only build habits coerce a missing target to 1.
 			this.target =
@@ -400,6 +402,8 @@ export class HabitModal extends Modal {
 			this.renderFrequency(contentEl);
 		}
 
+		this.renderTime(contentEl);
+
 		// Weekly and monthly goals count days completed within a period, which
 		// only makes sense for a daily habit; a weekly/monthly habit is due at
 		// most once per period.
@@ -495,6 +499,7 @@ export class HabitModal extends Modal {
 							weekdays: [...this.weekdays],
 							monthDay: this.monthDay,
 							intervalDays: this.intervalDays,
+							time: this.time,
 							target: this.target,
 							unit: this.unit,
 							weeklyTarget: this.weeklyTarget,
@@ -818,6 +823,35 @@ export class HabitModal extends Modal {
 						});
 				});
 		}
+	}
+
+	/**
+	 * Optional planned time of day. Informational only — it is shown on the
+	 * habit's card next to the schedule and never affects due-ness.
+	 */
+	private renderTime(contentEl: HTMLElement): void {
+		new Setting(contentEl)
+			.setName(t("Time of day"))
+			.setDesc(
+				t(
+					"Optional time this habit is planned for. Shown on the habit's card.",
+				),
+			)
+			.addText((text) => {
+				text.inputEl.type = "time";
+				text.setValue(this.time).onChange((value) => {
+					this.time = value;
+				});
+			})
+			.addExtraButton((extra) =>
+				extra
+					.setIcon("x")
+					.setTooltip(t("Clear time"))
+					.onClick(() => {
+						this.time = "";
+						this.build();
+					}),
+			);
 	}
 
 	/** Collapsible, optional weekly/monthly targets section. */

@@ -112,6 +112,12 @@ export interface HabitDefinition {
 	 */
 	intervalDays: number;
 	/**
+	 * Optional time of day the habit is planned for, as 24-hour `HH:mm`.
+	 * Purely informational: it is shown alongside the schedule on the habit's
+	 * card and does not affect when the habit is due. Empty means no time.
+	 */
+	time: string;
+	/**
 	 * Daily target. For `repetition` this is a count; for `timed` it is a
 	 * number of minutes. Ignored for `binary`.
 	 */
@@ -174,6 +180,7 @@ export interface NewHabitOptions {
 	weekdays: number[];
 	monthDay: number;
 	intervalDays: number;
+	time: string;
 	target: number;
 	unit: string;
 	weeklyTarget: number;
