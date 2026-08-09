@@ -62,6 +62,17 @@ export const zh: Record<string, string> = {
 	"Group the habits table": "按分组显示习惯表格",
 	"Group the rows of habits-table blocks by habit group, with a heading row per group. Turn off for one flat list ordered by planned time.":
 		"将 habits-table 块的行按习惯分组显示，每组一个标题行。关闭后为按计划时间排序的单一列表。",
+	"Reminders": "提醒",
+	"Write reminders for due habits": "为当日应做的习惯写入提醒",
+	"Each day, write one reminder checklist line per planned time of every habit due that day, in the format the Reminder plugin picks up. The lines live in a marked block and refresh as you log habits.":
+		"每天为当日应做的每个习惯的每个计划时间写入一行提醒清单，格式可被 Reminder 插件识别。这些行位于带标记的块中，并随打卡自动刷新。",
+	"Where to write reminders": "提醒写入位置",
+	"The daily note follows the Daily notes core plugin's folder and date format; the block is added once the note exists. A fixed note is created automatically.":
+		"每日笔记遵循核心“每日笔记”插件的文件夹和日期格式；笔记存在后即会添加该块。固定笔记会自动创建。",
+	"Today's daily note": "今天的每日笔记",
+	"A fixed note": "固定笔记",
+	"Reminder note path": "提醒笔记路径",
+	"Vault path of the note that holds the reminder block.": "存放提醒块的笔记在库中的路径。",
 	"Manage groups": "管理分组",
 	"See every habit by group and drag cards between groups.":
 		"按分组查看所有习惯,并在分组间拖动卡片。",

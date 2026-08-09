@@ -63,6 +63,18 @@ export const ko: Record<string, string> = {
 	"Group the habits table": "습관 표 그룹화",
 	"Group the rows of habits-table blocks by habit group, with a heading row per group. Turn off for one flat list ordered by planned time.":
 		"habits-table 블록의 행을 습관 그룹별로 묶고 그룹마다 머리글 행을 표시합니다. 끄면 예정 시간순의 단일 목록이 됩니다.",
+	"Reminders": "알림",
+	"Write reminders for due habits": "오늘 해야 할 습관의 알림 작성",
+	"Each day, write one reminder checklist line per planned time of every habit due that day, in the format the Reminder plugin picks up. The lines live in a marked block and refresh as you log habits.":
+		"매일 그날 해야 할 각 습관의 예정 시간마다 알림 체크리스트 한 줄을 Reminder 플러그인이 인식하는 형식으로 작성합니다. 이 줄들은 표시된 블록 안에 있으며 기록에 따라 갱신됩니다.",
+	"Where to write reminders": "알림을 작성할 위치",
+	"The daily note follows the Daily notes core plugin's folder and date format; the block is added once the note exists. A fixed note is created automatically.":
+		"데일리 노트는 코어 데일리 노트 플러그인의 폴더와 날짜 형식을 따르며, 노트가 존재하면 블록이 추가됩니다. 고정 노트는 자동으로 생성됩니다.",
+	"Today's daily note": "오늘의 데일리 노트",
+	"A fixed note": "고정 노트",
+	"Reminder note path": "알림 노트 경로",
+	"Vault path of the note that holds the reminder block.":
+		"알림 블록을 담는 노트의 볼트 경로.",
 	"Manage groups": "그룹 관리",
 	"See every habit by group and drag cards between groups.":
 		"그룹별로 습관을 보고 카드를 그룹 간에 드래그하세요.",

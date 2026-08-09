@@ -130,6 +130,17 @@ Drop a `habits-table` code block into any note (there's an **Insert habits table
 
 Each count is **completed due days / elapsed due days** for the period — the current calendar week (Monday-first, like the stats view) and the current plus two previous calendar months. Only due days count: a Tuesday-only habit shows `4/4` in a four-Tuesday month, paused days are excluded, and periods before a habit existed show `–`. The **Today** column logs the day without leaving the table: a Done/Not done pill for binary habits (a slip toggle for limit habits), a compact stepper for counted and timed ones; habits not due today show a dash. Rows are grouped like the dashboard and ordered by planned time within each group, so the table reads as your day's timeline — or turn off **Group the habits table** in settings for one flat time-ordered list. The table live-updates as habit notes change.
 
+## ⏰ Reminders
+
+Habits with planned times can feed the community [Reminder](https://github.com/uphy/obsidian-reminder) plugin. Turn on **Write reminders for due habits** in settings and the plugin maintains a small marked block — in today's daily note, or in one fixed note of your choosing — with one checklist line per planned time of every habit due that day:
+
+```
+- [ ] Physiotherapy (@2026-08-10 13:30)
+- [x] Take medicine (@2026-08-10 21:00)
+```
+
+That's exactly the format the Reminder plugin scans, so each line becomes a real notification at its time. Lines start checked when today's record already covers them (a counted habit ticks its first line at count 1, its second at 2, and so on), refresh as you log habits, and a reminder you complete from the notification stays completed. The block regenerates itself at midnight for the new day; days where nothing is due add nothing to the note. To pick where the block sits, plant the two marker lines (`%% habits-reminders start %%` / `%% habits-reminders end %%`) in your daily-note template — the plugin fills them in place and only appends to the end of notes that have no markers. Habits without planned times are simply left out — nothing changes unless you opt in.
+
 ## 📊 Habit pages
 
 Every habit note can chart its own history with a `habit-metrics` code block (new habit notes include one automatically):

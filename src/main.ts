@@ -1,9 +1,18 @@
-import { Editor, Events, Plugin, type WorkspaceLeaf } from "obsidian";
+import {
+	Editor,
+	Events,
+	Plugin,
+	debounce,
+	normalizePath,
+	type WorkspaceLeaf,
+} from "obsidian";
 import { t } from "./i18n";
 import { HabitStore } from "./habit-store";
+import { ReminderSync } from "./reminders";
 import {
 	DEFAULT_AI_SUMMARY,
 	DEFAULT_EXPERIMENTAL,
+	DEFAULT_REMINDERS,
 	DEFAULT_SETTINGS,
 	HabitsSettingTab,
 	type HabitsPluginSettings,
@@ -155,6 +164,75 @@ export default class HabitsPlugin extends Plugin {
 				editor.replaceSelection("```habits-table\n```\n");
 			},
 		});
+
+		this.registerReminderSync();
+	}
+
+	/**
+	 * Keep the reminder block in step with the habits: regenerate it when
+	 * the plugin loads, when a habit note changes, when settings change,
+	 * when the target daily note is created, and when the day rolls over
+	 * (so the new day's note gets its block without a restart).
+	 */
+	private registerReminderSync(): void {
+		const sync = new ReminderSync(this.app, this.store, () => this.settings);
+		const requestUpdate = debounce(() => void sync.update(), 1000, true);
+
+		const isHabitFile = (path: string): boolean => {
+			const folder = normalizePath(this.settings.habitsFolder);
+			return path === folder || path.startsWith(`${folder}/`);
+		};
+
+		this.app.workspace.onLayoutReady(() => requestUpdate());
+		this.registerEvent(
+			this.app.metadataCache.on("changed", (file) => {
+				if (isHabitFile(file.path)) {
+					requestUpdate();
+				}
+			}),
+		);
+		this.registerEvent(
+			this.app.vault.on("create", (file) => {
+				// A new habit, or the target note appearing (e.g. today's
+				// daily note being created after the plugin loaded).
+				if (
+					isHabitFile(file.path) ||
+					file.path === sync.targetPath(new Date())
+				) {
+					requestUpdate();
+				}
+			}),
+		);
+		this.registerEvent(
+			this.app.vault.on("delete", (file) => {
+				if (isHabitFile(file.path)) {
+					requestUpdate();
+				}
+			}),
+		);
+		this.registerEvent(
+			this.app.vault.on("rename", (file, oldPath) => {
+				if (isHabitFile(file.path) || isHabitFile(oldPath)) {
+					requestUpdate();
+				}
+			}),
+		);
+		this.registerEvent(
+			this.events.on("settings-changed", () => requestUpdate()),
+		);
+
+		// Day rollover: a minute-level check is cheap and avoids the drift
+		// and DST pitfalls of scheduling one long timeout for midnight.
+		let currentDay = new Date().toDateString();
+		this.registerInterval(
+			window.setInterval(() => {
+				const day = new Date().toDateString();
+				if (day !== currentDay) {
+					currentDay = day;
+					requestUpdate();
+				}
+			}, 60_000),
+		);
 	}
 
 	/** Open (or reveal) the habits panel in the right sidebar. */
@@ -190,6 +268,10 @@ export default class HabitsPlugin extends Plugin {
 		this.settings.aiSummary = {
 			...DEFAULT_AI_SUMMARY,
 			...(data?.aiSummary ?? {}),
+		};
+		this.settings.reminders = {
+			...DEFAULT_REMINDERS,
+			...(data?.reminders ?? {}),
 		};
 		this.settings.groups = { ...(data?.groups ?? {}) };
 	}

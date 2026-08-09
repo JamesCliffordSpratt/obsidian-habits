@@ -88,6 +88,30 @@ export const DEFAULT_AI_SUMMARY: AiSummarySettings = {
 	model: "gpt-4o-mini",
 };
 
+/**
+ * Where and whether the plugin writes reminder checklist lines for the
+ * Reminder plugin to pick up. The lines live in a marked block, one per
+ * planned time of each habit due that day.
+ */
+export interface ReminderSettings {
+	/** Master switch; off by default. */
+	enabled: boolean;
+	/**
+	 * `daily-note` writes the block into today's daily note (following the
+	 * core Daily notes plugin's folder and format, once the note exists);
+	 * `fixed-note` keeps it in one dedicated note, created on demand.
+	 */
+	target: "daily-note" | "fixed-note";
+	/** Vault path of the dedicated note when `target` is `fixed-note`. */
+	notePath: string;
+}
+
+export const DEFAULT_REMINDERS: ReminderSettings = {
+	enabled: false,
+	target: "daily-note",
+	notePath: "Habit reminders.md",
+};
+
 /** How the dashboard presents its habit cards. */
 export type DashboardLayout = "carousel" | "grid" | "vertical";
 
@@ -158,6 +182,8 @@ export interface HabitsPluginSettings {
 	experimental: ExperimentalFlags;
 	/** Connection details used when AI summaries are enabled. */
 	aiSummary: AiSummarySettings;
+	/** Reminder-line generation for the Reminder plugin. */
+	reminders: ReminderSettings;
 }
 
 export const DEFAULT_SETTINGS: HabitsPluginSettings = {
@@ -178,6 +204,7 @@ export const DEFAULT_SETTINGS: HabitsPluginSettings = {
 	statsRowsPerPage: 4,
 	experimental: { ...DEFAULT_EXPERIMENTAL },
 	aiSummary: { ...DEFAULT_AI_SUMMARY },
+	reminders: { ...DEFAULT_REMINDERS },
 };
 
 /** Settings stored as numbers but edited through string-valued dropdowns. */
@@ -468,6 +495,55 @@ export class HabitsSettingTab extends PluginSettingTab {
 			},
 			{
 				type: "group",
+				heading: t("Reminders"),
+				items: [
+					{
+						name: t("Write reminders for due habits"),
+						desc: t(
+							"Each day, write one reminder checklist line per planned time of every habit due that day, in the format the Reminder plugin picks up. The lines live in a marked block and refresh as you log habits.",
+						),
+						control: {
+							type: "toggle",
+							key: "reminders.enabled",
+							defaultValue: DEFAULT_REMINDERS.enabled,
+						},
+					},
+					{
+						name: t("Where to write reminders"),
+						desc: t(
+							"The daily note follows the Daily notes core plugin's folder and date format; the block is added once the note exists. A fixed note is created automatically.",
+						),
+						visible: () => this.plugin.settings.reminders.enabled,
+						control: {
+							type: "dropdown",
+							key: "reminders.target",
+							options: {
+								"daily-note": t("Today's daily note"),
+								"fixed-note": t("A fixed note"),
+							},
+							defaultValue: DEFAULT_REMINDERS.target,
+						},
+					},
+					{
+						name: t("Reminder note path"),
+						desc: t(
+							"Vault path of the note that holds the reminder block.",
+						),
+						visible: () =>
+							this.plugin.settings.reminders.enabled &&
+							this.plugin.settings.reminders.target ===
+								"fixed-note",
+						control: {
+							type: "text",
+							key: "reminders.notePath",
+							placeholder: DEFAULT_REMINDERS.notePath,
+							defaultValue: DEFAULT_REMINDERS.notePath,
+						},
+					},
+				],
+			},
+			{
+				type: "group",
 				heading: t("Experimental"),
 				items: [
 					{
@@ -596,6 +672,10 @@ export class HabitsSettingTab extends PluginSettingTab {
 				return trimmed === "grid" || trimmed === "vertical"
 					? trimmed
 					: "carousel";
+			case "reminders.target":
+				return trimmed === "fixed-note" ? trimmed : "daily-note";
+			case "reminders.notePath":
+				return trimmed || DEFAULT_REMINDERS.notePath;
 			case "habitsFolder":
 				return trimmed || DEFAULT_SETTINGS.habitsFolder;
 			case "dailyNoteDateFormat":
@@ -1082,7 +1162,80 @@ export class HabitsSettingTab extends PluginSettingTab {
 			);
 		groupDetails.toggle(this.plugin.settings.groupsEnabled);
 
+		this.displayReminders(containerEl);
 		this.displayExperimental(containerEl);
+	}
+
+	/** Reminder-line generation for the Reminder plugin. */
+	private displayReminders(containerEl: HTMLElement): void {
+		new Setting(containerEl).setName(t("Reminders")).setHeading();
+
+		new Setting(containerEl)
+			.setName(t("Write reminders for due habits"))
+			.setDesc(
+				t(
+					"Each day, write one reminder checklist line per planned time of every habit due that day, in the format the Reminder plugin picks up. The lines live in a marked block and refresh as you log habits.",
+				),
+			)
+			.addToggle((toggle) =>
+				toggle
+					.setValue(this.plugin.settings.reminders.enabled)
+					.onChange(async (value) => {
+						this.plugin.settings.reminders.enabled = value;
+						await this.plugin.saveSettings();
+						reminderDetails.toggle(value);
+						notePathSetting.settingEl.toggle(
+							value &&
+								this.plugin.settings.reminders.target ===
+									"fixed-note",
+						);
+					}),
+			);
+
+		const reminderDetails = containerEl.createDiv();
+		new Setting(reminderDetails)
+			.setName(t("Where to write reminders"))
+			.setDesc(
+				t(
+					"The daily note follows the Daily notes core plugin's folder and date format; the block is added once the note exists. A fixed note is created automatically.",
+				),
+			)
+			.addDropdown((dropdown) =>
+				dropdown
+					.addOption("daily-note", t("Today's daily note"))
+					.addOption("fixed-note", t("A fixed note"))
+					.setValue(this.plugin.settings.reminders.target)
+					.onChange(async (value) => {
+						this.plugin.settings.reminders.target =
+							value === "fixed-note" ? "fixed-note" : "daily-note";
+						await this.plugin.saveSettings();
+						notePathSetting.settingEl.toggle(
+							this.plugin.settings.reminders.target ===
+								"fixed-note",
+						);
+					}),
+			);
+
+		const notePathSetting = new Setting(reminderDetails)
+			.setName(t("Reminder note path"))
+			.setDesc(
+				t("Vault path of the note that holds the reminder block."),
+			)
+			.addText((text) =>
+				text
+					.setPlaceholder(DEFAULT_REMINDERS.notePath)
+					.setValue(this.plugin.settings.reminders.notePath)
+					.onChange(async (value) => {
+						this.plugin.settings.reminders.notePath =
+							value.trim() || DEFAULT_REMINDERS.notePath;
+						await this.plugin.saveSettings();
+					}),
+			);
+		reminderDetails.toggle(this.plugin.settings.reminders.enabled);
+		notePathSetting.settingEl.toggle(
+			this.plugin.settings.reminders.enabled &&
+				this.plugin.settings.reminders.target === "fixed-note",
+		);
 	}
 
 	/**

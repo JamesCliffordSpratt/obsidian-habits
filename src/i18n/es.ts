@@ -65,6 +65,19 @@ export const es: Record<string, string> = {
 	"Group the habits table": "Agrupar la tabla de hábitos",
 	"Group the rows of habits-table blocks by habit group, with a heading row per group. Turn off for one flat list ordered by planned time.":
 		"Agrupa las filas de los bloques habits-table por grupo de hábito, con una fila de encabezado por grupo. Desactívalo para una sola lista plana ordenada por hora prevista.",
+	"Reminders": "Recordatorios",
+	"Write reminders for due habits":
+		"Escribir recordatorios para hábitos pendientes",
+	"Each day, write one reminder checklist line per planned time of every habit due that day, in the format the Reminder plugin picks up. The lines live in a marked block and refresh as you log habits.":
+		"Cada día escribe una línea de recordatorio por cada hora prevista de cada hábito que toque ese día, en el formato que reconoce el plugin Reminder. Las líneas viven en un bloque marcado y se actualizan al registrar hábitos.",
+	"Where to write reminders": "Dónde escribir los recordatorios",
+	"The daily note follows the Daily notes core plugin's folder and date format; the block is added once the note exists. A fixed note is created automatically.":
+		"La nota diaria sigue la carpeta y el formato de fecha del plugin básico de notas diarias; el bloque se añade cuando la nota existe. Una nota fija se crea automáticamente.",
+	"Today's daily note": "Nota diaria de hoy",
+	"A fixed note": "Una nota fija",
+	"Reminder note path": "Ruta de la nota de recordatorios",
+	"Vault path of the note that holds the reminder block.":
+		"Ruta en el vault de la nota que contiene el bloque de recordatorios.",
 	"Manage groups": "Gestionar grupos",
 	"See every habit by group and drag cards between groups.":
 		"Ve todos los hábitos por grupo y arrastra tarjetas entre grupos.",

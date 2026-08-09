@@ -63,6 +63,18 @@ export const ja: Record<string, string> = {
 	"Group the habits table": "習慣テーブルをグループ化",
 	"Group the rows of habits-table blocks by habit group, with a heading row per group. Turn off for one flat list ordered by planned time.":
 		"habits-table ブロックの行を習慣のグループごとにまとめ、グループごとに見出し行を表示します。オフにすると予定時刻順のフラットなリストになります。",
+	"Reminders": "リマインダー",
+	"Write reminders for due habits": "当日実施予定の習慣のリマインダーを書き込む",
+	"Each day, write one reminder checklist line per planned time of every habit due that day, in the format the Reminder plugin picks up. The lines live in a marked block and refresh as you log habits.":
+		"毎日、その日に実施予定の各習慣の予定時刻ごとにリマインダー行を書き込みます。形式は Reminder プラグインが認識するものです。行はマーカー付きブロック内にあり、記録に応じて更新されます。",
+	"Where to write reminders": "リマインダーの書き込み先",
+	"The daily note follows the Daily notes core plugin's folder and date format; the block is added once the note exists. A fixed note is created automatically.":
+		"デイリーノートはコアプラグイン「デイリーノート」のフォルダーと日付形式に従い、ノートが存在すればブロックが追加されます。固定ノートは自動的に作成されます。",
+	"Today's daily note": "今日のデイリーノート",
+	"A fixed note": "固定ノート",
+	"Reminder note path": "リマインダーノートのパス",
+	"Vault path of the note that holds the reminder block.":
+		"リマインダーブロックを保持するノートの保管庫内パス。",
 	"Manage groups": "グループを管理",
 	"See every habit by group and drag cards between groups.":
 		"グループごとに習慣を確認し、カードをグループ間でドラッグできます。",

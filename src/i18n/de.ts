@@ -64,6 +64,19 @@ export const de: Record<string, string> = {
 	"Group the habits table": "Gewohnheitstabelle gruppieren",
 	"Group the rows of habits-table blocks by habit group, with a heading row per group. Turn off for one flat list ordered by planned time.":
 		"Gruppiert die Zeilen von habits-table-Blöcken nach Gewohnheitsgruppe, mit einer Überschriftszeile pro Gruppe. Ausschalten für eine flache Liste, sortiert nach geplanter Uhrzeit.",
+	"Reminders": "Erinnerungen",
+	"Write reminders for due habits":
+		"Erinnerungen für fällige Gewohnheiten schreiben",
+	"Each day, write one reminder checklist line per planned time of every habit due that day, in the format the Reminder plugin picks up. The lines live in a marked block and refresh as you log habits.":
+		"Schreibt jeden Tag eine Erinnerungs-Checklistenzeile pro geplanter Uhrzeit für jede an dem Tag fällige Gewohnheit, im Format, das das Reminder-Plugin erkennt. Die Zeilen stehen in einem markierten Block und werden beim Protokollieren aktualisiert.",
+	"Where to write reminders": "Wohin Erinnerungen geschrieben werden",
+	"The daily note follows the Daily notes core plugin's folder and date format; the block is added once the note exists. A fixed note is created automatically.":
+		"Die tägliche Notiz folgt Ordner und Datumsformat des Kern-Plugins „Tägliche Notizen“; der Block wird eingefügt, sobald die Notiz existiert. Eine feste Notiz wird automatisch erstellt.",
+	"Today's daily note": "Heutige tägliche Notiz",
+	"A fixed note": "Eine feste Notiz",
+	"Reminder note path": "Pfad der Erinnerungsnotiz",
+	"Vault path of the note that holds the reminder block.":
+		"Vault-Pfad der Notiz, die den Erinnerungsblock enthält.",
 	"Manage groups": "Gruppen verwalten",
 	"See every habit by group and drag cards between groups.":
 		"Zeigt alle Gewohnheiten nach Gruppe und erlaubt das Ziehen von Karten zwischen Gruppen.",
