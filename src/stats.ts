@@ -108,16 +108,35 @@ export function effectiveMonthDay(
 }
 
 /**
+ * The day an interval habit's every-N-days cycle counts from: its start
+ * date, or the earliest record for hand-written notes without one. `null`
+ * means no anchor exists yet (a brand-new note with no records).
+ */
+export function intervalAnchor(habit: HabitDefinition): Date | null {
+	if (habit.startDate !== "") {
+		return fromDateKey(habit.startDate);
+	}
+	const keys = Object.keys(habit.records);
+	if (keys.length > 0) {
+		return fromDateKey(keys.reduce((min, key) => (key < min ? key : min)));
+	}
+	return null;
+}
+
+/**
  * True when the habit is due on the given date.
  *
  * - `daily` habits are due every day.
- * - `weekly` habits are due on their chosen weekday.
+ * - `weekly` habits are due on their chosen weekdays.
  * - `monthly` habits are due on their chosen day of the month, clamped to the
  *   month's last day when the month is shorter.
+ * - `interval` habits are due every N days counted from their anchor (see
+ *   {@link intervalAnchor}); dates before the anchor are never due, and a
+ *   habit with no anchor yet behaves as daily until one exists.
  */
 export function isDue(habit: HabitDefinition, date: Date): boolean {
 	if (habit.frequency === "weekly") {
-		return date.getDay() === habit.weekday;
+		return habit.weekdays.includes(date.getDay());
 	}
 	if (habit.frequency === "monthly") {
 		return (
@@ -128,6 +147,18 @@ export function isDue(habit: HabitDefinition, date: Date): boolean {
 				habit.monthDay,
 			)
 		);
+	}
+	if (habit.frequency === "interval") {
+		const anchor = intervalAnchor(habit);
+		if (!anchor) {
+			return true;
+		}
+		// Both dates are local midnights; rounding absorbs the odd hour a
+		// DST transition adds or removes inside the span.
+		const days = Math.round(
+			(startOfDay(date).getTime() - anchor.getTime()) / MS_PER_DAY,
+		);
+		return days >= 0 && days % Math.max(1, habit.intervalDays) === 0;
 	}
 	return true;
 }
@@ -213,7 +244,14 @@ export function currentStreak(habit: HabitDefinition, today: Date): number {
 	let cursor = startOfDay(today);
 	let streak = 0;
 	let graceUsed = false;
+	// An interval habit is never due before its anchor, so without a floor
+	// the walk below would search backwards forever.
+	const floor =
+		habit.frequency === "interval" ? intervalAnchor(habit) : null;
 	for (;;) {
+		if (floor && cursor.getTime() < floor.getTime()) {
+			break;
+		}
 		if (!isDue(habit, cursor)) {
 			cursor = addDays(cursor, -1);
 			continue;

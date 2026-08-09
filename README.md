@@ -12,7 +12,7 @@
 
 - 🎠 **Carousel dashboard** — log your habits from any note with a `habits` code block, with satisfying completion animations
 - ✅ **Three habit types** — done/not-done, counted (8 cups of water), and timed (30 minutes of exercise, with +1/+5/+10 quick buttons)
-- 🗓️ **Daily, weekly, or monthly** — pick a frequency per habit; weekly and monthly habits appear only on their due day, and streaks count consecutive weeks or months
+- 🗓️ **Flexible schedules** — daily, weekly on one or several weekdays (Mon/Wed/Fri), monthly, or every N days (alternate-day medication); non-daily habits appear only on their due day, and streaks count due days, not calendar days
 - 🔥 **Streaks and statistics** — current and best streaks, completion rates, perfect days, weekly and monthly goals, per-habit heatmaps over the week, month, or any custom date range
 - 📊 **Charts on every habit page** — 30-day activity and 12-week trend charts rendered in your theme's colours
 - 📄 **Printable PDF reports** — pick your metrics, date range, and layout with a live A4 preview
@@ -70,17 +70,18 @@ pauses:
 
 No databases, no external services — delete the plugin and your history is still right there in your notes.
 
-## 🗓️ Daily, weekly, and monthly habits
+## 🗓️ Daily, weekly, monthly, and every-N-days habits
 
 Every habit has a **frequency**, chosen when you create or edit it:
 
 - **Daily** — due every day (the default).
-- **Weekly** — due once a week on the weekday you pick. The card only appears on that day.
+- **Weekly** — due on the weekdays you pick, one or several (a gym habit on Mon/Wed/Fri is one habit, one streak). The card only appears on those days. A single day is stored as `weekday: 5` in frontmatter; several days as `weekdays: [1, 3, 5]` (JavaScript `getDay` numbers, `0` = Sunday).
 - **Monthly** — due once a month on the day you pick. Months shorter than the chosen day fall due on their **last day**, so the 31st always lands on the final day of the month (28th or 29th in February, 30th in April, and so on) — you never miss a month.
+- **Every N days** — due every N days counted from the habit's start date, so an alternate-day schedule (N = 2) stays put even when you miss a day — just like a prescription. Stored as `frequency: interval` with `intervalDays: 2` in frontmatter; hand-written notes without a `startDate` anchor on their earliest record instead.
 
-Weekly and monthly cards surface only on their due date in both the dashboard and the sidebar panel, so your list stays focused on what's actually due. Their **streaks and stats count periods, not days**: a weekly habit's streak is the number of consecutive weeks you completed it, and a monthly habit's is consecutive months. Days a habit isn't due don't count against its completion rate. To log a due date you missed, use the dashboard's date arrows to step back to it.
+Non-daily cards surface only on their due dates in both the dashboard and the sidebar panel, so your list stays focused on what's actually due. Their **streaks and stats count due days, not calendar days**: a Sunday-only habit's streak is the number of consecutive weeks you completed it, a Mon/Wed/Fri habit's is consecutive due days, and a monthly habit's is consecutive months. Days a habit isn't due don't count against its completion rate. To log a due date you missed, use the dashboard's date arrows to step back to it.
 
-The charts on a weekly or monthly habit's page adapt too: instead of a 30-day grid, the activity chart plots each recent **due date** (labelled with the date it lands on), and a rolling completion-rate line shows the trend across periods. The summary tiles relabel accordingly — "Weeks completed" or "Months completed" rather than "Days completed".
+The charts on a non-daily habit's page adapt too: instead of a 30-day grid, the activity chart plots each recent **due date** (labelled with the date it lands on), and a rolling completion-rate line shows the trend across periods. The summary tiles relabel accordingly — "Weeks completed" or "Months completed" rather than "Days completed".
 
 ## 🎠 The dashboard
 

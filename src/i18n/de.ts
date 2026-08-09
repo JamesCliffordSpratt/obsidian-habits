@@ -333,21 +333,30 @@ export const de: Record<string, string> = {
 	// Frequencies and per-note metrics
 	Frequency: "Häufigkeit",
 	Daily: "Täglich",
-	"Day of week": "Wochentag",
+	"Days of week": "Wochentage",
+	"Every N days": "Alle N Tage",
+	"Repeat every": "Wiederholen alle",
 	"Day of month": "Tag des Monats",
 	"How often this habit is due. Weekly and monthly habits only appear on their due date.":
 		"Wie oft diese Gewohnheit fällig ist. Wöchentliche und monatliche Gewohnheiten erscheinen nur an ihrem Fälligkeitstag.",
-	"The weekday this habit is due on.":
-		"Der Wochentag, an dem diese Gewohnheit fällig ist.",
+	"The weekdays this habit is due on. Pick as many as you need.":
+		"Die Wochentage, an denen diese Gewohnheit fällig ist. Wähle so viele wie nötig.",
+	"Number of days between due dates, counted from the habit's start date. Use 2 for an alternate-day schedule.":
+		"Anzahl der Tage zwischen den Fälligkeiten, gezählt ab dem Startdatum der Gewohnheit. 2 ergibt einen Rhythmus von jedem zweiten Tag.",
 	"The day of the month this habit is due. In shorter months it falls due on the last day, so 31 always lands on the final day of the month.":
 		"Der Tag des Monats, an dem diese Gewohnheit fällig ist. In kürzeren Monaten fällt sie auf den letzten Tag, sodass 31 immer auf den letzten Tag des Monats fällt.",
 	"Every {day}": "Jeden {day}",
 	"Monthly · day {day}": "Monatlich · Tag {day}",
+	"Every other day": "Jeden zweiten Tag",
+	"Every {n} days": "Alle {n} Tage",
 	"No habits are due on this day.":
 		"An diesem Tag sind keine Gewohnheiten fällig.",
 	"Nothing due today.": "Heute ist nichts fällig.",
 	"Weekly activity": "Wöchentliche Aktivität",
 	"Monthly activity": "Monatliche Aktivität",
+	"Activity on due days": "Aktivität an Fälligkeitstagen",
+	"Completion rate over {n} due days":
+		"Erfolgsquote über {n} Fälligkeitstage",
 	"Weeks completed": "Abgeschlossene Wochen",
 	"Months completed": "Abgeschlossene Monate",
 	"Recent rate": "Aktuelle Quote",

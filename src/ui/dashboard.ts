@@ -876,21 +876,38 @@ export class HabitsDashboard extends MarkdownRenderChild {
 		});
 	}
 
-	/** A short "due" descriptor for weekly/monthly cards; empty for daily. */
+	/** A short "due" descriptor for non-daily cards; empty for daily. */
 	private frequencyLabel(habit: HabitDefinition): string {
 		if (habit.frequency === "weekly") {
-			const ref = new Date();
-			ref.setDate(
-				ref.getDate() + ((habit.weekday - ref.getDay() + 7) % 7),
-			);
-			return t("Every {day}", {
-				day: ref.toLocaleDateString(undefined, { weekday: "long" }),
-			});
+			if (habit.weekdays.length === 1) {
+				return t("Every {day}", {
+					day: this.weekdayName(habit.weekdays[0], "long"),
+				});
+			}
+			// Monday-first reads as a week plan ("Mon, Wed, Fri") whatever
+			// the underlying Sunday-based getDay values are.
+			const days = [...habit.weekdays]
+				.sort((a, b) => ((a + 6) % 7) - ((b + 6) % 7))
+				.map((day) => this.weekdayName(day, "short"))
+				.join(", ");
+			return t("Every {day}", { day: days });
 		}
 		if (habit.frequency === "monthly") {
 			return t("Monthly · day {day}", { day: habit.monthDay });
 		}
+		if (habit.frequency === "interval") {
+			return habit.intervalDays === 2
+				? t("Every other day")
+				: t("Every {n} days", { n: habit.intervalDays });
+		}
 		return "";
+	}
+
+	/** Locale-aware weekday name for a `getDay` value (2024-01-07 = Sunday). */
+	private weekdayName(value: number, style: "long" | "short"): string {
+		return new Date(2024, 0, 7 + value).toLocaleDateString(undefined, {
+			weekday: style,
+		});
 	}
 
 	private currentValue(habit: HabitDefinition): number {

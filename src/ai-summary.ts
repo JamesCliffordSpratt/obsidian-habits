@@ -117,7 +117,9 @@ export function buildStatsDigest(
 				);
 			}
 		}
-		if (habit.frequency !== "daily") {
+		if (habit.frequency === "interval") {
+			parts.push(`due every ${habit.intervalDays} days`);
+		} else if (habit.frequency !== "daily") {
 			parts.push(`due ${habit.frequency}`);
 		}
 		parts.push(`${Math.round(s.rate * 100)}% rate`);

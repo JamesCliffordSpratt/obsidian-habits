@@ -325,19 +325,28 @@ export const zh: Record<string, string> = {
 	// Frequencies and per-note metrics
 	Frequency: "频率",
 	Daily: "每天",
-	"Day of week": "星期几",
+	"Days of week": "星期几",
+	"Every N days": "每 N 天",
+	"Repeat every": "重复间隔",
 	"Day of month": "每月日期",
 	"How often this habit is due. Weekly and monthly habits only appear on their due date.":
 		"此习惯的到期频率。每周和每月习惯只在到期日显示。",
-	"The weekday this habit is due on.": "此习惯到期的星期几。",
+	"The weekdays this habit is due on. Pick as many as you need.":
+		"此习惯到期的星期几。可选择多个。",
+	"Number of days between due dates, counted from the habit's start date. Use 2 for an alternate-day schedule.":
+		"两次到期之间的天数，从习惯的开始日期算起。填 2 表示隔天一次。",
 	"The day of the month this habit is due. In shorter months it falls due on the last day, so 31 always lands on the final day of the month.":
 		"此习惯每月的到期日。在较短的月份中落在最后一天，因此 31 总是落在当月最后一天。",
 	"Every {day}": "每{day}",
 	"Monthly · day {day}": "每月 · 第 {day} 天",
+	"Every other day": "隔天一次",
+	"Every {n} days": "每 {n} 天",
 	"No habits are due on this day.": "这一天没有到期的习惯。",
 	"Nothing due today.": "今天没有到期的习惯。",
 	"Weekly activity": "每周活动",
 	"Monthly activity": "每月活动",
+	"Activity on due days": "到期日活动",
+	"Completion rate over {n} due days": "最近 {n} 个到期日的完成率",
 	"Weeks completed": "已完成周数",
 	"Months completed": "已完成月数",
 	"Recent rate": "近期完成率",

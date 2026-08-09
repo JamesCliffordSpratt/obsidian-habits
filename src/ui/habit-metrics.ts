@@ -51,6 +51,7 @@ const RECENT_POINTS: Record<HabitFrequency, number> = {
 	daily: 30,
 	weekly: 16,
 	monthly: 12,
+	interval: 16,
 };
 
 /** Trailing window, in due periods, for the rolling completion-rate line. */
@@ -58,6 +59,7 @@ const ROLLING_WINDOW: Record<HabitFrequency, number> = {
 	daily: 7,
 	weekly: 4,
 	monthly: 3,
+	interval: 5,
 };
 
 /**
@@ -271,7 +273,7 @@ export class HabitMetrics extends MarkdownRenderChild {
 		const completedLabel =
 			habit.goalDirection === "max"
 				? t("Days within limit")
-				: habit.frequency === "weekly"
+				: habit.frequency === "weekly" && habit.weekdays.length === 1
 					? t("Weeks completed")
 					: habit.frequency === "monthly"
 						? t("Months completed")
@@ -543,7 +545,9 @@ export class HabitMetrics extends MarkdownRenderChild {
 		const title =
 			habit.frequency === "weekly"
 				? t("Weekly activity")
-				: t("Monthly activity");
+				: habit.frequency === "interval"
+					? t("Activity on due days")
+					: t("Monthly activity");
 		this.createChart(title, {
 			type: "bar",
 			data: { labels, datasets },
@@ -607,7 +611,9 @@ export class HabitMetrics extends MarkdownRenderChild {
 		const title =
 			habit.frequency === "weekly"
 				? t("{n}-week completion rate", { n: window })
-				: t("{n}-month completion rate", { n: window });
+				: habit.frequency === "interval"
+					? t("Completion rate over {n} due days", { n: window })
+					: t("{n}-month completion rate", { n: window });
 		this.createChart(title, {
 			type: "line",
 			data: {

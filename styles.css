@@ -2301,3 +2301,35 @@
 	color: var(--text-muted);
 	font-size: var(--font-ui-small);
 }
+
+/* Weekday pills (multi-day picker in the habit modal) */
+
+.habits-weekday-picker {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.35rem;
+}
+
+.habits-weekday-picker button.habits-weekday-pill {
+	min-width: 2.6em;
+	padding: 0.25em 0.55em;
+	border-radius: var(--radius-l);
+	border: 1px solid var(--background-modifier-border);
+	background-color: var(--background-secondary);
+	background-image: none;
+	color: var(--text-muted);
+	font-size: var(--font-ui-small);
+	cursor: pointer;
+	box-shadow: none;
+}
+
+.habits-weekday-picker button.habits-weekday-pill:hover {
+	border-color: var(--background-modifier-border-hover);
+	color: var(--text-normal);
+}
+
+.habits-weekday-picker button.habits-weekday-pill.is-active {
+	background-color: var(--interactive-accent);
+	border-color: var(--interactive-accent);
+	color: var(--text-on-accent);
+}

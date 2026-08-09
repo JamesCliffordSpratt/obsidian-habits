@@ -332,21 +332,30 @@ export const fr: Record<string, string> = {
 	// Frequencies and per-note metrics
 	Frequency: "Fréquence",
 	Daily: "Quotidien",
-	"Day of week": "Jour de la semaine",
+	"Days of week": "Jours de la semaine",
+	"Every N days": "Tous les N jours",
+	"Repeat every": "Répéter tous les",
 	"Day of month": "Jour du mois",
 	"How often this habit is due. Weekly and monthly habits only appear on their due date.":
 		"La fréquence à laquelle cette habitude est due. Les habitudes hebdomadaires et mensuelles n'apparaissent qu'à leur date d'échéance.",
-	"The weekday this habit is due on.":
-		"Le jour de la semaine où cette habitude est due.",
+	"The weekdays this habit is due on. Pick as many as you need.":
+		"Les jours de la semaine où cette habitude est due. Choisissez-en autant que nécessaire.",
+	"Number of days between due dates, counted from the habit's start date. Use 2 for an alternate-day schedule.":
+		"Nombre de jours entre les échéances, compté à partir de la date de début de l'habitude. Utilisez 2 pour un rythme d'un jour sur deux.",
 	"The day of the month this habit is due. In shorter months it falls due on the last day, so 31 always lands on the final day of the month.":
 		"Le jour du mois où cette habitude est due. Les mois plus courts la placent le dernier jour, donc 31 tombe toujours en fin de mois.",
 	"Every {day}": "Chaque {day}",
 	"Monthly · day {day}": "Mensuel · jour {day}",
+	"Every other day": "Un jour sur deux",
+	"Every {n} days": "Tous les {n} jours",
 	"No habits are due on this day.":
 		"Aucune habitude n'est due ce jour-là.",
 	"Nothing due today.": "Rien à faire aujourd'hui.",
 	"Weekly activity": "Activité hebdomadaire",
 	"Monthly activity": "Activité mensuelle",
+	"Activity on due days": "Activité aux jours d'échéance",
+	"Completion rate over {n} due days":
+		"Taux de réussite sur {n} jours d'échéance",
 	"Weeks completed": "Semaines accomplies",
 	"Months completed": "Mois accomplis",
 	"Recent rate": "Taux récent",

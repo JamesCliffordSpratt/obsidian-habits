@@ -332,20 +332,29 @@ export const es: Record<string, string> = {
 	// Frequencies and per-note metrics
 	Frequency: "Frecuencia",
 	Daily: "Diario",
-	"Day of week": "Día de la semana",
+	"Days of week": "Días de la semana",
+	"Every N days": "Cada N días",
+	"Repeat every": "Repetir cada",
 	"Day of month": "Día del mes",
 	"How often this habit is due. Weekly and monthly habits only appear on their due date.":
 		"Con qué frecuencia vence este hábito. Los hábitos semanales y mensuales solo aparecen en su día de vencimiento.",
-	"The weekday this habit is due on.":
-		"El día de la semana en que vence este hábito.",
+	"The weekdays this habit is due on. Pick as many as you need.":
+		"Los días de la semana en que vence este hábito. Elige tantos como necesites.",
+	"Number of days between due dates, counted from the habit's start date. Use 2 for an alternate-day schedule.":
+		"Número de días entre vencimientos, contado desde la fecha de inicio del hábito. Usa 2 para un esquema de días alternos.",
 	"The day of the month this habit is due. In shorter months it falls due on the last day, so 31 always lands on the final day of the month.":
 		"El día del mes en que vence este hábito. En meses más cortos vence el último día, así que 31 siempre cae en el último día del mes.",
 	"Every {day}": "Cada {day}",
 	"Monthly · day {day}": "Mensual · día {day}",
+	"Every other day": "Cada dos días",
+	"Every {n} days": "Cada {n} días",
 	"No habits are due on this day.": "Ningún hábito vence este día.",
 	"Nothing due today.": "Nada vence hoy.",
 	"Weekly activity": "Actividad semanal",
 	"Monthly activity": "Actividad mensual",
+	"Activity on due days": "Actividad en días de vencimiento",
+	"Completion rate over {n} due days":
+		"Tasa de cumplimiento en {n} días de vencimiento",
 	"Weeks completed": "Semanas completadas",
 	"Months completed": "Meses completados",
 	"Recent rate": "Tasa reciente",
