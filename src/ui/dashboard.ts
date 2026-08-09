@@ -34,9 +34,11 @@ import { CommentSuggest } from "./comment-suggest";
 import { renderComment } from "../comment-text";
 import {
 	addDays,
+	formatTimeOfDay,
 	friendlyDateLabel,
 	fromDateKey,
 	groupHabits,
+	habitScheduleLabel,
 	habitAccent,
 	parseNoteDate,
 	registerLongPress,
@@ -987,21 +989,18 @@ export class HabitsDashboard
 		});
 	}
 
-	/** A short "due" descriptor for weekly/monthly cards; empty for daily. */
+	/**
+	 * The card's schedule line: the due descriptor for non-daily habits,
+	 * the planned time when one is set, or both joined with a dot. Empty
+	 * for a daily habit with no time, which keeps the original layout.
+	 */
 	private frequencyLabel(habit: HabitDefinition): string {
-		if (habit.frequency === "weekly") {
-			const ref = new Date();
-			ref.setDate(
-				ref.getDate() + ((habit.weekday - ref.getDay() + 7) % 7),
-			);
-			return t("Every {day}", {
-				day: ref.toLocaleDateString(undefined, { weekday: "long" }),
-			});
+		const schedule = habitScheduleLabel(habit);
+		const time = habit.times.map(formatTimeOfDay).join(", ");
+		if (schedule && time) {
+			return `${schedule} · ${time}`;
 		}
-		if (habit.frequency === "monthly") {
-			return t("Monthly · day {day}", { day: habit.monthDay });
-		}
-		return "";
+		return schedule || time;
 	}
 
 	private currentValue(habit: HabitDefinition): number {
@@ -1107,6 +1106,16 @@ export class HabitsDashboard
 		wasComplete: boolean,
 	): Promise<void> {
 		if (!wasComplete && this.isComplete(habit)) {
+			// With animations off the completion still books its perfect
+			// day (so re-enabling never replays a stale celebration), the
+			// view just updates without the ceremony.
+			if (!this.getSettings().animations) {
+				if (this.isPerfectDay()) {
+					this.celebratedDays.add(toDateKey(this.selectedDate));
+				}
+				this.reload();
+				return;
+			}
 			this.suppressAutoReload = true;
 			try {
 				const overlay = await this.playCompletionAnimation(card);
@@ -1146,7 +1155,15 @@ export class HabitsDashboard
 			this.celebratedDays.delete(dateKey);
 		}
 		const celebrate =
-			mayCelebrate && perfectNow && !this.celebratedDays.has(dateKey);
+			mayCelebrate &&
+			perfectNow &&
+			!this.celebratedDays.has(dateKey) &&
+			this.getSettings().animations;
+		// Book the perfect day even when the celebration is switched off,
+		// so re-enabling animations never replays a stale one.
+		if (perfectNow && !this.getSettings().animations) {
+			this.celebratedDays.add(dateKey);
+		}
 		// Repaint from local state rather than reloading: the metadata
 		// cache may not have absorbed the write yet, and a stale reload
 		// would briefly revert the control the user just pressed. The
@@ -1608,9 +1625,11 @@ export class HabitsDashboard
 						this.suppressAutoReload = true;
 						try {
 							await this.store.pauseHabit(habit);
-							const overlay =
-								await this.playPauseAnimation(card);
-							await this.playCardDeparture(card, overlay);
+							if (this.getSettings().animations) {
+								const overlay =
+									await this.playPauseAnimation(card);
+								await this.playCardDeparture(card, overlay);
+							}
 						} finally {
 							this.suppressAutoReload = false;
 						}

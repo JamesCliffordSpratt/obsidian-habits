@@ -2440,3 +2440,210 @@
 	color: var(--text-muted);
 	font-size: var(--font-ui-small);
 }
+
+/* Weekday pills (multi-day picker in the habit modal) */
+
+.habits-weekday-picker {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.35rem;
+}
+
+.habits-weekday-picker button.habits-weekday-pill {
+	min-width: 2.6em;
+	padding: 0.25em 0.55em;
+	border-radius: var(--radius-l);
+	border: 1px solid var(--background-modifier-border);
+	background-color: var(--background-secondary);
+	background-image: none;
+	color: var(--text-muted);
+	font-size: var(--font-ui-small);
+	cursor: pointer;
+	box-shadow: none;
+}
+
+.habits-weekday-picker button.habits-weekday-pill:hover {
+	border-color: var(--background-modifier-border-hover);
+	color: var(--text-normal);
+}
+
+.habits-weekday-picker button.habits-weekday-pill.is-active {
+	background-color: var(--interactive-accent);
+	border-color: var(--interactive-accent);
+	color: var(--text-on-accent);
+}
+
+/* Habits table (`habits-table` code block) */
+
+.habits-table-block {
+	overflow-x: auto;
+}
+
+table.habits-table {
+	width: 100%;
+	border-collapse: collapse;
+	font-size: var(--font-ui-small);
+	margin: 0;
+}
+
+table.habits-table th,
+table.habits-table td {
+	padding: 0.35em 0.6em;
+	border-bottom: 1px solid var(--background-modifier-border);
+	text-align: left;
+	white-space: nowrap;
+}
+
+table.habits-table th {
+	color: var(--text-muted);
+	font-weight: var(--font-semibold);
+}
+
+table.habits-table th.habits-table-count,
+table.habits-table td.habits-table-count {
+	text-align: right;
+	font-variant-numeric: tabular-nums;
+}
+
+table.habits-table tr.habits-table-group td {
+	padding-top: 0.9em;
+	color: var(--text-muted);
+	font-size: var(--font-ui-smaller);
+	font-weight: var(--font-semibold);
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	border-bottom: none;
+}
+
+table.habits-table a.habits-table-link {
+	color: var(--text-normal);
+	text-decoration: none;
+	cursor: pointer;
+}
+
+table.habits-table a.habits-table-link:hover {
+	color: var(--text-accent);
+	text-decoration: underline;
+}
+
+table.habits-table .habits-table-paused {
+	display: inline-flex;
+	vertical-align: middle;
+	margin-left: 0.4em;
+	color: var(--text-muted);
+}
+
+table.habits-table .habits-table-paused .svg-icon {
+	width: 0.85em;
+	height: 0.85em;
+}
+
+table.habits-table td.habits-table-schedule {
+	color: var(--text-muted);
+}
+
+.habits-table-empty {
+	color: var(--text-muted);
+	font-size: var(--font-ui-small);
+	padding: 0.5em 0;
+}
+
+/* Habits table — the interactive Today column */
+
+table.habits-table td.habits-table-today {
+	width: 1%;
+}
+
+table.habits-table button.habits-table-toggle {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.35em;
+	padding: 0.25em 0.7em;
+	border-radius: var(--radius-m);
+	background: var(--background-modifier-hover);
+	color: var(--text-muted);
+	font-size: var(--font-ui-small);
+	font-weight: var(--font-semibold);
+	cursor: pointer;
+	box-shadow: none;
+	white-space: nowrap;
+}
+
+table.habits-table button.habits-table-toggle:hover {
+	background: var(--background-modifier-active-hover);
+	color: var(--text-normal);
+}
+
+table.habits-table button.habits-table-toggle.is-done {
+	background: var(--interactive-accent);
+	color: var(--text-on-accent);
+}
+
+table.habits-table button.habits-table-toggle.habits-table-slip.is-done {
+	background: var(--background-modifier-error);
+	color: var(--text-on-accent);
+}
+
+table.habits-table .habits-table-toggle-icon {
+	display: inline-flex;
+}
+
+table.habits-table .habits-table-toggle-icon .svg-icon {
+	width: 0.9em;
+	height: 0.9em;
+}
+
+table.habits-table .habits-table-stepper {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.3em;
+}
+
+table.habits-table .habits-table-value {
+	min-width: 3em;
+	text-align: center;
+	font-variant-numeric: tabular-nums;
+}
+
+table.habits-table .habits-icon-button.habits-table-mini {
+	padding: 0.15em;
+}
+
+table.habits-table .habits-icon-button.habits-table-mini .svg-icon {
+	width: 0.85em;
+	height: 0.85em;
+}
+
+table.habits-table .habits-table-notdue {
+	color: var(--text-faint);
+}
+
+/* Planned-times picker (habit modal) */
+
+.habits-time-picker {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-end;
+	gap: 0.35rem;
+}
+
+.habits-time-row {
+	display: flex;
+	align-items: center;
+	gap: 0.3rem;
+}
+
+.habits-time-picker button.habits-time-add {
+	font-size: var(--font-ui-small);
+	padding: 0.2em 0.7em;
+	cursor: pointer;
+}
+
+.habits-time-picker .habits-icon-button.habits-time-remove {
+	padding: 0.15em;
+}
+
+.habits-time-picker .habits-icon-button.habits-time-remove .svg-icon {
+	width: 0.85em;
+	height: 0.85em;
+}

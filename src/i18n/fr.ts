@@ -4,6 +4,7 @@ export const fr: Record<string, string> = {
 	"Create habit": "Créer une habitude",
 	"Insert dashboard": "Insérer le tableau de bord",
 	"Insert habit metrics": "Insérer les métriques d'habitude",
+	"Insert habits table": "Insérer le tableau des habitudes",
 	"Open panel": "Ouvrir le panneau",
 	"Open habits panel": "Ouvrir le panneau des habitudes",
 	Habits: "Habitudes",
@@ -26,6 +27,7 @@ export const fr: Record<string, string> = {
 	"Name (A–Z)": "Nom (A–Z)",
 	Color: "Couleur",
 	"Last logged": "Dernier enregistrement",
+	"Planned time": "Heure prévue",
 	Manual: "Manuel",
 	"Manual order": "Ordre manuel",
 	"Drag the cards into the order you want. New habits join the end of the list.":
@@ -60,6 +62,24 @@ export const fr: Record<string, string> = {
 	"Group order": "Ordre des groupes",
 	"Drag the groups into the order you want. Sections follow the same order.":
 		"Faites glisser les groupes dans l'ordre souhaité. Les sections suivent le même ordre.",
+	"Group the habits table": "Grouper le tableau des habitudes",
+	"Group the rows of habits-table blocks by habit group, with a heading row per group. Turn off for one flat list ordered by planned time.":
+		"Groupe les lignes des blocs habits-table par groupe d'habitude, avec une ligne d'en-tête par groupe. Désactivez pour une seule liste plate triée par heure prévue.",
+	"Completion animations": "Animations de complétion",
+	"Play the check swoosh, card departure, and perfect-day confetti when habits are completed. Turn off for instant, quiet updates.":
+		"Joue le swoosh de la coche, le départ de la carte et les confettis du jour parfait quand une habitude est complétée. Désactivez pour des mises à jour instantanées et discrètes.",
+	"Reminders": "Rappels",
+	"Write reminders for due habits": "Écrire des rappels pour les habitudes dues",
+	"Each day, write one reminder checklist line per planned time of every habit due that day, in the format the Reminder plugin picks up. The lines live in a marked block and refresh as you log habits.":
+		"Chaque jour, écrit une ligne de rappel par heure prévue pour chaque habitude due ce jour-là, au format reconnu par le plugin Reminder. Les lignes vivent dans un bloc balisé et se mettent à jour au fil des enregistrements.",
+	"Where to write reminders": "Où écrire les rappels",
+	"The daily note follows the Daily notes core plugin's folder and date format; the block is added once the note exists. A fixed note is created automatically.":
+		"La note quotidienne suit le dossier et le format de date du plugin de base « Notes quotidiennes » ; le bloc est ajouté dès que la note existe. Une note fixe est créée automatiquement.",
+	"Today's daily note": "Note quotidienne du jour",
+	"A fixed note": "Une note fixe",
+	"Reminder note path": "Chemin de la note de rappels",
+	"Vault path of the note that holds the reminder block.":
+		"Chemin dans le coffre de la note qui contient le bloc de rappels.",
 	"Manage groups": "Gérer les groupes",
 	"See every habit by group and drag cards between groups.":
 		"Voyez chaque habitude par groupe et faites glisser les cartes entre les groupes.",
@@ -341,21 +361,37 @@ export const fr: Record<string, string> = {
 	// Frequencies and per-note metrics
 	Frequency: "Fréquence",
 	Daily: "Quotidien",
-	"Day of week": "Jour de la semaine",
+	"Days of week": "Jours de la semaine",
+	Habit: "Habitude",
+	Schedule: "Programme",
+	"Time of day": "Heure de la journée",
+	"Optional times this habit is planned for — once or several times a day. Shown on the habit's card.":
+		"Heures facultatives prévues pour cette habitude — une ou plusieurs fois par jour. Affichées sur la carte de l'habitude.",
+	"Add time": "Ajouter une heure",
+	"Remove time": "Supprimer l'heure",
+	"Every N days": "Tous les N jours",
+	"Repeat every": "Répéter tous les",
 	"Day of month": "Jour du mois",
 	"How often this habit is due. Weekly and monthly habits only appear on their due date.":
 		"La fréquence à laquelle cette habitude est due. Les habitudes hebdomadaires et mensuelles n'apparaissent qu'à leur date d'échéance.",
-	"The weekday this habit is due on.":
-		"Le jour de la semaine où cette habitude est due.",
+	"The weekdays this habit is due on. Pick as many as you need.":
+		"Les jours de la semaine où cette habitude est due. Choisissez-en autant que nécessaire.",
+	"Number of days between due dates, counted from the habit's start date. Use 2 for an alternate-day schedule.":
+		"Nombre de jours entre les échéances, compté à partir de la date de début de l'habitude. Utilisez 2 pour un rythme d'un jour sur deux.",
 	"The day of the month this habit is due. In shorter months it falls due on the last day, so 31 always lands on the final day of the month.":
 		"Le jour du mois où cette habitude est due. Les mois plus courts la placent le dernier jour, donc 31 tombe toujours en fin de mois.",
 	"Every {day}": "Chaque {day}",
 	"Monthly · day {day}": "Mensuel · jour {day}",
+	"Every other day": "Un jour sur deux",
+	"Every {n} days": "Tous les {n} jours",
 	"No habits are due on this day.":
 		"Aucune habitude n'est due ce jour-là.",
 	"Nothing due today.": "Rien à faire aujourd'hui.",
 	"Weekly activity": "Activité hebdomadaire",
 	"Monthly activity": "Activité mensuelle",
+	"Activity on due days": "Activité aux jours d'échéance",
+	"Completion rate over {n} due days":
+		"Taux de réussite sur {n} jours d'échéance",
 	"Weeks completed": "Semaines accomplies",
 	"Months completed": "Mois accomplis",
 	"Recent rate": "Taux récent",

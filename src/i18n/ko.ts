@@ -4,6 +4,7 @@ export const ko: Record<string, string> = {
 	"Create habit": "습관 만들기",
 	"Insert dashboard": "대시보드 삽입",
 	"Insert habit metrics": "습관 지표 삽입",
+	"Insert habits table": "습관 표 삽입",
 	"Open panel": "패널 열기",
 	"Open habits panel": "습관 패널 열기",
 	Habits: "습관",
@@ -26,6 +27,7 @@ export const ko: Record<string, string> = {
 	"Name (A–Z)": "이름(A–Z)",
 	Color: "색상",
 	"Last logged": "마지막 기록",
+	"Planned time": "예정 시간",
 	Manual: "수동",
 	"Manual order": "수동 순서",
 	"Drag the cards into the order you want. New habits join the end of the list.":
@@ -58,6 +60,24 @@ export const ko: Record<string, string> = {
 	"Group order": "그룹 순서",
 	"Drag the groups into the order you want. Sections follow the same order.":
 		"그룹을 원하는 순서로 드래그하세요. 섹션도 같은 순서를 따릅니다.",
+	"Group the habits table": "습관 표 그룹화",
+	"Group the rows of habits-table blocks by habit group, with a heading row per group. Turn off for one flat list ordered by planned time.":
+		"habits-table 블록의 행을 습관 그룹별로 묶고 그룹마다 머리글 행을 표시합니다. 끄면 예정 시간순의 단일 목록이 됩니다.",
+	"Completion animations": "완료 애니메이션",
+	"Play the check swoosh, card departure, and perfect-day confetti when habits are completed. Turn off for instant, quiet updates.":
+		"습관을 완료할 때 체크 스우시, 카드 퇴장, 완벽한 하루 색종이를 재생합니다. 끄면 즉시 조용히 갱신됩니다.",
+	"Reminders": "알림",
+	"Write reminders for due habits": "오늘 해야 할 습관의 알림 작성",
+	"Each day, write one reminder checklist line per planned time of every habit due that day, in the format the Reminder plugin picks up. The lines live in a marked block and refresh as you log habits.":
+		"매일 그날 해야 할 각 습관의 예정 시간마다 알림 체크리스트 한 줄을 Reminder 플러그인이 인식하는 형식으로 작성합니다. 이 줄들은 표시된 블록 안에 있으며 기록에 따라 갱신됩니다.",
+	"Where to write reminders": "알림을 작성할 위치",
+	"The daily note follows the Daily notes core plugin's folder and date format; the block is added once the note exists. A fixed note is created automatically.":
+		"데일리 노트는 코어 데일리 노트 플러그인의 폴더와 날짜 형식을 따르며, 노트가 존재하면 블록이 추가됩니다. 고정 노트는 자동으로 생성됩니다.",
+	"Today's daily note": "오늘의 데일리 노트",
+	"A fixed note": "고정 노트",
+	"Reminder note path": "알림 노트 경로",
+	"Vault path of the note that holds the reminder block.":
+		"알림 블록을 담는 노트의 볼트 경로.",
 	"Manage groups": "그룹 관리",
 	"See every habit by group and drag cards between groups.":
 		"그룹별로 습관을 보고 카드를 그룹 간에 드래그하세요.",
@@ -335,21 +355,36 @@ export const ko: Record<string, string> = {
 	// Frequencies and per-note metrics
 	Frequency: "주기",
 	Daily: "매일",
-	"Day of week": "요일",
+	"Days of week": "요일",
+	Habit: "습관",
+	Schedule: "일정",
+	"Time of day": "시간",
+	"Optional times this habit is planned for — once or several times a day. Shown on the habit's card.":
+		"이 습관을 실행할 예정 시간(선택) — 하루 한 번 또는 여러 번. 습관 카드에 표시됩니다.",
+	"Add time": "시간 추가",
+	"Remove time": "시간 제거",
+	"Every N days": "N일마다",
+	"Repeat every": "반복 주기",
 	"Day of month": "날짜(일)",
 	"How often this habit is due. Weekly and monthly habits only appear on their due date.":
 		"이 습관의 주기입니다. 주간·월간 습관은 예정일에만 표시됩니다.",
-	"The weekday this habit is due on.":
-		"이 습관의 예정 요일입니다.",
+	"The weekdays this habit is due on. Pick as many as you need.":
+		"이 습관이 예정된 요일입니다. 여러 개를 선택할 수 있습니다.",
+	"Number of days between due dates, counted from the habit's start date. Use 2 for an alternate-day schedule.":
+		"예정일 사이의 일수로, 습관 시작일부터 계산합니다. 격일로 하려면 2를 입력하세요.",
 	"The day of the month this habit is due. In shorter months it falls due on the last day, so 31 always lands on the final day of the month.":
 		"이 습관의 예정 일자입니다. 더 짧은 달에는 마지막 날로 넘어가므로 31은 항상 그 달의 마지막 날이 됩니다.",
 	"Every {day}": "매주 {day}",
 	"Monthly · day {day}": "매월 {day}일",
+	"Every other day": "격일",
+	"Every {n} days": "{n}일마다",
 	"No habits are due on this day.":
 		"이 날에 예정된 습관이 없습니다.",
 	"Nothing due today.": "오늘은 예정된 것이 없습니다.",
 	"Weekly activity": "주간 활동",
 	"Monthly activity": "월간 활동",
+	"Activity on due days": "예정일 활동",
+	"Completion rate over {n} due days": "최근 예정일 {n}회 완료율",
 	"Weeks completed": "완료한 주",
 	"Months completed": "완료한 달",
 	"Recent rate": "최근 달성률",

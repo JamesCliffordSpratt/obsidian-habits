@@ -117,8 +117,13 @@ export function buildStatsDigest(
 				);
 			}
 		}
-		if (habit.frequency !== "daily") {
+		if (habit.frequency === "interval") {
+			parts.push(`due every ${habit.intervalDays} days`);
+		} else if (habit.frequency !== "daily") {
 			parts.push(`due ${habit.frequency}`);
+		}
+		if (habit.times.length > 0) {
+			parts.push(`planned at ${habit.times.join(", ")}`);
 		}
 		parts.push(`${Math.round(s.rate * 100)}% rate`);
 		parts.push(`current streak ${s.current}, best ${s.best}`);

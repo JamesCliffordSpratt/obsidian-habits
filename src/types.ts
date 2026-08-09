@@ -11,10 +11,12 @@ export type HabitType = "binary" | "repetition" | "timed";
  * How often a habit is due.
  *
  * - `daily`: due every day (the original behaviour).
- * - `weekly`: due once a week, on a chosen weekday.
+ * - `weekly`: due on one or more chosen weekdays each week.
  * - `monthly`: due once a month, on a chosen day of the month.
+ * - `interval`: due every N days, counted from the habit's start date
+ *   (e.g. every 2 days for an alternate-day schedule).
  */
-export type HabitFrequency = "daily" | "weekly" | "monthly";
+export type HabitFrequency = "daily" | "weekly" | "monthly" | "interval";
 
 /**
  * Which way a habit's goal points.
@@ -35,6 +37,7 @@ export type GoalDirection = "min" | "max";
  * - `color`: by accent colour hue, so similar colours sit together.
  * - `startDate`: oldest habit first — the order habits were created in.
  * - `lastLogged`: most recently logged first.
+ * - `time`: by first planned time — the day's timeline; untimed habits last.
  * - `group`: by group, following the arranged group order.
  * - `manual`: the order the user arranged in settings.
  */
@@ -43,6 +46,7 @@ export type HabitSortMode =
 	| "color"
 	| "startDate"
 	| "lastLogged"
+	| "time"
 	| "group"
 	| "manual";
 
@@ -90,17 +94,35 @@ export interface HabitDefinition {
 	/** How often the habit is due. Defaults to `daily`. */
 	frequency: HabitFrequency;
 	/**
-	 * Day of the week a weekly habit is due, as a JavaScript `getDay` value
-	 * (`0` = Sunday … `6` = Saturday). Only meaningful when `frequency` is
-	 * `weekly`.
+	 * Days of the week a weekly habit is due, as JavaScript `getDay` values
+	 * (`0` = Sunday … `6` = Saturday), sorted and without duplicates. Only
+	 * meaningful when `frequency` is `weekly`. Stored in frontmatter as a
+	 * scalar `weekday` when there is one day (the original format) or as a
+	 * `weekdays` list when there are several.
 	 */
-	weekday: number;
+	weekdays: number[];
 	/**
 	 * Day of the month a monthly habit is due (`1`–`31`). Only meaningful when
 	 * `frequency` is `monthly`. In months shorter than the chosen day it is
 	 * clamped to the last day of that month (so `31` acts as "last day").
 	 */
 	monthDay: number;
+	/**
+	 * Number of days between due dates (`2`–`365`), counted from the habit's
+	 * start date. Only meaningful when `frequency` is `interval`; `2` gives an
+	 * alternate-day schedule.
+	 */
+	intervalDays: number;
+	/**
+	 * Optional times of day the habit is planned for, as 24-hour `HH:mm`
+	 * strings, sorted and without duplicates — one entry for a once-a-day
+	 * plan, several for e.g. twice-daily medication. Purely informational:
+	 * they are shown alongside the schedule on the habit's card and never
+	 * affect when the habit is due. Stored in frontmatter as a scalar
+	 * `time` when there is one, or a `times` list when there are several.
+	 * Empty means no planned time.
+	 */
+	times: string[];
 	/**
 	 * Daily target. For `repetition` this is a count; for `timed` it is a
 	 * number of minutes. Ignored for `binary`.
@@ -161,8 +183,10 @@ export interface NewHabitOptions {
 	type: HabitType;
 	goalDirection: GoalDirection;
 	frequency: HabitFrequency;
-	weekday: number;
+	weekdays: number[];
 	monthDay: number;
+	intervalDays: number;
+	times: string[];
 	target: number;
 	unit: string;
 	weeklyTarget: number;

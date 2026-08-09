@@ -53,6 +53,61 @@ export function registerLongPress(
 	component.registerDomEvent(el, "touchcancel", clear);
 }
 
+/**
+ * Locale-aware display form of a 24-hour `HH:mm` time of day (e.g. "9:00 PM"
+ * or "21:00", following the system locale). Invalid input is returned as-is.
+ */
+export function formatTimeOfDay(time: string): string {
+	const match = /^(\d{2}):(\d{2})$/.exec(time);
+	if (!match) {
+		return time;
+	}
+	return new Date(
+		2024,
+		0,
+		1,
+		Number(match[1]),
+		Number(match[2]),
+	).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+}
+
+/** Locale-aware weekday name for a `getDay` value (2024-01-07 = Sunday). */
+export function weekdayName(value: number, style: "long" | "short"): string {
+	return new Date(2024, 0, 7 + value).toLocaleDateString(undefined, {
+		weekday: style,
+	});
+}
+
+/**
+ * A short "due" descriptor for non-daily habits ("Every Mon, Wed, Fri",
+ * "Monthly · day 15", "Every other day"); empty for daily.
+ */
+export function habitScheduleLabel(habit: HabitDefinition): string {
+	if (habit.frequency === "weekly") {
+		if (habit.weekdays.length === 1) {
+			return t("Every {day}", {
+				day: weekdayName(habit.weekdays[0], "long"),
+			});
+		}
+		// Monday-first reads as a week plan ("Mon, Wed, Fri") whatever
+		// the underlying Sunday-based getDay values are.
+		const days = [...habit.weekdays]
+			.sort((a, b) => ((a + 6) % 7) - ((b + 6) % 7))
+			.map((day) => weekdayName(day, "short"))
+			.join(", ");
+		return t("Every {day}", { day: days });
+	}
+	if (habit.frequency === "monthly") {
+		return t("Monthly · day {day}", { day: habit.monthDay });
+	}
+	if (habit.frequency === "interval") {
+		return habit.intervalDays === 2
+			? t("Every other day")
+			: t("Every {n} days", { n: habit.intervalDays });
+	}
+	return "";
+}
+
 /** Format a date as a `YYYY-MM-DD` key using local time. */
 export function toDateKey(date: Date): string {
 	const year = date.getFullYear();
@@ -376,6 +431,19 @@ export function sortHabits(
 			sorted.sort(
 				(a, b) =>
 					lastLoggedDay(b).localeCompare(lastLoggedDay(a)) ||
+					a.name.localeCompare(b.name),
+			);
+			break;
+		}
+		case "time": {
+			// The day's timeline: habits with a planned time first,
+			// earliest first (times are stored sorted, so the first entry
+			// is the earliest), then untimed habits by name.
+			const first = (habit: HabitDefinition) => habit.times[0] ?? "";
+			sorted.sort(
+				(a, b) =>
+					Number(first(a) === "") - Number(first(b) === "") ||
+					first(a).localeCompare(first(b)) ||
 					a.name.localeCompare(b.name),
 			);
 			break;

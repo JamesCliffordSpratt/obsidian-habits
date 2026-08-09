@@ -4,6 +4,7 @@ export const ja: Record<string, string> = {
 	"Create habit": "習慣を作成",
 	"Insert dashboard": "ダッシュボードを挿入",
 	"Insert habit metrics": "習慣メトリクスを挿入",
+	"Insert habits table": "習慣テーブルを挿入",
 	"Open panel": "パネルを開く",
 	"Open habits panel": "習慣パネルを開く",
 	Habits: "習慣",
@@ -26,6 +27,7 @@ export const ja: Record<string, string> = {
 	"Name (A–Z)": "名前(A–Z)",
 	Color: "色",
 	"Last logged": "最終記録",
+	"Planned time": "予定時刻",
 	Manual: "手動",
 	"Manual order": "手動の順序",
 	"Drag the cards into the order you want. New habits join the end of the list.":
@@ -58,6 +60,24 @@ export const ja: Record<string, string> = {
 	"Group order": "グループの順序",
 	"Drag the groups into the order you want. Sections follow the same order.":
 		"グループを好きな順序にドラッグします。セクションも同じ順序に従います。",
+	"Group the habits table": "習慣テーブルをグループ化",
+	"Group the rows of habits-table blocks by habit group, with a heading row per group. Turn off for one flat list ordered by planned time.":
+		"habits-table ブロックの行を習慣のグループごとにまとめ、グループごとに見出し行を表示します。オフにすると予定時刻順のフラットなリストになります。",
+	"Completion animations": "完了アニメーション",
+	"Play the check swoosh, card departure, and perfect-day confetti when habits are completed. Turn off for instant, quiet updates.":
+		"習慣の完了時にチェックのスウッシュ、カードの退場、パーフェクトデーの紙吹雪を再生します。オフにすると即座に静かに更新されます。",
+	"Reminders": "リマインダー",
+	"Write reminders for due habits": "当日実施予定の習慣のリマインダーを書き込む",
+	"Each day, write one reminder checklist line per planned time of every habit due that day, in the format the Reminder plugin picks up. The lines live in a marked block and refresh as you log habits.":
+		"毎日、その日に実施予定の各習慣の予定時刻ごとにリマインダー行を書き込みます。形式は Reminder プラグインが認識するものです。行はマーカー付きブロック内にあり、記録に応じて更新されます。",
+	"Where to write reminders": "リマインダーの書き込み先",
+	"The daily note follows the Daily notes core plugin's folder and date format; the block is added once the note exists. A fixed note is created automatically.":
+		"デイリーノートはコアプラグイン「デイリーノート」のフォルダーと日付形式に従い、ノートが存在すればブロックが追加されます。固定ノートは自動的に作成されます。",
+	"Today's daily note": "今日のデイリーノート",
+	"A fixed note": "固定ノート",
+	"Reminder note path": "リマインダーノートのパス",
+	"Vault path of the note that holds the reminder block.":
+		"リマインダーブロックを保持するノートの保管庫内パス。",
 	"Manage groups": "グループを管理",
 	"See every habit by group and drag cards between groups.":
 		"グループごとに習慣を確認し、カードをグループ間でドラッグできます。",
@@ -335,21 +355,36 @@ export const ja: Record<string, string> = {
 	// Frequencies and per-note metrics
 	Frequency: "頻度",
 	Daily: "毎日",
-	"Day of week": "曜日",
+	"Days of week": "曜日",
+	Habit: "習慣",
+	Schedule: "スケジュール",
+	"Time of day": "時刻",
+	"Optional times this habit is planned for — once or several times a day. Shown on the habit's card.":
+		"この習慣を行う予定時刻（任意）。1日1回または複数回。習慣のカードに表示されます。",
+	"Add time": "時刻を追加",
+	"Remove time": "時刻を削除",
+	"Every N days": "N日ごと",
+	"Repeat every": "繰り返し間隔",
 	"Day of month": "日にち",
 	"How often this habit is due. Weekly and monthly habits only appear on their due date.":
 		"この習慣の頻度。週間・月間の習慣は期日にのみ表示されます。",
-	"The weekday this habit is due on.":
-		"この習慣の期日となる曜日。",
+	"The weekdays this habit is due on. Pick as many as you need.":
+		"この習慣の期日となる曜日。複数選択できます。",
+	"Number of days between due dates, counted from the habit's start date. Use 2 for an alternate-day schedule.":
+		"期日と期日の間の日数。習慣の開始日から数えます。2にすると1日おきになります。",
 	"The day of the month this habit is due. In shorter months it falls due on the last day, so 31 always lands on the final day of the month.":
 		"この習慣の期日となる日。短い月では月末が期日になるため、31 は常にその月の最終日になります。",
 	"Every {day}": "毎週 {day}",
 	"Monthly · day {day}": "毎月 · {day} 日",
+	"Every other day": "1日おき",
+	"Every {n} days": "{n}日ごと",
 	"No habits are due on this day.":
 		"この日に期日の習慣はありません。",
 	"Nothing due today.": "今日は期日のものがありません。",
 	"Weekly activity": "週間アクティビティ",
 	"Monthly activity": "月間アクティビティ",
+	"Activity on due days": "期日の活動",
+	"Completion rate over {n} due days": "直近{n}回の期日の達成率",
 	"Weeks completed": "完了した週",
 	"Months completed": "完了した月",
 	"Recent rate": "最近の達成率",

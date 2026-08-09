@@ -4,6 +4,7 @@ export const zh: Record<string, string> = {
 	"Create habit": "创建习惯",
 	"Insert dashboard": "插入习惯面板",
 	"Insert habit metrics": "插入习惯指标",
+	"Insert habits table": "插入习惯表格",
 	"Open panel": "打开侧边栏面板",
 	"Open habits panel": "打开习惯侧边栏",
 	Habits: "习惯",
@@ -26,6 +27,7 @@ export const zh: Record<string, string> = {
 	"Name (A–Z)": "名称(A–Z)",
 	Color: "颜色",
 	"Last logged": "最近记录",
+	"Planned time": "计划时间",
 	Manual: "手动",
 	"Manual order": "手动排序",
 	"Drag the cards into the order you want. New habits join the end of the list.":
@@ -57,6 +59,23 @@ export const zh: Record<string, string> = {
 	"Group order": "分组顺序",
 	"Drag the groups into the order you want. Sections follow the same order.":
 		"拖动分组以调整顺序。分区遵循相同顺序。",
+	"Group the habits table": "按分组显示习惯表格",
+	"Group the rows of habits-table blocks by habit group, with a heading row per group. Turn off for one flat list ordered by planned time.":
+		"将 habits-table 块的行按习惯分组显示，每组一个标题行。关闭后为按计划时间排序的单一列表。",
+	"Completion animations": "完成动画",
+	"Play the check swoosh, card departure, and perfect-day confetti when habits are completed. Turn off for instant, quiet updates.":
+		"完成习惯时播放对勾划入、卡片退场和完美一天的彩纸动画。关闭后立即静默更新。",
+	"Reminders": "提醒",
+	"Write reminders for due habits": "为当日应做的习惯写入提醒",
+	"Each day, write one reminder checklist line per planned time of every habit due that day, in the format the Reminder plugin picks up. The lines live in a marked block and refresh as you log habits.":
+		"每天为当日应做的每个习惯的每个计划时间写入一行提醒清单，格式可被 Reminder 插件识别。这些行位于带标记的块中，并随打卡自动刷新。",
+	"Where to write reminders": "提醒写入位置",
+	"The daily note follows the Daily notes core plugin's folder and date format; the block is added once the note exists. A fixed note is created automatically.":
+		"每日笔记遵循核心“每日笔记”插件的文件夹和日期格式；笔记存在后即会添加该块。固定笔记会自动创建。",
+	"Today's daily note": "今天的每日笔记",
+	"A fixed note": "固定笔记",
+	"Reminder note path": "提醒笔记路径",
+	"Vault path of the note that holds the reminder block.": "存放提醒块的笔记在库中的路径。",
 	"Manage groups": "管理分组",
 	"See every habit by group and drag cards between groups.":
 		"按分组查看所有习惯,并在分组间拖动卡片。",
@@ -330,19 +349,35 @@ export const zh: Record<string, string> = {
 	// Frequencies and per-note metrics
 	Frequency: "频率",
 	Daily: "每天",
-	"Day of week": "星期几",
+	"Days of week": "星期几",
+	Habit: "习惯",
+	Schedule: "计划",
+	"Time of day": "时间",
+	"Optional times this habit is planned for — once or several times a day. Shown on the habit's card.":
+		"此习惯计划进行的时间（可选）——每天一次或多次。显示在习惯卡片上。",
+	"Add time": "添加时间",
+	"Remove time": "移除时间",
+	"Every N days": "每 N 天",
+	"Repeat every": "重复间隔",
 	"Day of month": "每月日期",
 	"How often this habit is due. Weekly and monthly habits only appear on their due date.":
 		"此习惯的到期频率。每周和每月习惯只在到期日显示。",
-	"The weekday this habit is due on.": "此习惯到期的星期几。",
+	"The weekdays this habit is due on. Pick as many as you need.":
+		"此习惯到期的星期几。可选择多个。",
+	"Number of days between due dates, counted from the habit's start date. Use 2 for an alternate-day schedule.":
+		"两次到期之间的天数，从习惯的开始日期算起。填 2 表示隔天一次。",
 	"The day of the month this habit is due. In shorter months it falls due on the last day, so 31 always lands on the final day of the month.":
 		"此习惯每月的到期日。在较短的月份中落在最后一天，因此 31 总是落在当月最后一天。",
 	"Every {day}": "每{day}",
 	"Monthly · day {day}": "每月 · 第 {day} 天",
+	"Every other day": "隔天一次",
+	"Every {n} days": "每 {n} 天",
 	"No habits are due on this day.": "这一天没有到期的习惯。",
 	"Nothing due today.": "今天没有到期的习惯。",
 	"Weekly activity": "每周活动",
 	"Monthly activity": "每月活动",
+	"Activity on due days": "到期日活动",
+	"Completion rate over {n} due days": "最近 {n} 个到期日的完成率",
 	"Weeks completed": "已完成周数",
 	"Months completed": "已完成月数",
 	"Recent rate": "近期完成率",

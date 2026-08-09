@@ -12,9 +12,10 @@
 
 - 🎠 **Carousel dashboard** — log your habits from any note with a `habits` code block, with satisfying completion animations
 - ✅ **Three habit types** — done/not-done, counted (8 cups of water), and timed (30 minutes of exercise, with +1/+5/+10 quick buttons)
-- 🗓️ **Daily, weekly, or monthly** — pick a frequency per habit; weekly and monthly habits appear only on their due day, and streaks count consecutive weeks or months
+- 🗓️ **Flexible schedules** — daily, weekly on one or several weekdays (Mon/Wed/Fri), monthly, or every N days (alternate-day medication); non-daily habits appear only on their due day, and streaks count due days, not calendar days
 - 🔥 **Streaks and statistics** — current and best streaks, completion rates, perfect days, weekly and monthly goals, per-habit heatmaps over the week, month, or any custom date range
 - 📊 **Charts on every habit page** — 30-day activity and 12-week trend charts rendered in your theme's colours
+- 📋 **Habits overview table** — a `habits-table` code block lists every active habit with its schedule and completed/due counts for the current week and the last three months
 - 📄 **Printable PDF reports** — pick your metrics, date range, and layout with a live A4 preview
 - 🚭 **Break bad habits** *(experimental)* — track things you're cutting down or quitting by staying under a daily limit, with quiet streaks for every clean day
 - ✨ **AI summaries** *(experimental)* — on-demand feedback and advice on your stats, on screen and in PDF reports, using your own AI service (including free and fully local options)
@@ -70,21 +71,24 @@ pauses:
 
 No databases, no external services — delete the plugin and your history is still right there in your notes.
 
-## 🗓️ Daily, weekly, and monthly habits
+## 🗓️ Daily, weekly, monthly, and every-N-days habits
 
 Every habit has a **frequency**, chosen when you create or edit it:
 
 - **Daily** — due every day (the default).
-- **Weekly** — due once a week on the weekday you pick. The card only appears on that day.
+- **Weekly** — due on the weekdays you pick, one or several (a gym habit on Mon/Wed/Fri is one habit, one streak). The card only appears on those days. A single day is stored as `weekday: 5` in frontmatter; several days as `weekdays: [1, 3, 5]` (JavaScript `getDay` numbers, `0` = Sunday).
 - **Monthly** — due once a month on the day you pick. Months shorter than the chosen day fall due on their **last day**, so the 31st always lands on the final day of the month (28th or 29th in February, 30th in April, and so on) — you never miss a month.
+- **Every N days** — due every N days counted from the habit's start date, so an alternate-day schedule (N = 2) stays put even when you miss a day — just like a prescription. Stored as `frequency: interval` with `intervalDays: 2` in frontmatter; hand-written notes without a `startDate` anchor on their earliest record instead.
 
-Weekly and monthly cards surface only on their due date in both the dashboard and the sidebar panel, so your list stays focused on what's actually due. Their **streaks and stats count periods, not days**: a weekly habit's streak is the number of consecutive weeks you completed it, and a monthly habit's is consecutive months. Days a habit isn't due don't count against its completion rate. To log a due date you missed, use the dashboard's date arrows to step back to it.
+Any habit, whatever its frequency, can also carry one or more optional **times of day** (`time: "21:00"` in frontmatter for one, `times: ["13:30", "21:30"]` for several — the modal has a time picker with an add button). They are purely informational — shown on the habit's card next to the schedule (e.g. "Every other day · 9:00 PM", or "1:30 PM, 9:30 PM" for twice-daily medication) — and never affect when a habit is due. Pair several times with a counted habit (`target: 2`) to track a twice-a-day routine as one habit.
 
-The charts on a weekly or monthly habit's page adapt too: instead of a 30-day grid, the activity chart plots each recent **due date** (labelled with the date it lands on), and a rolling completion-rate line shows the trend across periods. The summary tiles relabel accordingly — "Weeks completed" or "Months completed" rather than "Days completed".
+Non-daily cards surface only on their due dates in both the dashboard and the sidebar panel, so your list stays focused on what's actually due. Their **streaks and stats count due days, not calendar days**: a Sunday-only habit's streak is the number of consecutive weeks you completed it, a Mon/Wed/Fri habit's is consecutive due days, and a monthly habit's is consecutive months. Days a habit isn't due don't count against its completion rate. To log a due date you missed, use the dashboard's date arrows to step back to it.
+
+The charts on a non-daily habit's page adapt too: instead of a 30-day grid, the activity chart plots each recent **due date** (labelled with the date it lands on), and a rolling completion-rate line shows the trend across periods. The summary tiles relabel accordingly — "Weeks completed" or "Months completed" rather than "Days completed".
 
 ## 🎠 The dashboard
 
-Cards for each habit sit in a swipeable carousel. Completing a habit plays a celebration animation and the card glides to the back of the queue, keeping what's left front and centre. Click a card's name to open its note; right-click (or long-press on mobile) for editing, pausing, stopping, or removing.
+Cards for each habit sit in a swipeable carousel. Completing a habit plays a celebration animation and the card glides to the back of the queue, keeping what's left front and centre (prefer it quiet? turn off **Completion animations** in settings). Click a card's name to open its note; right-click (or long-press on mobile) for editing, pausing, stopping, or removing.
 
 Embedded in a **daily note**? The dashboard follows that note's date, so browsing yesterday's note shows yesterday's habits. The dashboard also live-updates whenever your habit notes or settings change — even from another pane or device sync.
 
@@ -114,6 +118,28 @@ From there, the download button opens the **PDF export** dialog:
 - **Live preview** — a to-scale A4 preview updates as you tweak; click it to inspect at full size. What you see is exactly what prints.
 
 ![Building a PDF report](images/habits-report.gif)
+
+## 📋 The habits table
+
+Drop a `habits-table` code block into any note (there's an **Insert habits table** command) for a compact overview of every active habit:
+
+| Habit | Schedule | Today | This week | Aug | Jul | Jun |
+| --- | --- | --- | ---: | ---: | ---: | ---: |
+| Take medicine | Every other day · 9:00 PM | ✅ Done | 3/3 | 4/5 | 15/15 | 14/16 |
+| Gym | Every Mon, Wed, Fri · 6:30 AM | ◯ Not done | 2/2 | 4/4 | 13/13 | 12/13 |
+
+Each count is **completed due days / elapsed due days** for the period — the current calendar week (Monday-first, like the stats view) and the current plus two previous calendar months. Only due days count: a Tuesday-only habit shows `4/4` in a four-Tuesday month, paused days are excluded, and periods before a habit existed show `–`. The **Today** column logs the day without leaving the table: a Done/Not done pill for binary habits (a slip toggle for limit habits), a compact stepper for counted and timed ones; habits not due today show a dash. Rows are grouped like the dashboard and ordered by planned time within each group, so the table reads as your day's timeline — or turn off **Group the habits table** in settings for one flat time-ordered list. The table live-updates as habit notes change.
+
+## ⏰ Reminders
+
+Habits with planned times can feed the community [Reminder](https://github.com/uphy/obsidian-reminder) plugin. Turn on **Write reminders for due habits** in settings and the plugin maintains a small marked block — in today's daily note, or in one fixed note of your choosing — with one checklist line per planned time of every habit due that day:
+
+```
+- [ ] Physiotherapy (@2026-08-10 13:30)
+- [x] Take medicine (@2026-08-10 21:00)
+```
+
+That's exactly the format the Reminder plugin scans, so each line becomes a real notification at its time. The sync runs both ways: lines start checked when today's record already covers them (a counted habit ticks its first line at count 1, its second at 2, and so on), and **ticking a line is logging** — check a reminder off in the note or from its notification and the habit's record, streaks, and counts update everywhere. Unticking un-logs it again. A binary habit with several times counts as done once every line is ticked (a partial tick is kept visually until then); timed habits are the one read-only case, since a checkbox can't say how many minutes you did. The block regenerates itself at midnight for the new day; days where nothing is due add nothing to the note. To pick where the block sits, plant the two marker lines (`%% habits-reminders start %%` / `%% habits-reminders end %%`) in your daily-note template — the plugin fills them in place and only appends to the end of notes that have no markers. Habits without planned times are simply left out — nothing changes unless you opt in.
 
 ## 📊 Habit pages
 

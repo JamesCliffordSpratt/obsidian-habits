@@ -55,6 +55,16 @@ const WEEKDAYS: readonly { label: string; value: number }[] = [
 	{ label: "Sunday", value: 0 },
 ];
 
+/**
+ * Locale-aware short weekday name (e.g. "Mon", "lun.", "月") for a `getDay`
+ * value. 2024-01-07 was a Sunday, so day 7 + value lands on the right day.
+ */
+function weekdayShortLabel(value: number): string {
+	return new Date(2024, 0, 7 + value).toLocaleDateString(undefined, {
+		weekday: "short",
+	});
+}
+
 /** Suggests existing group names while typing in the group field. */
 class GroupSuggest extends AbstractInputSuggest<string> {
 	constructor(
@@ -179,8 +189,10 @@ export class HabitModal extends Modal {
 	private type: HabitType = "binary";
 	private goalDirection: GoalDirection = "min";
 	private frequency: HabitFrequency = "daily";
-	private weekday = new Date().getDay();
+	private weekdays: number[] = [new Date().getDay()];
 	private monthDay = new Date().getDate();
+	private intervalDays = 2;
+	private times: string[] = [];
 	private target = 1;
 	private unit = "";
 	private weeklyTarget = 0;
@@ -224,10 +236,13 @@ export class HabitModal extends Modal {
 			this.goalDirection = editing.goalDirection;
 			this.frequency = editing.frequency;
 			if (editing.frequency === "weekly") {
-				this.weekday = editing.weekday;
+				this.weekdays = [...editing.weekdays];
 			} else if (editing.frequency === "monthly") {
 				this.monthDay = editing.monthDay;
+			} else if (editing.frequency === "interval") {
+				this.intervalDays = editing.intervalDays;
 			}
+			this.times = [...editing.times];
 			// A limit habit's target may legitimately be 0 ("none at all");
 			// only build habits coerce a missing target to 1.
 			this.target =
@@ -387,6 +402,8 @@ export class HabitModal extends Modal {
 			this.renderFrequency(contentEl);
 		}
 
+		this.renderTime(contentEl);
+
 		// Weekly and monthly goals count days completed within a period, which
 		// only makes sense for a daily habit; a weekly/monthly habit is due at
 		// most once per period.
@@ -479,8 +496,10 @@ export class HabitModal extends Modal {
 								this.goalDirection === "max"
 									? ("daily" as HabitFrequency)
 									: this.frequency,
-							weekday: this.weekday,
+							weekdays: [...this.weekdays],
 							monthDay: this.monthDay,
+							intervalDays: this.intervalDays,
+							times: this.times.filter((value) => value !== ""),
 							target: this.target,
 							unit: this.unit,
 							weeklyTarget: this.weeklyTarget,
@@ -691,8 +710,9 @@ export class HabitModal extends Modal {
 	}
 
 	/**
-	 * Frequency picker: daily, weekly (with a weekday) or monthly (with a day
-	 * of the month). Weekly and monthly habits only surface on their due date.
+	 * Frequency picker: daily, weekly (with one or more weekdays), monthly
+	 * (with a day of the month) or every N days. Non-daily habits only
+	 * surface on their due dates.
 	 */
 	private renderFrequency(contentEl: HTMLElement): void {
 		new Setting(contentEl)
@@ -707,6 +727,7 @@ export class HabitModal extends Modal {
 					.addOption("daily", t("Daily"))
 					.addOption("weekly", t("Weekly"))
 					.addOption("monthly", t("Monthly"))
+					.addOption("interval", t("Every N days"))
 					.setValue(this.frequency)
 					.onChange((value) => {
 						this.frequency = value as HabitFrequency;
@@ -715,18 +736,71 @@ export class HabitModal extends Modal {
 			);
 
 		if (this.frequency === "weekly") {
-			new Setting(contentEl)
-				.setName(t("Day of week"))
-				.setDesc(t("The weekday this habit is due on."))
-				.addDropdown((dropdown) => {
-					for (const day of WEEKDAYS) {
-						dropdown.addOption(String(day.value), t(day.label));
+			const setting = new Setting(contentEl)
+				.setName(t("Days of week"))
+				.setDesc(
+					t(
+						"The weekdays this habit is due on. Pick as many as you need.",
+					),
+				);
+			const row = setting.controlEl.createDiv({
+				cls: "habits-weekday-picker",
+			});
+			for (const day of WEEKDAYS) {
+				const active = (): boolean =>
+					this.weekdays.includes(day.value);
+				const pill = row.createEl("button", {
+					cls: "habits-weekday-pill",
+					text: weekdayShortLabel(day.value),
+					attr: {
+						type: "button",
+						"aria-label": t(day.label),
+						"aria-pressed": String(active()),
+					},
+				});
+				pill.toggleClass("is-active", active());
+				pill.addEventListener("click", () => {
+					if (active()) {
+						// Keep at least one day selected: a weekly habit
+						// due on no day at all would simply never appear.
+						if (this.weekdays.length === 1) {
+							return;
+						}
+						this.weekdays = this.weekdays.filter(
+							(value) => value !== day.value,
+						);
+					} else {
+						this.weekdays = [...this.weekdays, day.value].sort(
+							(a, b) => a - b,
+						);
 					}
-					dropdown
-						.setValue(String(this.weekday))
-						.onChange((value) => {
-							this.weekday = Number(value);
-						});
+					pill.toggleClass("is-active", active());
+					pill.setAttr("aria-pressed", String(active()));
+				});
+			}
+		}
+
+		if (this.frequency === "interval") {
+			new Setting(contentEl)
+				.setName(t("Repeat every"))
+				.setDesc(
+					t(
+						"Number of days between due dates, counted from the habit's start date. Use 2 for an alternate-day schedule.",
+					),
+				)
+				.addText((text) => {
+					applyNumeric(text.inputEl, 2, 365);
+					text.setValue(String(this.intervalDays)).onChange(
+						(value) => {
+							const parsed = Math.round(Number(value));
+							if (Number.isFinite(parsed)) {
+								this.intervalDays = Math.min(
+									365,
+									Math.max(2, parsed),
+								);
+							}
+						},
+					);
 				});
 		}
 
@@ -749,6 +823,62 @@ export class HabitModal extends Modal {
 						});
 				});
 		}
+	}
+
+	/**
+	 * Optional planned times of day — one row per time plus an add button,
+	 * so twice-daily plans (e.g. medication at 13:30 and 21:30) are one
+	 * habit. Informational only: shown on the habit's card next to the
+	 * schedule, never affects due-ness.
+	 */
+	private renderTime(contentEl: HTMLElement): void {
+		const setting = new Setting(contentEl)
+			.setName(t("Time of day"))
+			.setDesc(
+				t(
+					"Optional times this habit is planned for — once or several times a day. Shown on the habit's card.",
+				),
+			);
+		const box = setting.controlEl.createDiv({
+			cls: "habits-time-picker",
+		});
+
+		const renderRows = (): void => {
+			box.empty();
+			this.times.forEach((value, index) => {
+				const row = box.createDiv({ cls: "habits-time-row" });
+				const input = row.createEl("input", {
+					cls: "habits-time-input",
+					attr: { type: "time" },
+				});
+				input.value = value;
+				input.addEventListener("change", () => {
+					this.times[index] = input.value;
+				});
+				const remove = row.createEl("button", {
+					cls: "habits-icon-button habits-time-remove",
+					attr: {
+						type: "button",
+						"aria-label": t("Remove time"),
+					},
+				});
+				setIcon(remove, "x");
+				remove.addEventListener("click", () => {
+					this.times.splice(index, 1);
+					renderRows();
+				});
+			});
+			const add = box.createEl("button", {
+				cls: "habits-time-add",
+				text: t("Add time"),
+				attr: { type: "button" },
+			});
+			add.addEventListener("click", () => {
+				this.times.push("");
+				renderRows();
+			});
+		};
+		renderRows();
 	}
 
 	/** Collapsible, optional weekly/monthly targets section. */

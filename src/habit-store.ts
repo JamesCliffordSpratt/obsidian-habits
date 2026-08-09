@@ -18,6 +18,7 @@ const HABIT_FREQUENCIES: readonly HabitFrequency[] = [
 	"daily",
 	"weekly",
 	"monthly",
+	"interval",
 ];
 
 function isHabitType(value: unknown): value is HabitType {
@@ -194,8 +195,14 @@ export class HabitStore {
 			frequency: isHabitFrequency(fm.frequency)
 				? fm.frequency
 				: "daily",
-			weekday: this.clampInt(this.readNumber(fm.weekday, 1), 0, 6),
+			weekdays: this.readWeekdays(fm.weekdays, fm.weekday),
 			monthDay: this.clampInt(this.readNumber(fm.monthDay, 1), 1, 31),
+			intervalDays: this.clampInt(
+				this.readNumber(fm.intervalDays, 2),
+				2,
+				365,
+			),
+			times: this.readTimes(fm.times, fm.time),
 			target: this.readNumber(fm.target, 1),
 			unit: typeof fm.unit === "string" ? fm.unit : "",
 			weeklyTarget: this.readNumber(fm.weeklyTarget, 0),
@@ -237,6 +244,73 @@ export class HabitStore {
 	/** Round to a whole number and constrain it to an inclusive range. */
 	private clampInt(value: number, min: number, max: number): number {
 		return Math.min(max, Math.max(min, Math.round(value)));
+	}
+
+	/**
+	 * Parse a weekly habit's due days: the `weekdays` list when present,
+	 * otherwise the original scalar `weekday`. Values are clamped to `0`–`6`,
+	 * deduplicated and sorted; with nothing usable the result falls back to
+	 * `[1]` (Monday), matching the old scalar default.
+	 */
+	private readWeekdays(list: unknown, single: unknown): number[] {
+		const raw = Array.isArray(list) ? list : [single];
+		const days = new Set<number>();
+		for (const value of raw) {
+			const parsed = this.readNumber(value, NaN);
+			if (Number.isFinite(parsed)) {
+				days.add(this.clampInt(parsed, 0, 6));
+			}
+		}
+		if (days.size === 0) {
+			days.add(1);
+		}
+		return [...days].sort((a, b) => a - b);
+	}
+
+	/**
+	 * Parse a single time of day. Anything that isn't a valid `H:mm` or
+	 * `HH:mm` string is treated as "no time" rather than an error, and the
+	 * hour is zero-padded so times sort and compare as plain strings.
+	 */
+	private readTime(value: unknown): string {
+		if (typeof value !== "string") {
+			return "";
+		}
+		const match = /^([01]?\d|2[0-3]):([0-5]\d)$/.exec(value.trim());
+		if (!match) {
+			return "";
+		}
+		return `${match[1].padStart(2, "0")}:${match[2]}`;
+	}
+
+	/**
+	 * Parse a habit's planned times: the `times` list when present,
+	 * otherwise the scalar `time`. Invalid entries are dropped, the rest
+	 * deduplicated and sorted chronologically.
+	 */
+	private readTimes(list: unknown, single: unknown): string[] {
+		const raw = Array.isArray(list) ? list : [single];
+		const times = new Set<string>();
+		for (const value of raw) {
+			const parsed = this.readTime(value);
+			if (parsed) {
+				times.add(parsed);
+			}
+		}
+		return [...times].sort();
+	}
+
+	/** Validate, deduplicate and sort a planned-times list. */
+	private normalizeTimes(values: string[]): string[] {
+		return this.readTimes(values, undefined);
+	}
+
+	/** Clamp, deduplicate and sort a weekday list, defaulting to Monday. */
+	private normalizeWeekdays(values: number[]): number[] {
+		const days = [
+			...new Set(values.map((value) => this.clampInt(value, 0, 6))),
+		].sort((a, b) => a - b);
+		return days.length > 0 ? days : [1];
 	}
 
 	private readRecords(raw: unknown): Record<string, number> {
@@ -325,25 +399,54 @@ export class HabitStore {
 
 	/**
 	 * Write the frequency fields to frontmatter, keeping it tidy: daily habits
-	 * store nothing (it is the default), and only the field relevant to the
-	 * chosen frequency is kept so stale keys never linger after a change.
+	 * store nothing (it is the default), and only the fields relevant to the
+	 * chosen frequency are kept so stale keys never linger after a change.
+	 * A weekly habit due on a single day keeps the original scalar `weekday`
+	 * form, so notes from before multi-day support are rewritten unchanged.
 	 */
 	private writeFrequency(
 		fm: Record<string, unknown>,
 		options: NewHabitOptions,
 	): void {
+		delete fm.weekday;
+		delete fm.weekdays;
+		delete fm.monthDay;
+		delete fm.intervalDays;
 		if (options.frequency === "weekly") {
 			fm.frequency = "weekly";
-			fm.weekday = this.clampInt(options.weekday, 0, 6);
-			delete fm.monthDay;
+			const days = this.normalizeWeekdays(options.weekdays);
+			if (days.length === 1) {
+				fm.weekday = days[0];
+			} else {
+				fm.weekdays = days;
+			}
 		} else if (options.frequency === "monthly") {
 			fm.frequency = "monthly";
 			fm.monthDay = this.clampInt(options.monthDay, 1, 31);
-			delete fm.weekday;
+		} else if (options.frequency === "interval") {
+			fm.frequency = "interval";
+			fm.intervalDays = this.clampInt(options.intervalDays, 2, 365);
 		} else {
 			delete fm.frequency;
-			delete fm.weekday;
-			delete fm.monthDay;
+		}
+	}
+
+	/**
+	 * Write the planned times to frontmatter, mirroring the weekday
+	 * convention: a single time keeps the scalar `time` form, several use
+	 * the `times` list, and none removes both keys.
+	 */
+	private writeTimes(
+		fm: Record<string, unknown>,
+		options: NewHabitOptions,
+	): void {
+		delete fm.time;
+		delete fm.times;
+		const times = this.normalizeTimes(options.times);
+		if (times.length === 1) {
+			fm.time = times[0];
+		} else if (times.length > 1) {
+			fm.times = times;
 		}
 	}
 
@@ -660,6 +763,7 @@ export class HabitStore {
 				fm.goalDirection = "max";
 			}
 			this.writeFrequency(fm, options);
+			this.writeTimes(fm, options);
 			if (options.type !== "binary") {
 				// A limit of 0 is meaningful ("none at all"), so max habits
 				// always write the field even when it is zero.
@@ -746,6 +850,7 @@ export class HabitStore {
 				delete fm.goalDirection;
 			}
 			this.writeFrequency(fm, options);
+			this.writeTimes(fm, options);
 			if (options.type === "binary") {
 				delete fm.target;
 			} else {
