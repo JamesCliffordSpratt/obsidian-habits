@@ -1,4 +1,13 @@
-import { Editor, Events, Plugin, type WorkspaceLeaf } from "obsidian";
+import {
+	debounce,
+	Editor,
+	Events,
+	Notice,
+	Plugin,
+	TFile,
+	type TAbstractFile,
+	type WorkspaceLeaf,
+} from "obsidian";
 import { t } from "./i18n";
 import { HabitStore } from "./habit-store";
 import {
@@ -33,6 +42,13 @@ export default class HabitsPlugin extends Plugin {
 		);
 
 		this.addSettingTab(new HabitsSettingTab(this.app, this));
+
+		// Lets Core Plugins → Page preview offer hover previews for the
+		// [[links]] users write in day comments.
+		this.registerHoverLinkSource("habits", {
+			display: t("Habits"),
+			defaultMod: true,
+		});
 
 		this.registerMarkdownCodeBlockProcessor("habits", (_source, el, ctx) => {
 			const dashboard = new HabitsDashboard(
@@ -116,6 +132,16 @@ export default class HabitsPlugin extends Plugin {
 			}),
 		);
 
+		this.watchComments();
+
+		this.addCommand({
+			id: "migrate-comments",
+			name: t("Move day comments into note bodies"),
+			callback: () => {
+				void this.migrateComments();
+			},
+		});
+
 		this.addCommand({
 			id: "insert-dashboard",
 			name: t("Insert dashboard"),
@@ -131,6 +157,68 @@ export default class HabitsPlugin extends Plugin {
 				editor.replaceSelection("```habit-metrics\n```\n");
 			},
 		});
+	}
+
+	/**
+	 * Day comments live in the note body, which can only be read
+	 * asynchronously, so the store caches them. Prime that cache once the
+	 * vault is ready and keep it in step with edits from any source —
+	 * including the user typing straight into a habit note.
+	 */
+	private watchComments(): void {
+		const notify = debounce(
+			() => this.events.trigger("comments-changed"),
+			150,
+			true,
+		);
+		const refresh = async (file: TAbstractFile): Promise<void> => {
+			if (!(file instanceof TFile) || !this.store.isHabitFile(file.path)) {
+				return;
+			}
+			if (await this.store.refreshComments(file)) {
+				notify();
+			}
+		};
+
+		this.app.workspace.onLayoutReady(() => {
+			void this.store.primeComments().then((changed) => {
+				if (changed) {
+					notify();
+				}
+			});
+		});
+		this.registerEvent(
+			this.app.vault.on("modify", (file) => void refresh(file)),
+		);
+		this.registerEvent(
+			this.app.vault.on("create", (file) => void refresh(file)),
+		);
+		this.registerEvent(
+			this.app.vault.on("delete", (file) => {
+				this.store.forgetComments(file.path);
+			}),
+		);
+		this.registerEvent(
+			this.app.vault.on("rename", (file, oldPath) => {
+				this.store.forgetComments(oldPath);
+				void refresh(file);
+			}),
+		);
+	}
+
+	/** Bulk-migrate notes still keeping their comments in frontmatter. */
+	private async migrateComments(): Promise<void> {
+		if (!this.store.hasLegacyComments()) {
+			new Notice(t("No comments left to move."));
+			return;
+		}
+		const count = await this.store.migrateComments();
+		this.events.trigger("comments-changed");
+		new Notice(
+			count === 1
+				? t("Moved comments in 1 note.")
+				: t("Moved comments in {n} notes.", { n: count }),
+		);
 	}
 
 	/** Open (or reveal) the habits panel in the right sidebar. */

@@ -299,6 +299,13 @@ export const es: Record<string, string> = {
 		"Muestra una pestaña de comentarios en las tarjetas del panel para anotar cualquier día.",
 	"Add comment": "Añadir comentario",
 	"Flip back": "Volver a girar",
+	"Edit comment": "Editar comentario",
+	"Move day comments into note bodies":
+		"Mover los comentarios diarios al cuerpo de las notas",
+	"No comments left to move.": "No quedan comentarios por mover.",
+	"Moved comments in 1 note.": "Comentarios movidos en 1 nota.",
+	"Moved comments in {n} notes.":
+		"Comentarios movidos en {n} notas.",
 	"Add a comment for this day…": "Añade un comentario para este día…",
 	Comments: "Comentarios",
 	"+{n} more": "+{n} más",

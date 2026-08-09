@@ -299,6 +299,15 @@ export const fr: Record<string, string> = {
 		"Affiche un volet de commentaire sur les cartes du tableau de bord pour annoter n'importe quel jour.",
 	"Add comment": "Ajouter un commentaire",
 	"Flip back": "Retourner la carte",
+	"Edit comment": "Modifier le commentaire",
+	"Move day comments into note bodies":
+		"Déplacer les commentaires quotidiens dans le corps des notes",
+	"No comments left to move.":
+		"Plus aucun commentaire à déplacer.",
+	"Moved comments in 1 note.":
+		"Commentaires déplacés dans 1 note.",
+	"Moved comments in {n} notes.":
+		"Commentaires déplacés dans {n} notes.",
 	"Add a comment for this day…": "Ajoutez un commentaire pour ce jour…",
 	Comments: "Commentaires",
 	"+{n} more": "+{n} de plus",

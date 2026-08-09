@@ -300,6 +300,14 @@ export const de: Record<string, string> = {
 		"Zeigt eine Kommentarlasche auf den Dashboard-Karten, um Notizen zu einzelnen Tagen festzuhalten.",
 	"Add comment": "Kommentar hinzufügen",
 	"Flip back": "Zurückdrehen",
+	"Edit comment": "Kommentar bearbeiten",
+	"Move day comments into note bodies":
+		"Tageskommentare in Notiztexte verschieben",
+	"No comments left to move.":
+		"Keine Kommentare mehr zu verschieben.",
+	"Moved comments in 1 note.": "Kommentare in 1 Notiz verschoben.",
+	"Moved comments in {n} notes.":
+		"Kommentare in {n} Notizen verschoben.",
 	"Add a comment for this day…": "Füge einen Kommentar für diesen Tag hinzu…",
 	Comments: "Kommentare",
 	"+{n} more": "+{n} weitere",

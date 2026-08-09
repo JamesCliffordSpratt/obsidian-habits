@@ -9,6 +9,8 @@ import type {
 	NewHabitOptions,
 } from "./types";
 import { addDays, sanitizeFileName, toDateKey } from "./utils";
+import { tagsInComments } from "./comment-text";
+import { applyCommentLog, parseCommentLog } from "./comment-log";
 import { t } from "./i18n";
 
 const HABIT_TYPES: readonly HabitType[] = ["binary", "repetition", "timed"];
@@ -32,6 +34,18 @@ function isHabitFrequency(value: unknown): value is HabitFrequency {
 	);
 }
 
+/** Shallow equality for a day-keyed comment map. */
+function sameComments(
+	a: Record<string, string>,
+	b: Record<string, string>,
+): boolean {
+	const keys = Object.keys(a);
+	return (
+		keys.length === Object.keys(b).length &&
+		keys.every((key) => a[key] === b[key])
+	);
+}
+
 /**
  * Reads and writes habit notes in the configured folder.
  *
@@ -39,11 +53,66 @@ function isHabitFrequency(value: unknown): value is HabitFrequency {
  * map stores the value logged for each day.
  */
 export class HabitStore {
+	/**
+	 * Day comments read from each note's body, keyed by note path.
+	 *
+	 * The body can only be read asynchronously, but `getHabits` is
+	 * synchronous and called on every render, so the text is cached here
+	 * and refreshed whenever a habit note changes on disk.
+	 */
+	private commentCache = new Map<string, Record<string, string>>();
+
 	constructor(
 		private app: App,
 		private getSettings: () => HabitsPluginSettings,
 		private saveSettings: () => Promise<void>,
 	) {}
+
+	/** True when the path lives inside the configured habits folder. */
+	isHabitFile(path: string): boolean {
+		const folder = this.folderPath;
+		return path === folder || path.startsWith(`${folder}/`);
+	}
+
+	/**
+	 * Read every habit note's comment section into the cache. Returns true
+	 * when anything changed, so the caller can refresh open views.
+	 */
+	async primeComments(): Promise<boolean> {
+		let changed = false;
+		for (const file of this.habitFiles()) {
+			changed = (await this.refreshComments(file)) || changed;
+		}
+		return changed;
+	}
+
+	/** Re-read one note's comment section. Returns true when it changed. */
+	async refreshComments(file: TFile): Promise<boolean> {
+		const content = await this.app.vault.cachedRead(file);
+		return this.putComments(file.path, parseCommentLog(content));
+	}
+
+	/** Drop a note from the cache, e.g. after a delete or rename. */
+	forgetComments(path: string): void {
+		this.commentCache.delete(path);
+	}
+
+	/** Store parsed comments, reporting whether they differ from the cache. */
+	private putComments(
+		path: string,
+		comments: Record<string, string>,
+	): boolean {
+		const previous = this.commentCache.get(path);
+		if (previous && sameComments(previous, comments)) {
+			return false;
+		}
+		if (Object.keys(comments).length === 0) {
+			this.commentCache.delete(path);
+			return previous !== undefined;
+		}
+		this.commentCache.set(path, comments);
+		return true;
+	}
 
 	private get folderPath(): string {
 		return normalizePath(this.getSettings().habitsFolder);
@@ -97,18 +166,11 @@ export class HabitStore {
 
 	/** Return every habit defined in the folder, sorted by name. */
 	getHabits(): HabitDefinition[] {
-		const folder = this.app.vault.getAbstractFileByPath(this.folderPath);
-		if (!(folder instanceof TFolder)) {
-			return [];
-		}
-
 		const habits: HabitDefinition[] = [];
-		for (const child of folder.children) {
-			if (child instanceof TFile && child.extension === "md") {
-				const habit = this.parseFile(child);
-				if (habit) {
-					habits.push(habit);
-				}
+		for (const file of this.habitFiles()) {
+			const habit = this.parseFile(file);
+			if (habit) {
+				habits.push(habit);
 			}
 		}
 
@@ -150,7 +212,12 @@ export class HabitStore {
 			stopped: fm.stopped === true,
 			stopDate: typeof fm.stopDate === "string" ? fm.stopDate : "",
 			records: this.readRecords(fm.records),
-			comments: this.readComments(fm.comments),
+			// Notes written before comments moved into the body still keep
+			// them in frontmatter; the body wins where both exist.
+			comments: {
+				...this.readComments(fm.comments),
+				...(this.commentCache.get(file.path) ?? {}),
+			},
 		};
 	}
 
@@ -320,7 +387,14 @@ export class HabitStore {
 		});
 	}
 
-	/** Save (or clear) the comment for a habit on the given day. */
+	/**
+	 * Save (or clear) the comment for a habit on the given day.
+	 *
+	 * Comments are written to the note body so that Obsidian indexes the
+	 * `#tags` and `[[links]]` inside them against the day they belong to.
+	 * A note still holding comments in frontmatter is migrated on the same
+	 * pass, so no separate upgrade step is needed.
+	 */
 	async setComment(
 		habit: HabitDefinition,
 		dateKey: string,
@@ -335,23 +409,119 @@ export class HabitStore {
 			);
 			return;
 		}
-		await this.app.fileManager.processFrontMatter(file, (frontmatter) => {
-			const fm = frontmatter as Record<string, unknown>;
-			const comments =
-				fm.comments && typeof fm.comments === "object"
-					? (fm.comments as Record<string, string>)
-					: {};
+
+		const legacy = this.legacyComments(file);
+		let written: Record<string, string> = {};
+		await this.app.vault.process(file, (content) => {
+			const comments = { ...legacy, ...parseCommentLog(content) };
 			if (text) {
 				comments[dateKey] = text;
 			} else {
 				delete comments[dateKey];
 			}
-			if (Object.keys(comments).length > 0) {
-				fm.comments = comments;
+			written = comments;
+			return applyCommentLog(content, comments);
+		});
+		this.putComments(file.path, written);
+
+		if (Object.keys(legacy).length > 0) {
+			await this.clearLegacyComments(file, legacy);
+		}
+	}
+
+	/** Day comments still stored in a note's frontmatter, if any. */
+	private legacyComments(file: TFile): Record<string, string> {
+		const fm = this.app.metadataCache.getFileCache(file)?.frontmatter;
+		return this.readComments(fm?.comments);
+	}
+
+	/** True when any habit note still keeps its comments in frontmatter. */
+	hasLegacyComments(): boolean {
+		return this.habitFiles().some(
+			(file) => Object.keys(this.legacyComments(file)).length > 0,
+		);
+	}
+
+	/**
+	 * Move every note's frontmatter comments into its body. Returns how
+	 * many notes were changed.
+	 */
+	async migrateComments(): Promise<number> {
+		let migrated = 0;
+		for (const file of this.habitFiles()) {
+			const legacy = this.legacyComments(file);
+			if (Object.keys(legacy).length === 0) {
+				continue;
+			}
+			let written: Record<string, string> = {};
+			await this.app.vault.process(file, (content) => {
+				written = { ...legacy, ...parseCommentLog(content) };
+				return applyCommentLog(content, written);
+			});
+			this.putComments(file.path, written);
+			await this.clearLegacyComments(file, legacy);
+			migrated++;
+		}
+		return migrated;
+	}
+
+	/**
+	 * Drop the frontmatter `comments` key once its contents live in the
+	 * body, along with any tags an earlier version mirrored into `tags` —
+	 * the body now supplies those to Obsidian's index directly.
+	 */
+	private async clearLegacyComments(
+		file: TFile,
+		legacy: Record<string, string>,
+	): Promise<void> {
+		const mirrored = tagsInComments(legacy);
+		await this.app.fileManager.processFrontMatter(file, (frontmatter) => {
+			const fm = frontmatter as Record<string, unknown>;
+			delete fm.comments;
+			if (mirrored.size === 0 || !("tags" in fm)) {
+				return;
+			}
+			const kept = this.readTagProperty(fm.tags).filter(
+				(tag) => !mirrored.has(tag),
+			);
+			if (kept.length > 0) {
+				fm.tags = kept;
 			} else {
-				delete fm.comments;
+				delete fm.tags;
 			}
 		});
+	}
+
+	/** Read `tags` in any of the shapes Obsidian accepts, minus the `#`. */
+	private readTagProperty(raw: unknown): string[] {
+		const values = Array.isArray(raw)
+			? raw
+			: typeof raw === "string"
+				? raw.split(/[,\s]+/)
+				: [];
+		const out: string[] = [];
+		for (const value of values) {
+			if (typeof value !== "string") {
+				continue;
+			}
+			const tag = value.trim().replace(/^#/, "");
+			if (tag !== "" && !out.includes(tag)) {
+				out.push(tag);
+			}
+		}
+		return out;
+	}
+
+	/** Every markdown file in the habits folder. */
+	private habitFiles(): TFile[] {
+		const folder = this.app.vault.getAbstractFileByPath(this.folderPath);
+		if (!(folder instanceof TFolder)) {
+			return [];
+		}
+		return folder.children.filter(
+			(child): child is TFile =>
+				child instanceof TFile && child.extension === "md",
+		);
 	}
 
 	/** Pause a habit from today. Paused days are skipped by streaks/stats. */

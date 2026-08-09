@@ -101,6 +101,11 @@ export class HabitsPanelView extends ItemView {
 				requestReload();
 			}),
 		);
+		this.registerEvent(
+			this.pluginEvents.on("comments-changed", () => {
+				requestReload();
+			}),
+		);
 
 		this.reload();
 	}

@@ -4,6 +4,8 @@ import {
 	Events,
 	MarkdownRenderChild,
 	Menu,
+	type HoverParent,
+	type HoverPopover,
 	normalizePath,
 	Notice,
 	setIcon,
@@ -28,6 +30,8 @@ import {
 	type StatsRangeMode,
 } from "../stats";
 import { applyHabitIcon } from "./icon-suggest-modal";
+import { CommentSuggest } from "./comment-suggest";
+import { renderComment } from "../comment-text";
 import {
 	addDays,
 	friendlyDateLabel,
@@ -50,7 +54,12 @@ const MOBILE_BREAKPOINT = 768;
  * The dashboard shows one card per habit in a carousel and lets the user log
  * progress for the currently selected day.
  */
-export class HabitsDashboard extends MarkdownRenderChild {
+export class HabitsDashboard
+	extends MarkdownRenderChild
+	implements HoverParent
+{
+	/** Set by Obsidian's page-preview plugin when a comment link is hovered. */
+	hoverPopover: HoverPopover | null = null;
 	private habits: HabitDefinition[] = [];
 	private selectedDate: Date = new Date();
 	private index = 0;
@@ -73,6 +82,8 @@ export class HabitsDashboard extends MarkdownRenderChild {
 	 * becomes perfect once more.
 	 */
 	private celebratedDays = new Set<string>();
+	/** Live comment autocompletes, one per rendered card. */
+	private commentSuggests: CommentSuggest[] = [];
 
 	constructor(
 		private app: App,
@@ -150,6 +161,13 @@ export class HabitsDashboard extends MarkdownRenderChild {
 				requestReload();
 			}),
 		);
+		// Comments are read from note bodies asynchronously, so they can
+		// land after the first paint.
+		this.registerEvent(
+			this.pluginEvents.on("comments-changed", () => {
+				requestReload();
+			}),
+		);
 
 		this.reload();
 	}
@@ -195,6 +213,7 @@ export class HabitsDashboard extends MarkdownRenderChild {
 	}
 
 	private render(): void {
+		this.disposeCommentSuggests();
 		this.root.empty();
 
 		if (this.mode === "stats") {
@@ -788,6 +807,10 @@ export class HabitsDashboard extends MarkdownRenderChild {
 	 * Back face of the card plus the comment "lip" along the bottom edge.
 	 * Clicking the lip flips the card over to a per-day comment editor;
 	 * comments are stored per selected date in the habit's frontmatter.
+	 *
+	 * The back has two faces of its own: a read view that renders `#tags`
+	 * and `[[links]]` as clickable elements, and the textarea that appears
+	 * once the user starts editing. Typing `#` or `[[` opens a suggester.
 	 */
 	private renderCommentBack(
 		card: HTMLElement,
@@ -801,7 +824,12 @@ export class HabitsDashboard extends MarkdownRenderChild {
 			cls: "habits-card-back-title",
 			text: friendlyDateLabel(this.selectedDate, new Date()),
 		});
-		const input = back.createEl("textarea", {
+		const stage = back.createDiv({ cls: "habits-comment-stage" });
+		const reader = stage.createDiv({
+			cls: "habits-comment-read",
+			attr: { tabindex: "0", role: "button" },
+		});
+		const input = stage.createEl("textarea", {
 			cls: "habits-comment-input",
 			attr: {
 				placeholder: t("Add a comment for this day…"),
@@ -809,6 +837,41 @@ export class HabitsDashboard extends MarkdownRenderChild {
 			},
 		});
 		input.value = habit.comments[dateKey] ?? "";
+
+		const suggest = new CommentSuggest(this.app, input);
+		suggest.load();
+		this.commentSuggests.push(suggest);
+
+		/** Repaint the read view from the current textarea contents. */
+		const paint = (): void => {
+			const text = input.value.trim();
+			if (text === "") {
+				reader.empty();
+				reader.addClass("is-empty");
+				reader.setText(t("Add a comment for this day…"));
+				reader.setAttr("aria-label", t("Add comment"));
+				return;
+			}
+			reader.removeClass("is-empty");
+			renderComment(this.app, reader, text, {
+				sourcePath: habit.path,
+				component: this,
+			});
+			reader.setAttr("aria-label", t("Edit comment"));
+		};
+
+		const edit = (): void => {
+			stage.addClass("is-editing");
+			input.focus();
+		};
+
+		/** Leave edit mode, showing the rendered view again. */
+		const review = (): void => {
+			stage.removeClass("is-editing");
+			paint();
+		};
+
+		paint();
 
 		const lip = card.createEl("button", {
 			cls: "habits-card-lip",
@@ -837,17 +900,65 @@ export class HabitsDashboard extends MarkdownRenderChild {
 				card.removeClass("is-flipped");
 				setIcon(lipIcon, "message-square");
 				lip.setAttr("aria-label", t("Add comment"));
+				review();
 				void save();
 			} else {
 				card.addClass("is-flipped");
 				setIcon(lipIcon, "rotate-ccw");
 				lip.setAttr("aria-label", t("Flip back"));
-				input.focus();
+				// An empty comment goes straight to the editor; an existing
+				// one shows its links first so they stay clickable.
+				if (input.value.trim() === "") {
+					edit();
+				}
 			}
 		});
-		this.registerDomEvent(input, "blur", () => {
-			void save();
+
+		// Clicking anywhere in the read view that is not a tag or link
+		// starts editing at the end of the text.
+		this.registerDomEvent(reader, "click", (event) => {
+			if ((event.target as HTMLElement).closest("a")) {
+				return;
+			}
+			edit();
+			input.setSelectionRange(input.value.length, input.value.length);
 		});
+		this.registerDomEvent(reader, "keydown", (event) => {
+			if (event.key === "Enter" || event.key === " ") {
+				event.preventDefault();
+				edit();
+			}
+		});
+
+		this.registerDomEvent(input, "blur", () => {
+			// The suggester steals focus briefly while a row is clicked.
+			window.setTimeout(() => {
+				if (suggest.isOpen || document.activeElement === input) {
+					return;
+				}
+				review();
+				void save();
+			}, 140);
+		});
+		this.registerDomEvent(input, "keydown", (event) => {
+			if (event.key === "Escape" && !suggest.isOpen) {
+				event.stopPropagation();
+				review();
+				void save();
+			}
+		});
+	}
+
+	onunload(): void {
+		this.disposeCommentSuggests();
+	}
+
+	/** Tear down comment suggesters before the cards they belong to go. */
+	private disposeCommentSuggests(): void {
+		for (const suggest of this.commentSuggests) {
+			suggest.unload();
+		}
+		this.commentSuggests = [];
 	}
 
 	/** Body shown instead of controls when the habit is paused. */
