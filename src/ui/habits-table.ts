@@ -9,12 +9,20 @@ import { t } from "../i18n";
 import type { HabitStore } from "../habit-store";
 import type { HabitsPluginSettings } from "../settings";
 import type { HabitDefinition } from "../types";
-import { getStatsRange, habitStats, type DateRange } from "../stats";
+import {
+	getStatsRange,
+	habitStats,
+	isDue,
+	isPausedOn,
+	limitOf,
+	type DateRange,
+} from "../stats";
 import {
 	formatTimeOfDay,
 	groupHabits,
 	habitScheduleLabel,
 	sectionLabel,
+	toDateKey,
 } from "../utils";
 
 /** One column of period counts: a header label and its date range. */
@@ -112,6 +120,7 @@ export class HabitsTable extends MarkdownRenderChild {
 
 		const table = root.createEl("table", { cls: "habits-table" });
 		const head = table.createEl("thead").createEl("tr");
+		head.createEl("th", { text: t("Today") });
 		head.createEl("th", { text: t("Habit") });
 		head.createEl("th", { text: t("Schedule") });
 		for (const column of columns) {
@@ -129,7 +138,7 @@ export class HabitsTable extends MarkdownRenderChild {
 				});
 				row.createEl("td", {
 					text: sectionLabel(section.key),
-					attr: { colspan: String(2 + columns.length) },
+					attr: { colspan: String(3 + columns.length) },
 				});
 			}
 			for (const habit of section.habits) {
@@ -145,6 +154,9 @@ export class HabitsTable extends MarkdownRenderChild {
 		today: Date,
 	): void {
 		const row = body.createEl("tr");
+
+		const todayCell = row.createEl("td", { cls: "habits-table-today" });
+		this.renderTodayCell(todayCell, habit, today);
 
 		const nameCell = row.createEl("td", { cls: "habits-table-name" });
 		const link = nameCell.createEl("a", {
@@ -178,6 +190,134 @@ export class HabitsTable extends MarkdownRenderChild {
 						: "–",
 			});
 		}
+	}
+
+	/**
+	 * The interactive first column: log today's value without leaving the
+	 * table. Binary habits get the Done/Not done pill, limit habits the
+	 * slip toggle, counted and timed habits a compact stepper. Habits not
+	 * due today show a dash; paused habits a pause glyph. The cell redraws
+	 * itself optimistically on click — the count columns catch up when the
+	 * note change comes back through the metadata cache.
+	 */
+	private renderTodayCell(
+		cell: HTMLElement,
+		habit: HabitDefinition,
+		today: Date,
+	): void {
+		cell.empty();
+		const dateKey = toDateKey(today);
+
+		if (isPausedOn(habit, dateKey)) {
+			const badge = cell.createSpan({
+				cls: "habits-table-paused",
+				attr: { "aria-label": t("Paused") },
+			});
+			setIcon(badge, "pause");
+			return;
+		}
+		if (!isDue(habit, today)) {
+			cell.createSpan({ cls: "habits-table-notdue", text: "–" });
+			return;
+		}
+
+		const value = habit.records[dateKey] ?? 0;
+		const commit = async (next: number): Promise<void> => {
+			const clamped = Math.max(0, next);
+			// Mirror the write locally so the cell can redraw immediately;
+			// the store keeps zero-values out of frontmatter, so do the same.
+			if (clamped > 0) {
+				habit.records[dateKey] = clamped;
+			} else {
+				delete habit.records[dateKey];
+			}
+			this.renderTodayCell(cell, habit, today);
+			await this.store.setRecord(habit, dateKey, clamped);
+		};
+
+		if (habit.type === "binary" && habit.goalDirection === "max") {
+			const slipped = value >= 1;
+			const pill = this.createPill(
+				cell,
+				slipped ? "x" : "check",
+				slipped ? t("Slipped") : t("Clean"),
+				slipped ? t("Mark as clean") : t("Mark as slipped"),
+				slipped,
+			);
+			pill.addClass("habits-table-slip");
+			this.registerDomEvent(pill, "click", () => {
+				void commit(slipped ? 0 : 1);
+			});
+			return;
+		}
+
+		if (habit.type === "binary") {
+			const done = value >= 1;
+			const pill = this.createPill(
+				cell,
+				done ? "check" : "circle",
+				done ? t("Done") : t("Not done"),
+				done ? t("Mark as not done") : t("Mark as done"),
+				done,
+			);
+			this.registerDomEvent(pill, "click", () => {
+				void commit(done ? 0 : 1);
+			});
+			return;
+		}
+
+		// Counted and timed habits: [−] value/goal [+]. Timed habits step
+		// in 5-minute chunks, matching the spirit of the panel's steppers.
+		const step = habit.type === "timed" ? 5 : 1;
+		const goal =
+			habit.goalDirection === "max" ? limitOf(habit) : habit.target;
+		const stepper = cell.createDiv({ cls: "habits-table-stepper" });
+		const minus = stepper.createEl("button", {
+			cls: "habits-icon-button habits-table-mini",
+			attr: { type: "button", "aria-label": t("Decrease by 1") },
+		});
+		setIcon(minus, "minus");
+		this.registerDomEvent(minus, "click", () => {
+			void commit(value - step);
+		});
+		stepper.createSpan({
+			cls: "habits-table-value",
+			text: `${value}/${goal}`,
+		});
+		const plus = stepper.createEl("button", {
+			cls: "habits-icon-button habits-table-mini",
+			attr: {
+				type: "button",
+				"aria-label": t("Increase by {n}", { n: step }),
+			},
+		});
+		setIcon(plus, "plus");
+		this.registerDomEvent(plus, "click", () => {
+			void commit(value + step);
+		});
+	}
+
+	/** The Done/Not done-style pill used by the binary today controls. */
+	private createPill(
+		cell: HTMLElement,
+		icon: string,
+		label: string,
+		ariaLabel: string,
+		active: boolean,
+	): HTMLButtonElement {
+		const pill = cell.createEl("button", {
+			cls: "habits-table-toggle",
+			attr: {
+				type: "button",
+				"aria-label": ariaLabel,
+				"aria-pressed": String(active),
+			},
+		});
+		pill.toggleClass("is-done", active);
+		const glyph = pill.createSpan({ cls: "habits-table-toggle-icon" });
+		setIcon(glyph, icon);
+		pill.createSpan({ text: label });
+		return pill;
 	}
 
 	/**

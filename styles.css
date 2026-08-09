@@ -2408,3 +2408,73 @@ table.habits-table td.habits-table-schedule {
 	font-size: var(--font-ui-small);
 	padding: 0.5em 0;
 }
+
+/* Habits table — the interactive Today column */
+
+table.habits-table td.habits-table-today {
+	width: 1%;
+}
+
+table.habits-table button.habits-table-toggle {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.35em;
+	padding: 0.25em 0.7em;
+	border-radius: var(--radius-m);
+	background: var(--background-modifier-hover);
+	color: var(--text-muted);
+	font-size: var(--font-ui-small);
+	font-weight: var(--font-semibold);
+	cursor: pointer;
+	box-shadow: none;
+	white-space: nowrap;
+}
+
+table.habits-table button.habits-table-toggle:hover {
+	background: var(--background-modifier-active-hover);
+	color: var(--text-normal);
+}
+
+table.habits-table button.habits-table-toggle.is-done {
+	background: var(--interactive-accent);
+	color: var(--text-on-accent);
+}
+
+table.habits-table button.habits-table-toggle.habits-table-slip.is-done {
+	background: var(--background-modifier-error);
+	color: var(--text-on-accent);
+}
+
+table.habits-table .habits-table-toggle-icon {
+	display: inline-flex;
+}
+
+table.habits-table .habits-table-toggle-icon .svg-icon {
+	width: 0.9em;
+	height: 0.9em;
+}
+
+table.habits-table .habits-table-stepper {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.3em;
+}
+
+table.habits-table .habits-table-value {
+	min-width: 3em;
+	text-align: center;
+	font-variant-numeric: tabular-nums;
+}
+
+table.habits-table .habits-icon-button.habits-table-mini {
+	padding: 0.15em;
+}
+
+table.habits-table .habits-icon-button.habits-table-mini .svg-icon {
+	width: 0.85em;
+	height: 0.85em;
+}
+
+table.habits-table .habits-table-notdue {
+	color: var(--text-faint);
+}
