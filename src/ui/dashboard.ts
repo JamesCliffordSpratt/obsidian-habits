@@ -995,6 +995,16 @@ export class HabitsDashboard extends MarkdownRenderChild {
 		wasComplete: boolean,
 	): Promise<void> {
 		if (!wasComplete && this.isComplete(habit)) {
+			// With animations off the completion still books its perfect
+			// day (so re-enabling never replays a stale celebration), the
+			// view just updates without the ceremony.
+			if (!this.getSettings().animations) {
+				if (this.isPerfectDay()) {
+					this.celebratedDays.add(toDateKey(this.selectedDate));
+				}
+				this.reload();
+				return;
+			}
 			this.suppressAutoReload = true;
 			try {
 				const overlay = await this.playCompletionAnimation(card);
@@ -1034,7 +1044,15 @@ export class HabitsDashboard extends MarkdownRenderChild {
 			this.celebratedDays.delete(dateKey);
 		}
 		const celebrate =
-			mayCelebrate && perfectNow && !this.celebratedDays.has(dateKey);
+			mayCelebrate &&
+			perfectNow &&
+			!this.celebratedDays.has(dateKey) &&
+			this.getSettings().animations;
+		// Book the perfect day even when the celebration is switched off,
+		// so re-enabling animations never replays a stale one.
+		if (perfectNow && !this.getSettings().animations) {
+			this.celebratedDays.add(dateKey);
+		}
 		// Repaint from local state rather than reloading: the metadata
 		// cache may not have absorbed the write yet, and a stale reload
 		// would briefly revert the control the user just pressed. The
@@ -1496,9 +1514,11 @@ export class HabitsDashboard extends MarkdownRenderChild {
 						this.suppressAutoReload = true;
 						try {
 							await this.store.pauseHabit(habit);
-							const overlay =
-								await this.playPauseAnimation(card);
-							await this.playCardDeparture(card, overlay);
+							if (this.getSettings().animations) {
+								const overlay =
+									await this.playPauseAnimation(card);
+								await this.playCardDeparture(card, overlay);
+							}
 						} finally {
 							this.suppressAutoReload = false;
 						}

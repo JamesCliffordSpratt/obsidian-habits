@@ -65,6 +65,9 @@ export const fr: Record<string, string> = {
 	"Group the habits table": "Grouper le tableau des habitudes",
 	"Group the rows of habits-table blocks by habit group, with a heading row per group. Turn off for one flat list ordered by planned time.":
 		"Groupe les lignes des blocs habits-table par groupe d'habitude, avec une ligne d'en-tête par groupe. Désactivez pour une seule liste plate triée par heure prévue.",
+	"Completion animations": "Animations de complétion",
+	"Play the check swoosh, card departure, and perfect-day confetti when habits are completed. Turn off for instant, quiet updates.":
+		"Joue le swoosh de la coche, le départ de la carte et les confettis du jour parfait quand une habitude est complétée. Désactivez pour des mises à jour instantanées et discrètes.",
 	"Reminders": "Rappels",
 	"Write reminders for due habits": "Écrire des rappels pour les habitudes dues",
 	"Each day, write one reminder checklist line per planned time of every habit due that day, in the format the Reminder plugin picks up. The lines live in a marked block and refresh as you log habits.":

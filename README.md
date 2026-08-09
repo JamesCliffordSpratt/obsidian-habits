@@ -88,7 +88,7 @@ The charts on a non-daily habit's page adapt too: instead of a 30-day grid, the 
 
 ## 🎠 The dashboard
 
-Cards for each habit sit in a swipeable carousel. Completing a habit plays a celebration animation and the card glides to the back of the queue, keeping what's left front and centre. Click a card's name to open its note; right-click (or long-press on mobile) for editing, pausing, stopping, or removing.
+Cards for each habit sit in a swipeable carousel. Completing a habit plays a celebration animation and the card glides to the back of the queue, keeping what's left front and centre (prefer it quiet? turn off **Completion animations** in settings). Click a card's name to open its note; right-click (or long-press on mobile) for editing, pausing, stopping, or removing.
 
 Embedded in a **daily note**? The dashboard follows that note's date, so browsing yesterday's note shows yesterday's habits. The dashboard also live-updates whenever your habit notes or settings change — even from another pane or device sync.
 

@@ -173,6 +173,12 @@ export interface HabitsPluginSettings {
 	/** Show the comment flap on dashboard cards. */
 	enableComments: boolean;
 	/**
+	 * Play the completion celebrations: the check swoosh and card
+	 * departure, the perfect-day confetti, and the panel row flash.
+	 * When off, logging updates the view instantly and quietly.
+	 */
+	animations: boolean;
+	/**
 	 * How many habit rows each stats carousel page shows. Only applies
 	 * while the layout is `carousel`; grid and vertical layouts show the
 	 * stats as one flat list.
@@ -201,6 +207,7 @@ export const DEFAULT_SETTINGS: HabitsPluginSettings = {
 	followDailyNoteDate: true,
 	dailyNoteDateFormat: "YYYY-MM-DD",
 	enableComments: true,
+	animations: true,
 	statsRowsPerPage: 4,
 	experimental: { ...DEFAULT_EXPERIMENTAL },
 	aiSummary: { ...DEFAULT_AI_SUMMARY },
@@ -308,6 +315,17 @@ export class HabitsSettingTab extends PluginSettingTab {
 							type: "toggle",
 							key: "enableComments",
 							defaultValue: DEFAULT_SETTINGS.enableComments,
+						},
+					},
+					{
+						name: t("Completion animations"),
+						desc: t(
+							"Play the check swoosh, card departure, and perfect-day confetti when habits are completed. Turn off for instant, quiet updates.",
+						),
+						control: {
+							type: "toggle",
+							key: "animations",
+							defaultValue: DEFAULT_SETTINGS.animations,
 						},
 					},
 				],
@@ -941,6 +959,22 @@ export class HabitsSettingTab extends PluginSettingTab {
 					.setValue(this.plugin.settings.enableComments)
 					.onChange(async (value) => {
 						this.plugin.settings.enableComments = value;
+						await this.plugin.saveSettings();
+					}),
+			);
+
+		new Setting(containerEl)
+			.setName(t("Completion animations"))
+			.setDesc(
+				t(
+					"Play the check swoosh, card departure, and perfect-day confetti when habits are completed. Turn off for instant, quiet updates.",
+				),
+			)
+			.addToggle((toggle) =>
+				toggle
+					.setValue(this.plugin.settings.animations)
+					.onChange(async (value) => {
+						this.plugin.settings.animations = value;
 						await this.plugin.saveSettings();
 					}),
 			);

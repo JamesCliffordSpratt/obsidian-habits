@@ -63,6 +63,9 @@ export const ko: Record<string, string> = {
 	"Group the habits table": "습관 표 그룹화",
 	"Group the rows of habits-table blocks by habit group, with a heading row per group. Turn off for one flat list ordered by planned time.":
 		"habits-table 블록의 행을 습관 그룹별로 묶고 그룹마다 머리글 행을 표시합니다. 끄면 예정 시간순의 단일 목록이 됩니다.",
+	"Completion animations": "완료 애니메이션",
+	"Play the check swoosh, card departure, and perfect-day confetti when habits are completed. Turn off for instant, quiet updates.":
+		"습관을 완료할 때 체크 스우시, 카드 퇴장, 완벽한 하루 색종이를 재생합니다. 끄면 즉시 조용히 갱신됩니다.",
 	"Reminders": "알림",
 	"Write reminders for due habits": "오늘 해야 할 습관의 알림 작성",
 	"Each day, write one reminder checklist line per planned time of every habit due that day, in the format the Reminder plugin picks up. The lines live in a marked block and refresh as you log habits.":

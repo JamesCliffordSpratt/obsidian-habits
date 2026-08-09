@@ -62,6 +62,9 @@ export const zh: Record<string, string> = {
 	"Group the habits table": "按分组显示习惯表格",
 	"Group the rows of habits-table blocks by habit group, with a heading row per group. Turn off for one flat list ordered by planned time.":
 		"将 habits-table 块的行按习惯分组显示，每组一个标题行。关闭后为按计划时间排序的单一列表。",
+	"Completion animations": "完成动画",
+	"Play the check swoosh, card departure, and perfect-day confetti when habits are completed. Turn off for instant, quiet updates.":
+		"完成习惯时播放对勾划入、卡片退场和完美一天的彩纸动画。关闭后立即静默更新。",
 	"Reminders": "提醒",
 	"Write reminders for due habits": "为当日应做的习惯写入提醒",
 	"Each day, write one reminder checklist line per planned time of every habit due that day, in the format the Reminder plugin picks up. The lines live in a marked block and refresh as you log habits.":

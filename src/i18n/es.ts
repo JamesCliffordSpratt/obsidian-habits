@@ -65,6 +65,9 @@ export const es: Record<string, string> = {
 	"Group the habits table": "Agrupar la tabla de hábitos",
 	"Group the rows of habits-table blocks by habit group, with a heading row per group. Turn off for one flat list ordered by planned time.":
 		"Agrupa las filas de los bloques habits-table por grupo de hábito, con una fila de encabezado por grupo. Desactívalo para una sola lista plana ordenada por hora prevista.",
+	"Completion animations": "Animaciones de finalización",
+	"Play the check swoosh, card departure, and perfect-day confetti when habits are completed. Turn off for instant, quiet updates.":
+		"Reproduce el swoosh de la marca, la salida de la tarjeta y el confeti del día perfecto al completar hábitos. Desactívalo para actualizaciones instantáneas y silenciosas.",
 	"Reminders": "Recordatorios",
 	"Write reminders for due habits":
 		"Escribir recordatorios para hábitos pendientes",

@@ -558,7 +558,8 @@ export class HabitsPanelView extends ItemView {
 			if (
 				!wasDone &&
 				this.isDone(habit) &&
-				habit.goalDirection !== "max"
+				habit.goalDirection !== "max" &&
+				this.getSettings().animations
 			) {
 				row.addClass("is-celebrating");
 				const flash = row.createDiv({ cls: "habits-panel-flash" });

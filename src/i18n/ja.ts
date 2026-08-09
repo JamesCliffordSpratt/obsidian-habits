@@ -63,6 +63,9 @@ export const ja: Record<string, string> = {
 	"Group the habits table": "習慣テーブルをグループ化",
 	"Group the rows of habits-table blocks by habit group, with a heading row per group. Turn off for one flat list ordered by planned time.":
 		"habits-table ブロックの行を習慣のグループごとにまとめ、グループごとに見出し行を表示します。オフにすると予定時刻順のフラットなリストになります。",
+	"Completion animations": "完了アニメーション",
+	"Play the check swoosh, card departure, and perfect-day confetti when habits are completed. Turn off for instant, quiet updates.":
+		"習慣の完了時にチェックのスウッシュ、カードの退場、パーフェクトデーの紙吹雪を再生します。オフにすると即座に静かに更新されます。",
 	"Reminders": "リマインダー",
 	"Write reminders for due habits": "当日実施予定の習慣のリマインダーを書き込む",
 	"Each day, write one reminder checklist line per planned time of every habit due that day, in the format the Reminder plugin picks up. The lines live in a marked block and refresh as you log habits.":
