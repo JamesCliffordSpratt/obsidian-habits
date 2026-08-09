@@ -43,23 +43,99 @@ function findBlock(
 	};
 }
 
+/** One parsed checklist line of the managed block. */
+export interface ReminderBlockLine {
+	checked: boolean;
+	name: string;
+	date: string;
+	time: string;
+}
+
+/** Parse every reminder line inside the managed block. */
+export function parseReminderLines(content: string): ReminderBlockLine[] {
+	const block = findBlock(content);
+	if (!block) {
+		return [];
+	}
+	const line =
+		/^- \[([ xX])\] (.+) \(@(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2})\)$/gm;
+	return [...block.body.matchAll(line)].map((match) => ({
+		checked: match[1] !== " ",
+		name: match[2],
+		date: match[3],
+		time: match[4],
+	}));
+}
+
 /**
- * The `name|time` keys of lines already ticked off inside the managed
- * block. Regeneration keeps these checked even when the habit's record
- * does not (yet) account for them, so completing a reminder from the
- * notification is never undone by a later refresh.
+ * The `name|time` keys of lines ticked off inside the managed block.
+ * Regeneration keeps these checked even when the habit's record does not
+ * account for them — the partially ticked binary habit (one of two times
+ * done) and the read-only timed habit would otherwise lose their ticks
+ * on every refresh.
  */
 export function checkedKeys(content: string): Set<string> {
 	const keys = new Set<string>();
-	const block = findBlock(content);
-	if (!block) {
-		return keys;
-	}
-	const line = /^- \[[xX]\] (.+) \(@\d{4}-\d{2}-\d{2} (\d{2}:\d{2})\)$/gm;
-	for (const match of block.body.matchAll(line)) {
-		keys.add(`${match[1]}|${match[2]}`);
+	for (const line of parseReminderLines(content)) {
+		if (line.checked) {
+			keys.add(`${line.name}|${line.time}`);
+		}
 	}
 	return keys;
+}
+
+/**
+ * The record value today's tick state calls for, or `current` when the
+ * ticks ask for no change. Ticking is logging: a binary habit is done
+ * once *all* its lines are ticked (and un-done when one is unticked
+ * again); a counted habit's value follows the number of ticked lines
+ * whenever that number disagrees with what the current value would
+ * display (`min(current, total)` — so a count beyond the planned times
+ * survives as long as every line stays ticked). Timed habits are
+ * read-only from the block: minutes are logged in the dashboard, and a
+ * tick is kept purely visually.
+ */
+export function desiredRecord(
+	habit: HabitDefinition,
+	checked: number,
+	total: number,
+	current: number,
+): number {
+	if (habit.type === "binary") {
+		return checked === total ? 1 : 0;
+	}
+	if (habit.type === "repetition") {
+		return checked === Math.min(current, total) ? current : checked;
+	}
+	return current;
+}
+
+/** Snapshot key for one line's tick state. */
+function tickKey(line: ReminderBlockLine): string {
+	return `${line.date}|${line.name}|${line.time}`;
+}
+
+/**
+ * The habits whose tick state differs from the snapshot taken after our
+ * last regeneration — the actual user edits. Only these may write records:
+ * a line can be stale the *other* way round (the record just changed in
+ * the dashboard and the block has not been regenerated yet), and mirroring
+ * such a line back would silently revert the fresh record. A line the
+ * snapshot has never seen counts as an edit only when it is ticked, so
+ * ticks made while the plugin was not watching are still honoured.
+ */
+export function changedHabitNames(
+	lines: ReminderBlockLine[],
+	snapshot: ReadonlyMap<string, boolean> | null,
+): Set<string> {
+	const changed = new Set<string>();
+	for (const line of lines) {
+		const before = snapshot?.get(tickKey(line));
+		if (before === undefined ? line.checked : before !== line.checked) {
+			changed.add(line.name);
+		}
+	}
+	return changed;
 }
 
 /**
@@ -103,9 +179,14 @@ export function reminderLines(
 		}
 		const covered = coveredTimes(habit, habit.records[dateKey] ?? 0);
 		habit.times.forEach((time, index) => {
+			// A counted habit's ticks mirror its record exactly (ticking IS
+			// logging, so the record is the whole truth); binary and timed
+			// habits additionally keep manual ticks the record cannot
+			// express — one session of two, or a tick on a read-only line.
 			const checked =
 				index < covered ||
-				previouslyChecked.has(`${habit.name}|${time}`);
+				(habit.type !== "repetition" &&
+					previouslyChecked.has(`${habit.name}|${time}`));
 			entries.push({
 				time,
 				line: reminderLine(habit.name, dateKey, time, checked),
@@ -177,11 +258,28 @@ function dailyNoteOptions(app: App): DailyNotesOptions {
  * integration: the Reminder plugin has no API, its input surface is notes.
  */
 export class ReminderSync {
+	/**
+	 * Tick state of the block as of our last regeneration (or first read),
+	 * keyed per line. Diffing against it separates user edits from lines
+	 * that are merely stale because a record changed elsewhere first.
+	 */
+	private lastTicks: Map<string, boolean> | null = null;
+
 	constructor(
 		private app: App,
 		private store: HabitStore,
 		private getSettings: () => HabitsPluginSettings,
 	) {}
+
+	/** Refresh the tick snapshot from the note content just written/read. */
+	private rememberTicks(content: string): void {
+		this.lastTicks = new Map(
+			parseReminderLines(content).map((line) => [
+				tickKey(line),
+				line.checked,
+			]),
+		);
+	}
 
 	/** Vault path the block should live in today, or null when unknown. */
 	targetPath(today: Date): string | null {
@@ -223,14 +321,14 @@ export class ReminderSync {
 			);
 			if (lines.length > 0) {
 				await this.ensureParentFolder(path);
-				await this.app.vault.create(
-					path,
-					applyReminderLines("", lines),
-				);
+				const created = applyReminderLines("", lines);
+				await this.app.vault.create(path, created);
+				this.rememberTicks(created);
 			}
 			return;
 		}
 		const content = await this.app.vault.cachedRead(file);
+		await this.syncRecords(content, today);
 		const next = applyReminderLines(
 			content,
 			reminderLines(
@@ -240,18 +338,80 @@ export class ReminderSync {
 			),
 		);
 		if (next === content) {
+			this.rememberTicks(content);
 			return;
 		}
-		await this.app.vault.process(file, (current) =>
-			applyReminderLines(
+		let written = next;
+		await this.app.vault.process(file, (current) => {
+			written = applyReminderLines(
 				current,
 				reminderLines(
 					this.store.getHabits(),
 					today,
 					checkedKeys(current),
 				),
-			),
+			);
+			return written;
+		});
+		this.rememberTicks(written);
+	}
+
+	/**
+	 * Ticking is logging: carry the block's *edited* tick state into the
+	 * habit records (per {@link desiredRecord}) before the block is
+	 * regenerated from those records. Only habits whose ticks changed
+	 * since our last regeneration count as edited — a record logged in
+	 * the dashboard a moment ago leaves the block momentarily stale, and
+	 * mirroring those untouched lines back would revert the fresh record.
+	 * Changed records are mirrored into the in-memory habit immediately,
+	 * so the regeneration that follows sees them before the note write
+	 * round-trips through the cache.
+	 */
+	private async syncRecords(content: string, today: Date): Promise<void> {
+		const dateKey = toDateKey(today);
+		const todayLines = parseReminderLines(content).filter(
+			(line) => line.date === dateKey,
 		);
+		const edited = changedHabitNames(todayLines, this.lastTicks);
+		if (edited.size === 0) {
+			return;
+		}
+		const ticks = new Map<string, { checked: number; total: number }>();
+		for (const line of todayLines) {
+			const tally = ticks.get(line.name) ?? { checked: 0, total: 0 };
+			tally.total += 1;
+			tally.checked += line.checked ? 1 : 0;
+			ticks.set(line.name, tally);
+		}
+		for (const habit of this.store.getHabits()) {
+			const tally = ticks.get(habit.name);
+			if (
+				!tally ||
+				!edited.has(habit.name) ||
+				habit.stopped ||
+				habit.goalDirection === "max" ||
+				isPausedOn(habit, dateKey) ||
+				!isDue(habit, today)
+			) {
+				continue;
+			}
+			const current = habit.records[dateKey] ?? 0;
+			const desired = desiredRecord(
+				habit,
+				tally.checked,
+				tally.total,
+				current,
+			);
+			if (desired === current) {
+				continue;
+			}
+			if (desired > 0) {
+				habit.records[dateKey] = desired;
+			} else {
+				delete habit.records[dateKey];
+			}
+			await this.store.setRecord(habit, dateKey, desired);
+		}
 	}
 
 	/** Create the folders leading up to `path` when they are missing. */

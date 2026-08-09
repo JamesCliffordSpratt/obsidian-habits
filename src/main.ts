@@ -186,7 +186,12 @@ export default class HabitsPlugin extends Plugin {
 		this.app.workspace.onLayoutReady(() => requestUpdate());
 		this.registerEvent(
 			this.app.metadataCache.on("changed", (file) => {
-				if (isHabitFile(file.path)) {
+				// The target note matters too: ticking a reminder line
+				// there (by hand or from a notification) logs the habit.
+				if (
+					isHabitFile(file.path) ||
+					file.path === sync.targetPath(new Date())
+				) {
 					requestUpdate();
 				}
 			}),
