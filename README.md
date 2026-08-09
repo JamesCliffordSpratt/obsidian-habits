@@ -15,6 +15,7 @@
 - 🗓️ **Flexible schedules** — daily, weekly on one or several weekdays (Mon/Wed/Fri), monthly, or every N days (alternate-day medication); non-daily habits appear only on their due day, and streaks count due days, not calendar days
 - 🔥 **Streaks and statistics** — current and best streaks, completion rates, perfect days, weekly and monthly goals, per-habit heatmaps over the week, month, or any custom date range
 - 📊 **Charts on every habit page** — 30-day activity and 12-week trend charts rendered in your theme's colours
+- 📋 **Habits overview table** — a `habits-table` code block lists every active habit with its schedule and completed/due counts for the current week and the last three months
 - 📄 **Printable PDF reports** — pick your metrics, date range, and layout with a live A4 preview
 - 🚭 **Break bad habits** *(experimental)* — track things you're cutting down or quitting by staying under a daily limit, with quiet streaks for every clean day
 - ✨ **AI summaries** *(experimental)* — on-demand feedback and advice on your stats, on screen and in PDF reports, using your own AI service (including free and fully local options)
@@ -117,6 +118,17 @@ From there, the download button opens the **PDF export** dialog:
 - **Live preview** — a to-scale A4 preview updates as you tweak; click it to inspect at full size. What you see is exactly what prints.
 
 ![Building a PDF report](images/habits-report.gif)
+
+## 📋 The habits table
+
+Drop a `habits-table` code block into any note (there's an **Insert habits table** command) for a compact overview of every active habit:
+
+| Habit | Schedule | This week | Aug | Jul | Jun |
+| --- | --- | ---: | ---: | ---: | ---: |
+| Take medicine | Every other day · 9:00 PM | 3/3 | 4/5 | 15/15 | 14/16 |
+| Gym | Every Mon, Wed, Fri · 6:30 AM | 2/2 | 4/4 | 13/13 | 12/13 |
+
+Each count is **completed due days / elapsed due days** for the period — the current calendar week (Monday-first, like the stats view) and the current plus two previous calendar months. Only due days count: a Tuesday-only habit shows `4/4` in a four-Tuesday month, paused days are excluded, and periods before a habit existed show `–`. Rows are grouped like the dashboard and ordered by planned time within each group, so the table reads as your day's timeline. The table live-updates as habit notes change.
 
 ## 📊 Habit pages
 

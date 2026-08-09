@@ -10,6 +10,7 @@ import {
 } from "./settings";
 import { HabitsDashboard } from "./ui/dashboard";
 import { HabitMetrics } from "./ui/habit-metrics";
+import { HabitsTable } from "./ui/habits-table";
 import { HabitModal } from "./ui/habit-modal";
 import { HabitMetricsSuggest } from "./ui/metrics-suggest";
 import {
@@ -55,6 +56,20 @@ export default class HabitsPlugin extends Plugin {
 						this.store,
 						ctx.sourcePath,
 						source,
+						el,
+					),
+				);
+			},
+		);
+
+		this.registerMarkdownCodeBlockProcessor(
+			"habits-table",
+			(_source, el, ctx) => {
+				ctx.addChild(
+					new HabitsTable(
+						this.app,
+						this.store,
+						() => this.settings,
 						el,
 					),
 				);
@@ -129,6 +144,14 @@ export default class HabitsPlugin extends Plugin {
 			name: t("Insert habit metrics"),
 			editorCallback: (editor: Editor) => {
 				editor.replaceSelection("```habit-metrics\n```\n");
+			},
+		});
+
+		this.addCommand({
+			id: "insert-table",
+			name: t("Insert habits table"),
+			editorCallback: (editor: Editor) => {
+				editor.replaceSelection("```habits-table\n```\n");
 			},
 		});
 	}

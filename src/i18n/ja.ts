@@ -4,6 +4,7 @@ export const ja: Record<string, string> = {
 	"Create habit": "習慣を作成",
 	"Insert dashboard": "ダッシュボードを挿入",
 	"Insert habit metrics": "習慣メトリクスを挿入",
+	"Insert habits table": "習慣テーブルを挿入",
 	"Open panel": "パネルを開く",
 	"Open habits panel": "習慣パネルを開く",
 	Habits: "習慣",
@@ -331,6 +332,8 @@ export const ja: Record<string, string> = {
 	Frequency: "頻度",
 	Daily: "毎日",
 	"Days of week": "曜日",
+	Habit: "習慣",
+	Schedule: "スケジュール",
 	"Time of day": "時刻",
 	"Optional time this habit is planned for. Shown on the habit's card.":
 		"この習慣を行う予定時刻（任意）。習慣のカードに表示されます。",

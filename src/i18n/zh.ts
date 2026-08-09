@@ -4,6 +4,7 @@ export const zh: Record<string, string> = {
 	"Create habit": "创建习惯",
 	"Insert dashboard": "插入习惯面板",
 	"Insert habit metrics": "插入习惯指标",
+	"Insert habits table": "插入习惯表格",
 	"Open panel": "打开侧边栏面板",
 	"Open habits panel": "打开习惯侧边栏",
 	Habits: "习惯",
@@ -326,6 +327,8 @@ export const zh: Record<string, string> = {
 	Frequency: "频率",
 	Daily: "每天",
 	"Days of week": "星期几",
+	Habit: "习惯",
+	Schedule: "计划",
 	"Time of day": "时间",
 	"Optional time this habit is planned for. Shown on the habit's card.":
 		"此习惯计划进行的时间（可选）。显示在习惯卡片上。",

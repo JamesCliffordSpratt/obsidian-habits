@@ -2333,3 +2333,78 @@
 	border-color: var(--interactive-accent);
 	color: var(--text-on-accent);
 }
+
+/* Habits table (`habits-table` code block) */
+
+.habits-table-block {
+	overflow-x: auto;
+}
+
+table.habits-table {
+	width: 100%;
+	border-collapse: collapse;
+	font-size: var(--font-ui-small);
+	margin: 0;
+}
+
+table.habits-table th,
+table.habits-table td {
+	padding: 0.35em 0.6em;
+	border-bottom: 1px solid var(--background-modifier-border);
+	text-align: left;
+	white-space: nowrap;
+}
+
+table.habits-table th {
+	color: var(--text-muted);
+	font-weight: var(--font-semibold);
+}
+
+table.habits-table th.habits-table-count,
+table.habits-table td.habits-table-count {
+	text-align: right;
+	font-variant-numeric: tabular-nums;
+}
+
+table.habits-table tr.habits-table-group td {
+	padding-top: 0.9em;
+	color: var(--text-muted);
+	font-size: var(--font-ui-smaller);
+	font-weight: var(--font-semibold);
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	border-bottom: none;
+}
+
+table.habits-table a.habits-table-link {
+	color: var(--text-normal);
+	text-decoration: none;
+	cursor: pointer;
+}
+
+table.habits-table a.habits-table-link:hover {
+	color: var(--text-accent);
+	text-decoration: underline;
+}
+
+table.habits-table .habits-table-paused {
+	display: inline-flex;
+	vertical-align: middle;
+	margin-left: 0.4em;
+	color: var(--text-muted);
+}
+
+table.habits-table .habits-table-paused .svg-icon {
+	width: 0.85em;
+	height: 0.85em;
+}
+
+table.habits-table td.habits-table-schedule {
+	color: var(--text-muted);
+}
+
+.habits-table-empty {
+	color: var(--text-muted);
+	font-size: var(--font-ui-small);
+	padding: 0.5em 0;
+}

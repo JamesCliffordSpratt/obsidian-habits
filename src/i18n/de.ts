@@ -4,6 +4,7 @@ export const de: Record<string, string> = {
 	"Create habit": "Gewohnheit erstellen",
 	"Insert dashboard": "Dashboard einfügen",
 	"Insert habit metrics": "Gewohnheits-Metriken einfügen",
+	"Insert habits table": "Gewohnheitstabelle einfügen",
 	"Open panel": "Seitenleiste öffnen",
 	"Open habits panel": "Gewohnheiten-Seitenleiste öffnen",
 	Habits: "Gewohnheiten",
@@ -334,6 +335,8 @@ export const de: Record<string, string> = {
 	Frequency: "Häufigkeit",
 	Daily: "Täglich",
 	"Days of week": "Wochentage",
+	Habit: "Gewohnheit",
+	Schedule: "Zeitplan",
 	"Time of day": "Uhrzeit",
 	"Optional time this habit is planned for. Shown on the habit's card.":
 		"Optionale Uhrzeit, zu der diese Gewohnheit geplant ist. Wird auf der Karte der Gewohnheit angezeigt.",

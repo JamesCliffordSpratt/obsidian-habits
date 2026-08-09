@@ -71,6 +71,43 @@ export function formatTimeOfDay(time: string): string {
 	).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
 }
 
+/** Locale-aware weekday name for a `getDay` value (2024-01-07 = Sunday). */
+export function weekdayName(value: number, style: "long" | "short"): string {
+	return new Date(2024, 0, 7 + value).toLocaleDateString(undefined, {
+		weekday: style,
+	});
+}
+
+/**
+ * A short "due" descriptor for non-daily habits ("Every Mon, Wed, Fri",
+ * "Monthly · day 15", "Every other day"); empty for daily.
+ */
+export function habitScheduleLabel(habit: HabitDefinition): string {
+	if (habit.frequency === "weekly") {
+		if (habit.weekdays.length === 1) {
+			return t("Every {day}", {
+				day: weekdayName(habit.weekdays[0], "long"),
+			});
+		}
+		// Monday-first reads as a week plan ("Mon, Wed, Fri") whatever
+		// the underlying Sunday-based getDay values are.
+		const days = [...habit.weekdays]
+			.sort((a, b) => ((a + 6) % 7) - ((b + 6) % 7))
+			.map((day) => weekdayName(day, "short"))
+			.join(", ");
+		return t("Every {day}", { day: days });
+	}
+	if (habit.frequency === "monthly") {
+		return t("Monthly · day {day}", { day: habit.monthDay });
+	}
+	if (habit.frequency === "interval") {
+		return habit.intervalDays === 2
+			? t("Every other day")
+			: t("Every {n} days", { n: habit.intervalDays });
+	}
+	return "";
+}
+
 /** Format a date as a `YYYY-MM-DD` key using local time. */
 export function toDateKey(date: Date): string {
 	const year = date.getFullYear();

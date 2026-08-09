@@ -4,6 +4,7 @@ export const ko: Record<string, string> = {
 	"Create habit": "습관 만들기",
 	"Insert dashboard": "대시보드 삽입",
 	"Insert habit metrics": "습관 지표 삽입",
+	"Insert habits table": "습관 표 삽입",
 	"Open panel": "패널 열기",
 	"Open habits panel": "습관 패널 열기",
 	Habits: "습관",
@@ -331,6 +332,8 @@ export const ko: Record<string, string> = {
 	Frequency: "주기",
 	Daily: "매일",
 	"Days of week": "요일",
+	Habit: "습관",
+	Schedule: "일정",
 	"Time of day": "시간",
 	"Optional time this habit is planned for. Shown on the habit's card.":
 		"이 습관을 실행할 예정 시간(선택)입니다. 습관 카드에 표시됩니다.",
