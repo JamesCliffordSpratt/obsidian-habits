@@ -140,7 +140,7 @@ export class HabitStore {
 				2,
 				365,
 			),
-			time: this.readTime(fm.time),
+			times: this.readTimes(fm.times, fm.time),
 			target: this.readNumber(fm.target, 1),
 			unit: typeof fm.unit === "string" ? fm.unit : "",
 			weeklyTarget: this.readNumber(fm.weeklyTarget, 0),
@@ -201,7 +201,7 @@ export class HabitStore {
 	}
 
 	/**
-	 * Parse an optional time of day. Anything that isn't a valid `H:mm` or
+	 * Parse a single time of day. Anything that isn't a valid `H:mm` or
 	 * `HH:mm` string is treated as "no time" rather than an error, and the
 	 * hour is zero-padded so times sort and compare as plain strings.
 	 */
@@ -214,6 +214,28 @@ export class HabitStore {
 			return "";
 		}
 		return `${match[1].padStart(2, "0")}:${match[2]}`;
+	}
+
+	/**
+	 * Parse a habit's planned times: the `times` list when present,
+	 * otherwise the scalar `time`. Invalid entries are dropped, the rest
+	 * deduplicated and sorted chronologically.
+	 */
+	private readTimes(list: unknown, single: unknown): string[] {
+		const raw = Array.isArray(list) ? list : [single];
+		const times = new Set<string>();
+		for (const value of raw) {
+			const parsed = this.readTime(value);
+			if (parsed) {
+				times.add(parsed);
+			}
+		}
+		return [...times].sort();
+	}
+
+	/** Validate, deduplicate and sort a planned-times list. */
+	private normalizeTimes(values: string[]): string[] {
+		return this.readTimes(values, undefined);
 	}
 
 	/** Clamp, deduplicate and sort a weekday list, defaulting to Monday. */
@@ -339,6 +361,25 @@ export class HabitStore {
 			fm.intervalDays = this.clampInt(options.intervalDays, 2, 365);
 		} else {
 			delete fm.frequency;
+		}
+	}
+
+	/**
+	 * Write the planned times to frontmatter, mirroring the weekday
+	 * convention: a single time keeps the scalar `time` form, several use
+	 * the `times` list, and none removes both keys.
+	 */
+	private writeTimes(
+		fm: Record<string, unknown>,
+		options: NewHabitOptions,
+	): void {
+		delete fm.time;
+		delete fm.times;
+		const times = this.normalizeTimes(options.times);
+		if (times.length === 1) {
+			fm.time = times[0];
+		} else if (times.length > 1) {
+			fm.times = times;
 		}
 	}
 
@@ -552,9 +593,7 @@ export class HabitStore {
 				fm.goalDirection = "max";
 			}
 			this.writeFrequency(fm, options);
-			if (options.time) {
-				fm.time = options.time;
-			}
+			this.writeTimes(fm, options);
 			if (options.type !== "binary") {
 				// A limit of 0 is meaningful ("none at all"), so max habits
 				// always write the field even when it is zero.
@@ -641,11 +680,7 @@ export class HabitStore {
 				delete fm.goalDirection;
 			}
 			this.writeFrequency(fm, options);
-			if (options.time) {
-				fm.time = options.time;
-			} else {
-				delete fm.time;
-			}
+			this.writeTimes(fm, options);
 			if (options.type === "binary") {
 				delete fm.target;
 			} else {

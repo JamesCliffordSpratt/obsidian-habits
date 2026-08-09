@@ -2478,3 +2478,33 @@ table.habits-table .habits-icon-button.habits-table-mini .svg-icon {
 table.habits-table .habits-table-notdue {
 	color: var(--text-faint);
 }
+
+/* Planned-times picker (habit modal) */
+
+.habits-time-picker {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-end;
+	gap: 0.35rem;
+}
+
+.habits-time-row {
+	display: flex;
+	align-items: center;
+	gap: 0.3rem;
+}
+
+.habits-time-picker button.habits-time-add {
+	font-size: var(--font-ui-small);
+	padding: 0.2em 0.7em;
+	cursor: pointer;
+}
+
+.habits-time-picker .habits-icon-button.habits-time-remove {
+	padding: 0.15em;
+}
+
+.habits-time-picker .habits-icon-button.habits-time-remove .svg-icon {
+	width: 0.85em;
+	height: 0.85em;
+}

@@ -336,9 +336,8 @@ export class HabitsTable extends MarkdownRenderChild {
 	 */
 	private scheduleText(habit: HabitDefinition): string {
 		const schedule = habitScheduleLabel(habit) || t("Daily");
-		return habit.time
-			? `${schedule} · ${formatTimeOfDay(habit.time)}`
-			: schedule;
+		const times = habit.times.map(formatTimeOfDay).join(", ");
+		return times ? `${schedule} · ${times}` : schedule;
 	}
 
 	/**
@@ -376,14 +375,16 @@ export class HabitsTable extends MarkdownRenderChild {
 
 	/**
 	 * Table order within each group: habits with a planned time first,
-	 * earliest first (the day's timeline), then untimed habits by name.
-	 * Grouping itself happens afterwards and preserves this order.
+	 * earliest first (the day's timeline, using each habit's first time),
+	 * then untimed habits by name. Grouping itself happens afterwards and
+	 * preserves this order.
 	 */
 	private sortByTime(habits: HabitDefinition[]): HabitDefinition[] {
+		const first = (habit: HabitDefinition) => habit.times[0] ?? "";
 		return [...habits].sort(
 			(a, b) =>
-				Number(a.time === "") - Number(b.time === "") ||
-				a.time.localeCompare(b.time) ||
+				Number(first(a) === "") - Number(first(b) === "") ||
+				first(a).localeCompare(first(b)) ||
 				a.name.localeCompare(b.name),
 		);
 	}

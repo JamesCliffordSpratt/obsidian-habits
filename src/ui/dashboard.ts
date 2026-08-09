@@ -885,7 +885,7 @@ export class HabitsDashboard extends MarkdownRenderChild {
 	 */
 	private frequencyLabel(habit: HabitDefinition): string {
 		const schedule = habitScheduleLabel(habit);
-		const time = habit.time ? formatTimeOfDay(habit.time) : "";
+		const time = habit.times.map(formatTimeOfDay).join(", ");
 		if (schedule && time) {
 			return `${schedule} · ${time}`;
 		}

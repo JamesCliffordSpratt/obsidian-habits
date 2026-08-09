@@ -340,9 +340,10 @@ export const es: Record<string, string> = {
 	Habit: "Hábito",
 	Schedule: "Programación",
 	"Time of day": "Hora del día",
-	"Optional time this habit is planned for. Shown on the habit's card.":
-		"Hora opcional prevista para este hábito. Se muestra en la tarjeta del hábito.",
-	"Clear time": "Borrar hora",
+	"Optional times this habit is planned for — once or several times a day. Shown on the habit's card.":
+		"Horas opcionales previstas para este hábito — una o varias veces al día. Se muestran en la tarjeta del hábito.",
+	"Add time": "Añadir hora",
+	"Remove time": "Quitar hora",
 	"Every N days": "Cada N días",
 	"Repeat every": "Repetir cada",
 	"Day of month": "Día del mes",

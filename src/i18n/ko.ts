@@ -338,9 +338,10 @@ export const ko: Record<string, string> = {
 	Habit: "습관",
 	Schedule: "일정",
 	"Time of day": "시간",
-	"Optional time this habit is planned for. Shown on the habit's card.":
-		"이 습관을 실행할 예정 시간(선택)입니다. 습관 카드에 표시됩니다.",
-	"Clear time": "시간 지우기",
+	"Optional times this habit is planned for — once or several times a day. Shown on the habit's card.":
+		"이 습관을 실행할 예정 시간(선택) — 하루 한 번 또는 여러 번. 습관 카드에 표시됩니다.",
+	"Add time": "시간 추가",
+	"Remove time": "시간 제거",
 	"Every N days": "N일마다",
 	"Repeat every": "반복 주기",
 	"Day of month": "날짜(일)",

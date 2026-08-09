@@ -122,8 +122,8 @@ export function buildStatsDigest(
 		} else if (habit.frequency !== "daily") {
 			parts.push(`due ${habit.frequency}`);
 		}
-		if (habit.time) {
-			parts.push(`planned at ${habit.time}`);
+		if (habit.times.length > 0) {
+			parts.push(`planned at ${habit.times.join(", ")}`);
 		}
 		parts.push(`${Math.round(s.rate * 100)}% rate`);
 		parts.push(`current streak ${s.current}, best ${s.best}`);

@@ -341,9 +341,10 @@ export const de: Record<string, string> = {
 	Habit: "Gewohnheit",
 	Schedule: "Zeitplan",
 	"Time of day": "Uhrzeit",
-	"Optional time this habit is planned for. Shown on the habit's card.":
-		"Optionale Uhrzeit, zu der diese Gewohnheit geplant ist. Wird auf der Karte der Gewohnheit angezeigt.",
-	"Clear time": "Uhrzeit löschen",
+	"Optional times this habit is planned for — once or several times a day. Shown on the habit's card.":
+		"Optionale Uhrzeiten, zu denen diese Gewohnheit geplant ist — einmal oder mehrmals täglich. Werden auf der Karte der Gewohnheit angezeigt.",
+	"Add time": "Uhrzeit hinzufügen",
+	"Remove time": "Uhrzeit entfernen",
 	"Every N days": "Alle N Tage",
 	"Repeat every": "Wiederholen alle",
 	"Day of month": "Tag des Monats",

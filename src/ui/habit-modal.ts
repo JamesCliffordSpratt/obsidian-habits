@@ -192,7 +192,7 @@ export class HabitModal extends Modal {
 	private weekdays: number[] = [new Date().getDay()];
 	private monthDay = new Date().getDate();
 	private intervalDays = 2;
-	private time = "";
+	private times: string[] = [];
 	private target = 1;
 	private unit = "";
 	private weeklyTarget = 0;
@@ -242,7 +242,7 @@ export class HabitModal extends Modal {
 			} else if (editing.frequency === "interval") {
 				this.intervalDays = editing.intervalDays;
 			}
-			this.time = editing.time;
+			this.times = [...editing.times];
 			// A limit habit's target may legitimately be 0 ("none at all");
 			// only build habits coerce a missing target to 1.
 			this.target =
@@ -499,7 +499,7 @@ export class HabitModal extends Modal {
 							weekdays: [...this.weekdays],
 							monthDay: this.monthDay,
 							intervalDays: this.intervalDays,
-							time: this.time,
+							times: this.times.filter((value) => value !== ""),
 							target: this.target,
 							unit: this.unit,
 							weeklyTarget: this.weeklyTarget,
@@ -826,32 +826,59 @@ export class HabitModal extends Modal {
 	}
 
 	/**
-	 * Optional planned time of day. Informational only — it is shown on the
-	 * habit's card next to the schedule and never affects due-ness.
+	 * Optional planned times of day — one row per time plus an add button,
+	 * so twice-daily plans (e.g. medication at 13:30 and 21:30) are one
+	 * habit. Informational only: shown on the habit's card next to the
+	 * schedule, never affects due-ness.
 	 */
 	private renderTime(contentEl: HTMLElement): void {
-		new Setting(contentEl)
+		const setting = new Setting(contentEl)
 			.setName(t("Time of day"))
 			.setDesc(
 				t(
-					"Optional time this habit is planned for. Shown on the habit's card.",
+					"Optional times this habit is planned for — once or several times a day. Shown on the habit's card.",
 				),
-			)
-			.addText((text) => {
-				text.inputEl.type = "time";
-				text.setValue(this.time).onChange((value) => {
-					this.time = value;
-				});
-			})
-			.addExtraButton((extra) =>
-				extra
-					.setIcon("x")
-					.setTooltip(t("Clear time"))
-					.onClick(() => {
-						this.time = "";
-						this.build();
-					}),
 			);
+		const box = setting.controlEl.createDiv({
+			cls: "habits-time-picker",
+		});
+
+		const renderRows = (): void => {
+			box.empty();
+			this.times.forEach((value, index) => {
+				const row = box.createDiv({ cls: "habits-time-row" });
+				const input = row.createEl("input", {
+					cls: "habits-time-input",
+					attr: { type: "time" },
+				});
+				input.value = value;
+				input.addEventListener("change", () => {
+					this.times[index] = input.value;
+				});
+				const remove = row.createEl("button", {
+					cls: "habits-icon-button habits-time-remove",
+					attr: {
+						type: "button",
+						"aria-label": t("Remove time"),
+					},
+				});
+				setIcon(remove, "x");
+				remove.addEventListener("click", () => {
+					this.times.splice(index, 1);
+					renderRows();
+				});
+			});
+			const add = box.createEl("button", {
+				cls: "habits-time-add",
+				text: t("Add time"),
+				attr: { type: "button" },
+			});
+			add.addEventListener("click", () => {
+				this.times.push("");
+				renderRows();
+			});
+		};
+		renderRows();
 	}
 
 	/** Collapsible, optional weekly/monthly targets section. */
