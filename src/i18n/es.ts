@@ -61,6 +61,9 @@ export const es: Record<string, string> = {
 	"Group order": "Orden de los grupos",
 	"Drag the groups into the order you want. Sections follow the same order.":
 		"Arrastra los grupos en el orden que quieras. Las secciones siguen el mismo orden.",
+	"Group the habits table": "Agrupar la tabla de hábitos",
+	"Group the rows of habits-table blocks by habit group, with a heading row per group. Turn off for one flat list ordered by planned time.":
+		"Agrupa las filas de los bloques habits-table por grupo de hábito, con una fila de encabezado por grupo. Desactívalo para una sola lista plana ordenada por hora prevista.",
 	"Manage groups": "Gestionar grupos",
 	"See every habit by group and drag cards between groups.":
 		"Ve todos los hábitos por grupo y arrastra tarjetas entre grupos.",

@@ -59,6 +59,9 @@ export const ko: Record<string, string> = {
 	"Group order": "그룹 순서",
 	"Drag the groups into the order you want. Sections follow the same order.":
 		"그룹을 원하는 순서로 드래그하세요. 섹션도 같은 순서를 따릅니다.",
+	"Group the habits table": "습관 표 그룹화",
+	"Group the rows of habits-table blocks by habit group, with a heading row per group. Turn off for one flat list ordered by planned time.":
+		"habits-table 블록의 행을 습관 그룹별로 묶고 그룹마다 머리글 행을 표시합니다. 끄면 예정 시간순의 단일 목록이 됩니다.",
 	"Manage groups": "그룹 관리",
 	"See every habit by group and drag cards between groups.":
 		"그룹별로 습관을 보고 카드를 그룹 간에 드래그하세요.",

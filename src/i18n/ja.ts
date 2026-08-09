@@ -59,6 +59,9 @@ export const ja: Record<string, string> = {
 	"Group order": "グループの順序",
 	"Drag the groups into the order you want. Sections follow the same order.":
 		"グループを好きな順序にドラッグします。セクションも同じ順序に従います。",
+	"Group the habits table": "習慣テーブルをグループ化",
+	"Group the rows of habits-table blocks by habit group, with a heading row per group. Turn off for one flat list ordered by planned time.":
+		"habits-table ブロックの行を習慣のグループごとにまとめ、グループごとに見出し行を表示します。オフにすると予定時刻順のフラットなリストになります。",
 	"Manage groups": "グループを管理",
 	"See every habit by group and drag cards between groups.":
 		"グループごとに習慣を確認し、カードをグループ間でドラッグできます。",

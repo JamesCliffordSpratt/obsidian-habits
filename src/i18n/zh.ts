@@ -58,6 +58,9 @@ export const zh: Record<string, string> = {
 	"Group order": "分组顺序",
 	"Drag the groups into the order you want. Sections follow the same order.":
 		"拖动分组以调整顺序。分区遵循相同顺序。",
+	"Group the habits table": "按分组显示习惯表格",
+	"Group the rows of habits-table blocks by habit group, with a heading row per group. Turn off for one flat list ordered by planned time.":
+		"将 habits-table 块的行按习惯分组显示，每组一个标题行。关闭后为按计划时间排序的单一列表。",
 	"Manage groups": "管理分组",
 	"See every habit by group and drag cards between groups.":
 		"按分组查看所有习惯,并在分组间拖动卡片。",

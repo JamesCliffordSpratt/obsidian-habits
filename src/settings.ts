@@ -121,6 +121,12 @@ export interface HabitsPluginSettings {
 	 * card. Off by default.
 	 */
 	groupsEnabled: boolean;
+	/**
+	 * Group the rows of `habits-table` blocks by habit group, with a
+	 * heading row per group. When false the table is one flat list,
+	 * ordered by planned time. On by default.
+	 */
+	tableGrouping: boolean;
 	/** Shared group styling (colour, icon), keyed by group name. */
 	groups: Record<string, GroupStyle>;
 	/**
@@ -162,6 +168,7 @@ export const DEFAULT_SETTINGS: HabitsPluginSettings = {
 	manualOrder: [],
 	statusOrdering: true,
 	groupsEnabled: false,
+	tableGrouping: true,
 	groups: {},
 	groupOrder: [],
 	mobileCardsPerView: 2,
@@ -421,6 +428,17 @@ export class HabitsSettingTab extends PluginSettingTab {
 							type: "toggle",
 							key: "groupsEnabled",
 							defaultValue: DEFAULT_SETTINGS.groupsEnabled,
+						},
+					},
+					{
+						name: t("Group the habits table"),
+						desc: t(
+							"Group the rows of habits-table blocks by habit group, with a heading row per group. Turn off for one flat list ordered by planned time.",
+						),
+						control: {
+							type: "toggle",
+							key: "tableGrouping",
+							defaultValue: DEFAULT_SETTINGS.tableGrouping,
 						},
 					},
 					{

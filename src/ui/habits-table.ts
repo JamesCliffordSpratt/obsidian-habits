@@ -4,6 +4,7 @@ import {
 	debounce,
 	normalizePath,
 	setIcon,
+	type Events,
 } from "obsidian";
 import { t } from "../i18n";
 import type { HabitStore } from "../habit-store";
@@ -43,6 +44,7 @@ export class HabitsTable extends MarkdownRenderChild {
 		private app: App,
 		private store: HabitStore,
 		private getSettings: () => HabitsPluginSettings,
+		private pluginEvents: Events,
 		root: HTMLElement,
 	) {
 		super(root);
@@ -84,6 +86,11 @@ export class HabitsTable extends MarkdownRenderChild {
 				}
 			}),
 		);
+		this.registerEvent(
+			this.pluginEvents.on("settings-changed", () => {
+				requestRender();
+			}),
+		);
 		this.render();
 	}
 
@@ -110,10 +117,11 @@ export class HabitsTable extends MarkdownRenderChild {
 
 		const today = new Date();
 		const columns = this.periodColumns(today);
+		const settings = this.getSettings();
 		const sections = groupHabits(
 			this.sortByTime(habits),
-			true,
-			this.getSettings().groupOrder,
+			settings.tableGrouping,
+			settings.groupOrder,
 		);
 		const showSections =
 			sections.length > 1 || (sections[0] && sections[0].key !== "");

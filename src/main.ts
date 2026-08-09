@@ -70,6 +70,7 @@ export default class HabitsPlugin extends Plugin {
 						this.app,
 						this.store,
 						() => this.settings,
+						this.events,
 						el,
 					),
 				);
