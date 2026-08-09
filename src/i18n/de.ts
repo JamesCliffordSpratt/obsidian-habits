@@ -27,6 +27,7 @@ export const de: Record<string, string> = {
 	"Name (A–Z)": "Name (A–Z)",
 	Color: "Farbe",
 	"Last logged": "Zuletzt protokolliert",
+	"Planned time": "Geplante Uhrzeit",
 	Manual: "Manuell",
 	"Manual order": "Manuelle Reihenfolge",
 	"Drag the cards into the order you want. New habits join the end of the list.":

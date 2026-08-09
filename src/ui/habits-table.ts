@@ -23,6 +23,7 @@ import {
 	groupHabits,
 	habitScheduleLabel,
 	sectionLabel,
+	sortHabits,
 	toDateKey,
 } from "../utils";
 
@@ -119,7 +120,7 @@ export class HabitsTable extends MarkdownRenderChild {
 		const columns = this.periodColumns(today);
 		const settings = this.getSettings();
 		const sections = groupHabits(
-			this.sortByTime(habits),
+			sortHabits(habits, "time", []),
 			settings.tableGrouping,
 			settings.groupOrder,
 		);
@@ -371,21 +372,5 @@ export class HabitsTable extends MarkdownRenderChild {
 			});
 		}
 		return columns;
-	}
-
-	/**
-	 * Table order within each group: habits with a planned time first,
-	 * earliest first (the day's timeline, using each habit's first time),
-	 * then untimed habits by name. Grouping itself happens afterwards and
-	 * preserves this order.
-	 */
-	private sortByTime(habits: HabitDefinition[]): HabitDefinition[] {
-		const first = (habit: HabitDefinition) => habit.times[0] ?? "";
-		return [...habits].sort(
-			(a, b) =>
-				Number(first(a) === "") - Number(first(b) === "") ||
-				first(a).localeCompare(first(b)) ||
-				a.name.localeCompare(b.name),
-		);
 	}
 }

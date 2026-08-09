@@ -27,6 +27,7 @@ export const zh: Record<string, string> = {
 	"Name (A–Z)": "名称(A–Z)",
 	Color: "颜色",
 	"Last logged": "最近记录",
+	"Planned time": "计划时间",
 	Manual: "手动",
 	"Manual order": "手动排序",
 	"Drag the cards into the order you want. New habits join the end of the list.":

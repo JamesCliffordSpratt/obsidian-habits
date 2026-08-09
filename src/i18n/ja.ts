@@ -27,6 +27,7 @@ export const ja: Record<string, string> = {
 	"Name (A–Z)": "名前(A–Z)",
 	Color: "色",
 	"Last logged": "最終記録",
+	"Planned time": "予定時刻",
 	Manual: "手動",
 	"Manual order": "手動の順序",
 	"Drag the cards into the order you want. New habits join the end of the list.":

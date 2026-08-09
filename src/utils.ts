@@ -435,6 +435,19 @@ export function sortHabits(
 			);
 			break;
 		}
+		case "time": {
+			// The day's timeline: habits with a planned time first,
+			// earliest first (times are stored sorted, so the first entry
+			// is the earliest), then untimed habits by name.
+			const first = (habit: HabitDefinition) => habit.times[0] ?? "";
+			sorted.sort(
+				(a, b) =>
+					Number(first(a) === "") - Number(first(b) === "") ||
+					first(a).localeCompare(first(b)) ||
+					a.name.localeCompare(b.name),
+			);
+			break;
+		}
 		case "group": {
 			// Group-mates stay adjacent, ordered by the arranged group
 			// order; ungrouped habits trail, matching the section order.

@@ -27,6 +27,7 @@ export const ko: Record<string, string> = {
 	"Name (A–Z)": "이름(A–Z)",
 	Color: "색상",
 	"Last logged": "마지막 기록",
+	"Planned time": "예정 시간",
 	Manual: "수동",
 	"Manual order": "수동 순서",
 	"Drag the cards into the order you want. New habits join the end of the list.":

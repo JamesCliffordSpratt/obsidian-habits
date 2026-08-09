@@ -374,6 +374,7 @@ export class HabitsSettingTab extends PluginSettingTab {
 								color: t("Color"),
 								startDate: t("Start date"),
 								lastLogged: t("Last logged"),
+								time: t("Planned time"),
 								group: t("Group"),
 								manual: t("Manual"),
 							},
@@ -585,6 +586,7 @@ export class HabitsSettingTab extends PluginSettingTab {
 					"color",
 					"startDate",
 					"lastLogged",
+					"time",
 					"group",
 					"manual",
 				].includes(trimmed)
@@ -974,6 +976,7 @@ export class HabitsSettingTab extends PluginSettingTab {
 					.addOption("color", t("Color"))
 					.addOption("startDate", t("Start date"))
 					.addOption("lastLogged", t("Last logged"))
+					.addOption("time", t("Planned time"))
 					.addOption("group", t("Group"))
 					.addOption("manual", t("Manual"))
 					.setValue(this.plugin.settings.sortMode)
@@ -983,6 +986,7 @@ export class HabitsSettingTab extends PluginSettingTab {
 							"color",
 							"startDate",
 							"lastLogged",
+							"time",
 							"group",
 							"manual",
 						].includes(value)
