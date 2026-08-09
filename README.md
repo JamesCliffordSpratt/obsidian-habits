@@ -123,10 +123,10 @@ From there, the download button opens the **PDF export** dialog:
 
 Drop a `habits-table` code block into any note (there's an **Insert habits table** command) for a compact overview of every active habit:
 
-| Today | Habit | Schedule | This week | Aug | Jul | Jun |
+| Habit | Schedule | Today | This week | Aug | Jul | Jun |
 | --- | --- | --- | ---: | ---: | ---: | ---: |
-| ✅ Done | Take medicine | Every other day · 9:00 PM | 3/3 | 4/5 | 15/15 | 14/16 |
-| ◯ Not done | Gym | Every Mon, Wed, Fri · 6:30 AM | 2/2 | 4/4 | 13/13 | 12/13 |
+| Take medicine | Every other day · 9:00 PM | ✅ Done | 3/3 | 4/5 | 15/15 | 14/16 |
+| Gym | Every Mon, Wed, Fri · 6:30 AM | ◯ Not done | 2/2 | 4/4 | 13/13 | 12/13 |
 
 Each count is **completed due days / elapsed due days** for the period — the current calendar week (Monday-first, like the stats view) and the current plus two previous calendar months. Only due days count: a Tuesday-only habit shows `4/4` in a four-Tuesday month, paused days are excluded, and periods before a habit existed show `–`. The **Today** column logs the day without leaving the table: a Done/Not done pill for binary habits (a slip toggle for limit habits), a compact stepper for counted and timed ones; habits not due today show a dash. Rows are grouped like the dashboard and ordered by planned time within each group, so the table reads as your day's timeline. The table live-updates as habit notes change.
 

@@ -120,9 +120,9 @@ export class HabitsTable extends MarkdownRenderChild {
 
 		const table = root.createEl("table", { cls: "habits-table" });
 		const head = table.createEl("thead").createEl("tr");
-		head.createEl("th", { text: t("Today") });
 		head.createEl("th", { text: t("Habit") });
 		head.createEl("th", { text: t("Schedule") });
+		head.createEl("th", { text: t("Today") });
 		for (const column of columns) {
 			head.createEl("th", {
 				cls: "habits-table-count",
@@ -155,9 +155,6 @@ export class HabitsTable extends MarkdownRenderChild {
 	): void {
 		const row = body.createEl("tr");
 
-		const todayCell = row.createEl("td", { cls: "habits-table-today" });
-		this.renderTodayCell(todayCell, habit, today);
-
 		const nameCell = row.createEl("td", { cls: "habits-table-name" });
 		const link = nameCell.createEl("a", {
 			cls: "habits-table-link",
@@ -180,6 +177,9 @@ export class HabitsTable extends MarkdownRenderChild {
 			text: this.scheduleText(habit),
 		});
 
+		const todayCell = row.createEl("td", { cls: "habits-table-today" });
+		this.renderTodayCell(todayCell, habit, today);
+
 		for (const column of columns) {
 			const stats = habitStats(habit, column.range, today);
 			row.createEl("td", {
@@ -193,8 +193,9 @@ export class HabitsTable extends MarkdownRenderChild {
 	}
 
 	/**
-	 * The interactive first column: log today's value without leaving the
-	 * table. Binary habits get the Done/Not done pill, limit habits the
+	 * The interactive Today column, sitting between the schedule and the
+	 * period counts: log today's value without leaving the table.
+	 * Binary habits get the Done/Not done pill, limit habits the
 	 * slip toggle, counted and timed habits a compact stepper. Habits not
 	 * due today show a dash; paused habits a pause glyph. The cell redraws
 	 * itself optimistically on click — the count columns catch up when the
