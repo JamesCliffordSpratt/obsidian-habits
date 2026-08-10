@@ -162,7 +162,15 @@ Habits with planned times can feed the community [Reminder](https://github.com/u
 - [x] Take medicine (@2026-08-10 21:00)
 ```
 
-That's exactly the format the Reminder plugin scans, so each line becomes a real notification at its time. The sync runs both ways: lines start checked when today's record already covers them (a counted habit ticks its first line at count 1, its second at 2, and so on), and **ticking a line is logging** — check a reminder off in the note or from its notification and the habit's record, streaks, and counts update everywhere. Unticking un-logs it again. A binary habit with several times counts as done once every line is ticked (a partial tick is kept visually until then); timed habits are the one read-only case, since a checkbox can't say how many minutes you did. The block regenerates itself at midnight for the new day; days where nothing is due add nothing to the note. To pick where the block sits, plant the two marker lines (`%% habits-reminders start %%` / `%% habits-reminders end %%`) in your daily-note template — the plugin fills them in place and only appends to the end of notes that have no markers. Habits without planned times are simply left out — nothing changes unless you opt in.
+That's exactly the format the Reminder plugin scans, so each line becomes a real notification at its time. The sync runs both ways, and **ticking a line is logging** — check a reminder off in the note or from its notification and the habit's record, streaks, and counts update everywhere. Unticking un-logs it again.
+
+A tick records the share of the day's goal that line represents, so you never have to open the dashboard to finish the job:
+
+- **Done/not-done habits** are complete once every line is ticked. With several times, a partial tick is kept visually until then.
+- **Counted and timed habits** log their target. Ticking off a 15-minute meditation writes 15 minutes; ticking off 8 cups of water writes 8. Where a habit has several planned times the goal is split between them — two of four ticks on a 30-minute habit records 15.
+- A larger value logged in the dashboard survives while every line stays ticked, so reading for 40 minutes against a 20-minute target is never quietly rounded back down.
+
+The block regenerates itself at midnight for the new day; days where nothing is due add nothing to the note. To pick where the block sits, plant the two marker lines (`%% habits-reminders start %%` / `%% habits-reminders end %%`) in your daily-note template — the plugin fills them in place and only appends to the end of notes that have no markers. Habits without planned times are simply left out — nothing changes unless you opt in.
 
 ## 📊 Habit pages
 

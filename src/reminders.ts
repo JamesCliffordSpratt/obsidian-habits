@@ -70,9 +70,9 @@ export function parseReminderLines(content: string): ReminderBlockLine[] {
 /**
  * The `name|time` keys of lines ticked off inside the managed block.
  * Regeneration keeps these checked even when the habit's record does not
- * account for them — the partially ticked binary habit (one of two times
- * done) and the read-only timed habit would otherwise lose their ticks
- * on every refresh.
+ * account for them — a partially ticked binary habit (one of two times
+ * done) would otherwise lose its tick on every refresh, since a binary
+ * record has no way to express half a day.
  */
 export function checkedKeys(content: string): Set<string> {
 	const keys = new Set<string>();
@@ -85,15 +85,45 @@ export function checkedKeys(content: string): Set<string> {
 }
 
 /**
- * The record value today's tick state calls for, or `current` when the
- * ticks ask for no change. Ticking is logging: a binary habit is done
- * once *all* its lines are ticked (and un-done when one is unticked
- * again); a counted habit's value follows the number of ticked lines
- * whenever that number disagrees with what the current value would
- * display (`min(current, total)` — so a count beyond the planned times
- * survives as long as every line stays ticked). Timed habits are
- * read-only from the block: minutes are logged in the dashboard, and a
- * tick is kept purely visually.
+ * The day's goal for a counted or timed habit — the target, floored at 1
+ * so a habit saved without one still logs something when ticked.
+ */
+function goalOf(habit: HabitDefinition): number {
+	return Math.max(habit.target, 1);
+}
+
+/**
+ * True when the habit's record can express a partly ticked day.
+ *
+ * That needs every planned time to own at least one whole unit of the
+ * goal. A binary record never can — 0 or 1 has no way to say "one session
+ * of two" — and neither can a goal smaller than its number of times, such
+ * as a single tablet reminded for twice. Those habits are all-or-nothing,
+ * and their partial ticks are kept visually instead.
+ */
+function splitsEvenly(habit: HabitDefinition): boolean {
+	return habit.type !== "binary" && goalOf(habit) >= habit.times.length;
+}
+
+/** The value that marks a whole day done. */
+function doneValue(habit: HabitDefinition): number {
+	return habit.type === "binary" ? 1 : goalOf(habit);
+}
+
+/**
+ * The record value today's tick state calls for. Ticking is logging.
+ *
+ * A binary habit is done once *all* its lines are ticked, and un-done
+ * when one is unticked again. Counted and timed habits log the share of
+ * the day's goal that the ticked lines represent, so a single tick on a
+ * habit with one planned time records the whole target: ticking off
+ * "Meditate" writes its 15 minutes, not a bare 1. With several times the
+ * goal is split across them — two of four ticks on a 30-minute habit
+ * records 15.
+ *
+ * A larger value logged in the dashboard survives while every line stays
+ * ticked, so reading for 40 minutes against a 20-minute target is not
+ * quietly rounded back down by a regeneration.
  */
 export function desiredRecord(
 	habit: HabitDefinition,
@@ -101,13 +131,19 @@ export function desiredRecord(
 	total: number,
 	current: number,
 ): number {
-	if (habit.type === "binary") {
-		return checked === total ? 1 : 0;
+	const goal = goalOf(habit);
+	if (checked === total && current >= goal && habit.type !== "binary") {
+		return current;
 	}
-	if (habit.type === "repetition") {
-		return checked === Math.min(current, total) ? current : checked;
+	if (!splitsEvenly(habit)) {
+		return checked === total ? doneValue(habit) : 0;
 	}
-	return current;
+	// Rounded *up*, because this has to be the exact inverse of the floor
+	// in coveredTimes: the smallest value that still reads back as this
+	// many covered lines. Rounding to nearest instead would let a middle
+	// tick write a value that regenerates as one tick fewer, and the block
+	// would undo the tick the user had just made.
+	return total > 0 ? Math.ceil((goal * checked) / total) : 0;
 }
 
 /** Snapshot key for one line's tick state. */
@@ -139,18 +175,21 @@ export function changedHabitNames(
 }
 
 /**
- * How many of the habit's planned times count as already covered by
- * today's record. Binary and limit-style values are all-or-nothing;
- * a counted habit covers its k-th time once the count reaches k; a
- * timed habit is covered once the day's minutes reach the target.
+ * How many of the habit's planned times today's record already covers.
+ *
+ * This is the exact inverse of {@link desiredRecord}: a counted or timed
+ * habit covers a line for each whole share of the goal its value reaches,
+ * so writing the value a tick asks for and reading it back produces the
+ * same ticks. The two must agree, or every regeneration would disturb the
+ * ticks it had just written. Binary values stay all-or-nothing.
  */
 function coveredTimes(habit: HabitDefinition, value: number): number {
-	if (habit.type === "repetition") {
-		return Math.min(value, habit.times.length);
+	const total = habit.times.length;
+	if (!splitsEvenly(habit)) {
+		return value >= doneValue(habit) ? total : 0;
 	}
-	const done =
-		habit.type === "timed" ? value >= Math.max(habit.target, 1) : value >= 1;
-	return done ? habit.times.length : 0;
+	const covered = Math.floor((value * total) / goalOf(habit));
+	return Math.max(0, Math.min(total, covered));
 }
 
 /**
@@ -179,13 +218,13 @@ export function reminderLines(
 		}
 		const covered = coveredTimes(habit, habit.records[dateKey] ?? 0);
 		habit.times.forEach((time, index) => {
-			// A counted habit's ticks mirror its record exactly (ticking IS
-			// logging, so the record is the whole truth); binary and timed
-			// habits additionally keep manual ticks the record cannot
-			// express — one session of two, or a tick on a read-only line.
+			// Habits whose record can express a partial day mirror it
+			// exactly — ticking is logging, so the record is the whole
+			// truth. The all-or-nothing ones need their ticks remembered
+			// instead, or a partial tick would be lost on every refresh.
 			const checked =
 				index < covered ||
-				(habit.type !== "repetition" &&
+				(!splitsEvenly(habit) &&
 					previouslyChecked.has(`${habit.name}|${time}`));
 			entries.push({
 				time,

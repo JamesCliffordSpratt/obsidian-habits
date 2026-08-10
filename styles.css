@@ -981,11 +981,21 @@
 }
 
 /* Departure: the completed card swooshes off to the right and its slot
-   collapses, so the rest of the queue slides in to close the gap. */
+   collapses, so the rest of the queue slides in to close the gap.
+
+   The slot collapsing to zero width reflows the card's own contents into
+   a very tall, very narrow column. Both the carousel track and the grid
+   stretch their items to the tallest one, so without the height clamp
+   below that momentary column drags every sibling card taller for the
+   length of the animation. The card is already fully transparent by the
+   time the collapse starts (opacity finishes at 0.25s, which is exactly
+   when flex-basis begins), so its height is pinned to zero at that same
+   moment — invisible, and no longer able to set the row's height. */
 .habits-card.is-departing {
 	opacity: 0;
 	transform: translateX(45%) scale(0.9);
 	flex-basis: 0;
+	max-height: 0;
 	padding-left: 0;
 	padding-right: 0;
 	border-left-width: 0;
@@ -995,7 +1005,8 @@
 		transform 0.3s ease-in,
 		flex-basis 0.3s ease-in-out 0.25s,
 		padding 0.3s ease-in-out 0.25s,
-		border-width 0.3s ease-in-out 0.25s;
+		border-width 0.3s ease-in-out 0.25s,
+		max-height 0s linear 0.25s;
 }
 
 /* Perfect day: glow, confetti and "Perfect!" spanning the dashboard when
