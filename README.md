@@ -21,7 +21,7 @@
 - ✨ **AI summaries** *(experimental)* — on-demand feedback and advice on your stats, on screen and in PDF reports, using your own AI service (including free and fully local options)
 - 📌 **Sidebar quick-log panel** — check off today's habits from anywhere, sized for narrow panes
 - ⏸️ **Pause without penalty** — ill or travelling? Paused days never break streaks or drag down your stats
-- 💬 **Per-day comments** — flip any card over to jot down why a day went the way it did; comments can be included in PDF reports
+- 💬 **Per-day comments with tags and links** — flip any card over to jot down why a day went the way it did, with `#tag` and `[[note]]` autocomplete; comments live in the note body, so Obsidian indexes them against the day they belong to
 - 📅 **Daily-note aware** — a dashboard inside `2026-07-01.md` shows that day's habits automatically
 - 📱 **Mobile friendly** — responsive cards, long-press menus, and a configurable mobile layout
 - 🌍 **In your language** — available in English, Spanish, French, German, Japanese, Korean, and Simplified Chinese
@@ -47,9 +47,9 @@ Habits is available in the community plugin browser: open **Settings → Communi
 
 ## 📓 Your data stays yours
 
-Each habit is a single Markdown note in a folder of your choice (default: `Habits`). The frontmatter defines the habit and stores one value per day — readable, portable, and future-proof:
+Each habit is a single Markdown note in a folder of your choice (default: `Habits`). The frontmatter defines the habit and stores one value per day, and any comments you write sit in the note body — readable, portable, and future-proof:
 
-```yaml
+```markdown
 ---
 habit: true
 type: repetition
@@ -61,12 +61,14 @@ startDate: 2026-07-01
 weeklyTarget: 5
 records:
   2026-07-01: 5
-comments:
-  2026-07-01: Managed all eight glasses before lunch!
 pauses:
   - start: 2026-06-10
     end: 2026-06-14
 ---
+
+%%habits-log%%
+- **2026-07-01** — Managed all eight glasses before lunch! #hydration
+%%/habits-log%%
 ```
 
 No databases, no external services — delete the plugin and your history is still right there in your notes.
@@ -92,13 +94,34 @@ Cards for each habit sit in a swipeable carousel. Completing a habit plays a cel
 
 Embedded in a **daily note**? The dashboard follows that note's date, so browsing yesterday's note shows yesterday's habits. The dashboard also live-updates whenever your habit notes or settings change — even from another pane or device sync.
 
-Every card also has a **comment flap** along its bottom edge. Click it and the card flips over to a per-day comment box — perfect for noting why a habit was missed (or smashed). Days with a comment show an accent-tinted speech bubble, and comments follow the selected date, so each day keeps its own note.
+Every card also has a **comment flap** along its bottom edge. Click it and the card flips over to a per-day comment box — perfect for noting why a habit was missed (or smashed). Days with a comment show an accent-tinted speech bubble, and comments follow the selected date, so each day keeps its own note. See [comments](#-comments-tags-and-links) for tags and links.
 
 ## 📌 The sidebar panel
 
 Open the panel from the ribbon icon or the **Open panel** command to log today's habits from anywhere: one compact row per habit with tap-to-check toggles, steppers, and slim progress bars, plus a running done/total count for the day.
 
 ![Logging habits from the sidebar panel](images/habits-side-panel.gif)
+
+## 💬 Comments, tags, and links
+
+Flip a card over and the back is a full note-taking surface for that day. Type `#` and your vault's tags are suggested; type `[[` and your notes are. Both are real Obsidian objects once saved — a tag opens a search filtered to it, a link opens the note (⌘/Ctrl-click for a new pane) and shows a hover preview, and links to notes that don't exist yet are greyed out just as they are anywhere else.
+
+```
+Legs felt heavy but got it done #fitness — following [[Marathon Plan]] week 4
+```
+
+Comments are stored as a list in the habit note's body, inside a pair of `%%habits-log%%` markers that stay invisible in reading view:
+
+```markdown
+%%habits-log%%
+- **2026-08-06** — Long run, felt strong #fitness
+- **2026-08-05** — Skipped, bad night's sleep #recovery
+%%/habits-log%%
+```
+
+This is what makes the tags and links **per day rather than per habit**. Obsidian only indexes tags from a note's body and its `tags` property — never from a nested frontmatter value — so storing each comment on its own line means searching `#fitness` lands you on the day, and `[[Marathon Plan]]`'s backlinks pane shows the dated line with its context. It also means you can edit a comment straight in the note and the card picks up the change.
+
+**Upgrading from an earlier version?** Nothing to do. Comments still in frontmatter are read as before, and a note moves its comments into the body the next time you edit one of them. To convert everything in one go, run **Move day comments into note bodies**.
 
 ## 📈 Stats and reports
 
@@ -198,7 +221,9 @@ Works with **any OpenAI-compatible service**: OpenAI, OpenRouter, Groq, Google A
 | **Create habit** | Open the new-habit dialog |
 | **Insert dashboard** | Insert a `habits` code block at the cursor |
 | **Insert habit metrics** | Insert a `habit-metrics` code block at the cursor |
+| **Insert habits table** | Insert a `habits-table` code block at the cursor |
 | **Open panel** | Open the sidebar quick-log panel |
+| **Move day comments into note bodies** | Convert any comments still held in frontmatter in one pass |
 
 ## ⚙️ Settings
 
@@ -210,8 +235,14 @@ Works with **any OpenAI-compatible service**: OpenAI, OpenRouter, Groq, Google A
 | Cards per view | 4 | Carousel cards shown at once on wide screens (1–4) |
 | Cards per view on mobile | 2 | Carousel cards on phone-sized screens (1–2) |
 | Comments on cards | On | Show the comment flap on dashboard cards |
+| Completion animations | On | Celebration animations when logging; off logs instantly and quietly |
+| Sort habits by | Name | Card order — including **Planned time**, which follows the day's timeline |
+| Group the habits table | On | Group `habits-table` rows by habit group; off gives one flat time-ordered list |
 | Stats page carousel | Off | Split the stats page's habit rows into flippable pages |
 | Stats rows per page | 4 | Habits per stats page when the carousel is on (1–8) |
+| Write reminders for due habits | Off | Maintain Reminder-plugin checklist lines for habits with planned times |
+| Where to write reminders | Daily note | Today's daily note, or one fixed note |
+| Reminder note path | `Habit reminders.md` | Vault path used when writing to a fixed note |
 | Break bad habits | Off | *(Experimental)* Limit habits: stay under a daily cap |
 | AI summaries | Off | *(Experimental)* AI feedback on stats tabs and PDF reports |
 
