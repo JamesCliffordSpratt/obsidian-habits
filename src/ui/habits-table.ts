@@ -11,9 +11,11 @@ import type { HabitStore } from "../habit-store";
 import type { HabitsPluginSettings } from "../settings";
 import type { HabitDefinition } from "../types";
 import {
+	flexiblePeriodTotal,
 	getStatsRange,
 	habitStats,
-	isDue,
+	isActive,
+	isFlexible,
 	isPausedOn,
 	limitOf,
 	type DateRange,
@@ -226,7 +228,7 @@ export class HabitsTable extends MarkdownRenderChild {
 			setIcon(badge, "pause");
 			return;
 		}
-		if (!isDue(habit, today)) {
+		if (!isActive(habit, today)) {
 			cell.createSpan({ cls: "habits-table-notdue", text: "–" });
 			return;
 		}
@@ -244,6 +246,39 @@ export class HabitsTable extends MarkdownRenderChild {
 			this.renderTodayCell(cell, habit, today);
 			await this.store.setRecord(habit, dateKey, clamped);
 		};
+
+		if (isFlexible(habit)) {
+			// Still logs today's own value via `commit`; only the readout
+			// shows the whole period's running total instead of today's.
+			const step = habit.type === "timed" ? 5 : 1;
+			const goal = habit.target > 0 ? habit.target : 1;
+			const periodTotal = flexiblePeriodTotal(habit, today);
+			const stepper = cell.createDiv({ cls: "habits-table-stepper" });
+			const minus = stepper.createEl("button", {
+				cls: "habits-icon-button habits-table-mini",
+				attr: { type: "button", "aria-label": t("Decrease by 1") },
+			});
+			setIcon(minus, "minus");
+			this.registerDomEvent(minus, "click", () => {
+				void commit(value - step);
+			});
+			stepper.createSpan({
+				cls: "habits-table-value",
+				text: `${periodTotal}/${goal}`,
+			});
+			const plus = stepper.createEl("button", {
+				cls: "habits-icon-button habits-table-mini",
+				attr: {
+					type: "button",
+					"aria-label": t("Increase by {n}", { n: step }),
+				},
+			});
+			setIcon(plus, "plus");
+			this.registerDomEvent(plus, "click", () => {
+				void commit(value + step);
+			});
+			return;
+		}
 
 		if (habit.type === "binary" && habit.goalDirection === "max") {
 			const slipped = value >= 1;

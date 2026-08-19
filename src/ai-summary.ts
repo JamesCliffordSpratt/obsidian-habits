@@ -103,12 +103,22 @@ export function buildStatsDigest(
 				);
 			}
 		} else {
+			const period =
+				habit.frequency === "flexibleWeekly"
+					? "per week, any day"
+					: habit.frequency === "flexibleMonthly"
+						? "per month, any day"
+						: "per day";
 			if (habit.type === "repetition") {
 				parts.push(
-					`target ${habit.target}${habit.unit ? ` ${habit.unit}` : ""} per day`,
+					`target ${habit.target}${habit.unit ? ` ${habit.unit}` : ""} ${period}`,
 				);
 			} else if (habit.type === "timed") {
-				parts.push(`target ${habit.target} min per day`);
+				parts.push(`target ${habit.target} min ${period}`);
+			} else if (habit.frequency === "flexibleWeekly") {
+				parts.push(`target ${habit.target}x per week, any day`);
+			} else if (habit.frequency === "flexibleMonthly") {
+				parts.push(`target ${habit.target}x per month, any day`);
 			}
 			parts.push(`${s.completed}/${s.days} due days completed`);
 			if (habit.type !== "binary") {
@@ -119,6 +129,11 @@ export function buildStatsDigest(
 		}
 		if (habit.frequency === "interval") {
 			parts.push(`due every ${habit.intervalDays} days`);
+		} else if (
+			habit.frequency === "flexibleWeekly" ||
+			habit.frequency === "flexibleMonthly"
+		) {
+			// Already covered by the target line above.
 		} else if (habit.frequency !== "daily") {
 			parts.push(`due ${habit.frequency}`);
 		}

@@ -20,6 +20,7 @@ import {
 	currentStreak,
 	isComplete,
 	isDue,
+	isFlexible,
 	isPausedOn,
 	limitOf,
 	trackingStartKey,
@@ -52,6 +53,8 @@ const RECENT_POINTS: Record<HabitFrequency, number> = {
 	weekly: 16,
 	monthly: 12,
 	interval: 16,
+	flexibleWeekly: 16,
+	flexibleMonthly: 12,
 };
 
 /** Trailing window, in due periods, for the rolling completion-rate line. */
@@ -60,6 +63,8 @@ const ROLLING_WINDOW: Record<HabitFrequency, number> = {
 	weekly: 4,
 	monthly: 3,
 	interval: 5,
+	flexibleWeekly: 4,
+	flexibleMonthly: 3,
 };
 
 /**
@@ -273,9 +278,12 @@ export class HabitMetrics extends MarkdownRenderChild {
 		const completedLabel =
 			habit.goalDirection === "max"
 				? t("Days within limit")
-				: habit.frequency === "weekly" && habit.weekdays.length === 1
+				: habit.frequency === "flexibleWeekly" ||
+						(habit.frequency === "weekly" &&
+							habit.weekdays.length === 1)
 					? t("Weeks completed")
-					: habit.frequency === "monthly"
+					: habit.frequency === "flexibleMonthly" ||
+							habit.frequency === "monthly"
 						? t("Months completed")
 						: t("Days completed");
 		const rateLabel =
@@ -358,7 +366,9 @@ export class HabitMetrics extends MarkdownRenderChild {
 				borderRadius: 3,
 			},
 		];
-		if (habit.type !== "binary" && habit.target > 0) {
+		// A flexible habit's target is a per-period goal; drawn as a flat
+		// daily line it would misleadingly read as a daily one.
+		if (habit.type !== "binary" && habit.target > 0 && !isFlexible(habit)) {
 			datasets.push({
 				type: "line",
 				label: isMax ? t("Limit") : t("Target"),
@@ -401,6 +411,21 @@ export class HabitMetrics extends MarkdownRenderChild {
 					month: "short",
 				}),
 			);
+			if (isFlexible(habit)) {
+				// A per-day ratio would inflate the rate for any week
+				// satisfied early (isComplete stays true for the rest of
+				// it), so this is a plain pass/fail for the week instead —
+				// as of its last elapsed day.
+				const weekEnd = addDays(start, 6);
+				const through =
+					weekEnd.getTime() > base.getTime() ? base : weekEnd;
+				const throughKey = toDateKey(through);
+				const trackable = throughKey >= trackingStartKey(habit, today);
+				rates.push(
+					trackable && isComplete(habit, throughKey) ? 100 : 0,
+				);
+				continue;
+			}
 			let elapsed = 0;
 			let completed = 0;
 			for (let i = 0; i < 7; i++) {

@@ -839,7 +839,9 @@
 	background: var(--color-green, var(--habits-accent));
 }
 
-.habits-note-value {
+/* A big, read-only derived number — a note habit's char/checklist count,
+   or a flexible habit's running total for the period. */
+.habits-readout-value {
 	padding: 0 0.15rem;
 	font-size: 1.8rem;
 	font-weight: var(--font-bold);
@@ -2029,13 +2031,14 @@
 	border-radius: var(--radius-s);
 }
 
-/* Note habits: the readout is machine-derived, so it is plain text rather
-   than the click-to-edit button other types use. */
-.habits-panel .habits-panel-note-value {
+/* Note and flexible habits: the readout is machine-derived (a note's
+   char/checklist count, or a flexible habit's period total), so it is
+   plain text rather than the click-to-edit button other types use. */
+.habits-panel .habits-panel-readout-value {
 	cursor: default;
 }
 
-.habits-panel .habits-panel-note-value:hover {
+.habits-panel .habits-panel-readout-value:hover {
 	color: var(--text-muted);
 	background: transparent;
 }

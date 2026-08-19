@@ -22,8 +22,10 @@ import { ExportModal } from "./export-modal";
 import { t } from "../i18n";
 import { renderStatsView } from "./stats-view";
 import {
+	flexiblePeriodTotal,
+	isActive,
 	isComplete as isCompleteOn,
-	isDue,
+	isFlexible,
 	isPausedOn,
 	limitOf,
 	normalizeCustomRange,
@@ -793,7 +795,9 @@ export class HabitsDashboard
 			this.renderPausedBody(front, habit);
 		} else {
 			const body = front.createDiv({ cls: "habits-card-body" });
-			if (habit.goalDirection === "max" && habit.type === "binary") {
+			if (isFlexible(habit)) {
+				this.renderFlexibleControl(body, habit, card);
+			} else if (habit.goalDirection === "max" && habit.type === "binary") {
 				this.renderLimitBinaryControl(body, habit, card);
 			} else if (habit.type === "binary") {
 				this.renderBinaryControl(body, habit, card);
@@ -1025,9 +1029,13 @@ export class HabitsDashboard
 		return isPausedOn(habit, toDateKey(this.selectedDate));
 	}
 
-	/** Whether the habit is due on the currently selected day. */
-	private isDueOnSelected(habit: HabitDefinition): boolean {
-		return isDue(habit, this.selectedDate);
+	/**
+	 * Whether the habit should show/be interactive on the currently
+	 * selected day — its normal due date, or every day for a flexible
+	 * habit (see {@link isActive}).
+	 */
+	private isActiveOnSelected(habit: HabitDefinition): boolean {
+		return isActive(habit, this.selectedDate);
 	}
 
 	/**
@@ -1063,7 +1071,7 @@ export class HabitsDashboard
 	/** Grouped sections before any status ordering. */
 	private rawSections(): HabitSection[] {
 		const due = this.habits.filter((habit) =>
-			this.isDueOnSelected(habit),
+			this.isActiveOnSelected(habit),
 		);
 		return groupHabits(
 			due,
@@ -1191,7 +1199,7 @@ export class HabitsDashboard
 	private isPerfectDay(): boolean {
 		const active = this.habits.filter(
 			(habit) =>
-				this.isDueOnSelected(habit) &&
+				this.isActiveOnSelected(habit) &&
 				!this.isPausedOnSelected(habit),
 		);
 		return (
@@ -1582,6 +1590,94 @@ export class HabitsDashboard
 	}
 
 	/**
+	 * Flexible weekly/monthly habits: logging still writes one number per
+	 * calendar day, exactly like the plain counter control, but the
+	 * readout and progress bar show the running total for the whole
+	 * period (see {@link flexiblePeriodTotal}) rather than just today's
+	 * value — so the card reads "1 / 2 this week" and keeps showing done
+	 * for the rest of the period once the quota is met, however it was
+	 * split across days. The readout is read-only: editing a cumulative
+	 * number that isn't itself the thing being stored would be confusing.
+	 */
+	private renderFlexibleControl(
+		body: HTMLElement,
+		habit: HabitDefinition,
+		card: HTMLElement,
+	): void {
+		const value = this.currentValue(habit);
+		const timed = habit.type === "timed";
+		const unit = habit.unit || (timed ? "min" : "");
+		const goalValue = habit.target > 0 ? habit.target : 1;
+		const periodTotal = flexiblePeriodTotal(habit, this.selectedDate);
+		const periodWord =
+			habit.frequency === "flexibleWeekly" ? t("this week") : t("this month");
+
+		const readout = body.createDiv({ cls: "habits-readout" });
+		readout.createSpan({
+			cls: "habits-readout-value",
+			text: String(periodTotal),
+		});
+		readout.createSpan({
+			cls: "habits-target",
+			text: unit
+				? `/ ${goalValue} ${unit} ${periodWord}`
+				: `/ ${goalValue} ${periodWord}`,
+		});
+
+		const progress = body.createDiv({ cls: "habits-progress" });
+		const fill = progress.createDiv({ cls: "habits-progress-fill" });
+		const pct = Math.min(100, Math.round((periodTotal / goalValue) * 100));
+		fill.setCssProps({ "--habits-progress": `${pct}%` });
+		if (periodTotal >= goalValue) {
+			progress.addClass("is-complete");
+		}
+
+		const buttons = body.createDiv({ cls: "habits-counter-buttons" });
+		buttons.toggleClass("is-compact", timed);
+
+		const minus = buttons.createEl("button", {
+			cls: "habits-icon-button",
+			attr: { type: "button", "aria-label": t("Decrease by 1") },
+		});
+		setIcon(minus, "minus");
+		this.registerDomEvent(minus, "click", async () => {
+			await this.commit(habit, value - 1);
+			this.render();
+		});
+
+		const addValue = async (amount: number): Promise<void> => {
+			const wasComplete = this.isComplete(habit);
+			await this.commit(habit, value + amount);
+			await this.finishChange(card, habit, wasComplete);
+		};
+
+		if (timed) {
+			for (const step of [1, 5, 10]) {
+				const btn = buttons.createEl("button", {
+					cls: "habits-icon-button habits-step-button",
+					text: `+${step}`,
+					attr: {
+						type: "button",
+						"aria-label": t("Increase by {n}", { n: step }),
+					},
+				});
+				this.registerDomEvent(btn, "click", () => {
+					void addValue(step);
+				});
+			}
+		} else {
+			const plus = buttons.createEl("button", {
+				cls: "habits-icon-button",
+				attr: { type: "button", "aria-label": t("Increase by 1") },
+			});
+			setIcon(plus, "plus");
+			this.registerDomEvent(plus, "click", () => {
+				void addValue(1);
+			});
+		}
+	}
+
+	/**
 	 * Note habits are completed by writing, not by tapping a control: the
 	 * card shows the machine-derived progress (char count or percentage of
 	 * tasks checked) as read-only, plus a single Write/Open action for the
@@ -1594,7 +1690,7 @@ export class HabitsDashboard
 		const unit = habit.unit || "chars";
 
 		const readout = body.createDiv({ cls: "habits-readout" });
-		readout.createSpan({ cls: "habits-note-value", text: String(value) });
+		readout.createSpan({ cls: "habits-readout-value", text: String(value) });
 		readout.createSpan({
 			cls: "habits-target",
 			text: `/ ${goalValue} ${unit}`,

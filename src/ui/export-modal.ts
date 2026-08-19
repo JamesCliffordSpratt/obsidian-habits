@@ -30,6 +30,7 @@ import {
 	getStatsRange,
 	habitStats,
 	isComplete,
+	isFlexible,
 	isPausedOn,
 	perfectDays,
 	rangeLength,
@@ -1053,8 +1054,14 @@ export class ExportModal extends Modal {
 		stats: HabitPeriodStats,
 	): string {
 		const unit = habit.unit || (habit.type === "timed" ? "min" : "");
-		const total =
-			habit.type === "binary"
+		const total = isFlexible(habit)
+			? docT(
+					habit.frequency === "flexibleWeekly"
+						? "{completed}/{days} weeks"
+						: "{completed}/{days} months",
+					{ completed: stats.completed, days: stats.days },
+				)
+			: habit.type === "binary"
 				? docT("{completed}/{days} days", {
 						completed: stats.completed,
 						days: stats.days,

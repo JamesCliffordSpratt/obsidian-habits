@@ -12,8 +12,9 @@ import {
 import {
 	getStatsRange,
 	habitStats,
+	isActive,
 	isComplete,
-	isDue,
+	isFlexible,
 	isPausedOn,
 	perfectDays,
 	trackingStartKey,
@@ -258,7 +259,7 @@ export function renderStatsView(
 				);
 				continue;
 			}
-			if (!isDue(habit, date)) {
+			if (!isActive(habit, date)) {
 				cell.addClass("is-notdue");
 			} else if (key > todayKey) {
 				cell.addClass("is-future");
@@ -285,8 +286,17 @@ export function renderStatsView(
 		}
 
 		const unit = habit.unit || (habit.type === "timed" ? "min" : "");
-		const totalText =
-			habit.type === "binary"
+		const totalText = isFlexible(habit)
+			? habit.frequency === "flexibleWeekly"
+				? t("{completed}/{days} weeks", {
+						completed: stats.completed,
+						days: stats.days,
+					})
+				: t("{completed}/{days} months", {
+						completed: stats.completed,
+						days: stats.days,
+					})
+			: habit.type === "binary"
 				? t("{completed}/{days} days", {
 						completed: stats.completed,
 						days: stats.days,

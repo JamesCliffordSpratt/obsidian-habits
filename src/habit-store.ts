@@ -9,7 +9,12 @@ import type {
 	NewHabitOptions,
 	NoteCompletionMode,
 } from "./types";
-import { addDays, sanitizeFileName, toDateKey } from "./utils";
+import {
+	addDays,
+	isFlexibleFrequency,
+	sanitizeFileName,
+	toDateKey,
+} from "./utils";
 import { tagsInComments } from "./comment-text";
 import { applyCommentLog, parseCommentLog } from "./comment-log";
 import { t } from "./i18n";
@@ -26,6 +31,8 @@ const HABIT_FREQUENCIES: readonly HabitFrequency[] = [
 	"weekly",
 	"monthly",
 	"interval",
+	"flexibleWeekly",
+	"flexibleMonthly",
 ];
 const NOTE_COMPLETION_MODES: readonly NoteCompletionMode[] = [
 	"chars",
@@ -455,6 +462,11 @@ export class HabitStore {
 		} else if (options.frequency === "interval") {
 			fm.frequency = "interval";
 			fm.intervalDays = this.clampInt(options.intervalDays, 2, 365);
+		} else if (
+			options.frequency === "flexibleWeekly" ||
+			options.frequency === "flexibleMonthly"
+		) {
+			fm.frequency = options.frequency;
 		} else {
 			delete fm.frequency;
 		}
@@ -828,11 +840,17 @@ export class HabitStore {
 			this.writeFrequency(fm, options);
 			this.writeTimes(fm, options);
 			this.writeNoteFields(fm, options, cleanName);
-			if (options.type !== "binary") {
+			if (
+				options.type !== "binary" ||
+				isFlexibleFrequency(options.frequency)
+			) {
 				// A limit of 0 is meaningful ("none at all"), so max habits
 				// always write the field even when it is zero. A note
 				// habit's target is its character goal, or 100 for a
-				// checklist habit's checked percentage.
+				// checklist habit's checked percentage. A flexible habit's
+				// target is its "times per period" goal, which a binary
+				// habit needs written too (unlike the normal binary case,
+				// where it is meaningless and left out).
 				fm.target = options.target;
 			}
 			if (options.unit) {
@@ -918,7 +936,10 @@ export class HabitStore {
 			this.writeFrequency(fm, options);
 			this.writeTimes(fm, options);
 			this.writeNoteFields(fm, options, cleanName);
-			if (options.type === "binary") {
+			if (
+				options.type === "binary" &&
+				!isFlexibleFrequency(options.frequency)
+			) {
 				delete fm.target;
 			} else {
 				fm.target = options.target;

@@ -25,6 +25,7 @@ import {
 import { EmojiSuggestModal } from "./emoji-suggest-modal";
 import { FolderSuggest, MarkdownFileSuggest } from "./vault-suggest";
 import { DEFAULT_NOTE_FILENAME_FORMAT } from "../note-habit";
+import { isFlexibleFrequency } from "../utils";
 import { t } from "../i18n";
 
 /**
@@ -382,25 +383,40 @@ export class HabitModal extends Modal {
 				dropdown.setValue(this.type).onChange((value) => {
 					this.type = value as HabitType;
 					if (this.type === "note") {
-						// Note habits have no limit variant.
+						// Note habits have no limit variant, and no
+						// flexible-frequency variant either.
 						this.goalDirection = "min";
+						if (isFlexibleFrequency(this.frequency)) {
+							this.frequency = "daily";
+						}
 					}
 					this.randomizeExample();
 					this.build();
 				});
 			});
 
-		if (this.type !== "binary" && this.type !== "note") {
-			const targetName = isMax
-				? this.type === "timed"
-					? t("Daily limit (minutes)")
-					: t("Daily limit")
-				: this.type === "timed"
-					? t("Daily target (minutes)")
-					: t("Daily target");
+		const isFlexible = isFlexibleFrequency(this.frequency);
+		if ((this.type !== "binary" && this.type !== "note") || isFlexible) {
+			const targetName = isFlexible
+				? this.frequency === "flexibleWeekly"
+					? t("Times per week")
+					: t("Times per month")
+				: isMax
+					? this.type === "timed"
+						? t("Daily limit (minutes)")
+						: t("Daily limit")
+					: this.type === "timed"
+						? t("Daily target (minutes)")
+						: t("Daily target");
 			const setting = new Setting(contentEl).setName(targetName);
 			if (isMax) {
 				setting.setDesc(t("0 means none at all."));
+			} else if (isFlexible) {
+				setting.setDesc(
+					t(
+						"How many times (or, for counted and timed habits, how much in total) this needs to happen somewhere in the period.",
+					),
+				);
 			}
 			setting.addText((text) => {
 				// A limit of 0 is meaningful ("none at all"); a target of 0
@@ -445,7 +461,11 @@ export class HabitModal extends Modal {
 			this.renderFrequency(contentEl);
 		}
 
-		this.renderTime(contentEl);
+		// A planned time of day doesn't fit "sometime this week/month" —
+		// skip it for flexible frequencies.
+		if (!isFlexibleFrequency(this.frequency)) {
+			this.renderTime(contentEl);
+		}
 
 		if (this.type === "note") {
 			this.renderNoteSettings(contentEl);
@@ -552,7 +572,12 @@ export class HabitModal extends Modal {
 							weekdays: [...this.weekdays],
 							monthDay: this.monthDay,
 							intervalDays: this.intervalDays,
-							times: this.times.filter((value) => value !== ""),
+							// The time picker is hidden for flexible
+							// frequencies, so a stale value from before the
+							// frequency changed must not persist unseen.
+							times: isFlexibleFrequency(this.frequency)
+								? []
+								: this.times.filter((value) => value !== ""),
 							target: isChecklist
 								? 100
 								: isNote
@@ -778,29 +803,37 @@ export class HabitModal extends Modal {
 
 	/**
 	 * Frequency picker: daily, weekly (with one or more weekdays), monthly
-	 * (with a day of the month) or every N days. Non-daily habits only
-	 * surface on their due dates.
+	 * (with a day of the month), every N days, or a flexible weekly/monthly
+	 * quota met on any day. Non-daily habits only surface on their due
+	 * dates — flexible ones are the exception, showing every day until
+	 * their period's quota is met. Not offered for note habits, whose
+	 * completion is file-content-based rather than a period total.
 	 */
 	private renderFrequency(contentEl: HTMLElement): void {
+		const allowFlexible = this.type !== "note";
 		new Setting(contentEl)
 			.setName(t("Frequency"))
 			.setDesc(
 				t(
-					"How often this habit is due. Weekly and monthly habits only appear on their due date.",
+					"How often this habit is due. Weekly and monthly habits only appear on their due date; the \"any day\" options appear every day until their quota is met.",
 				),
 			)
-			.addDropdown((dropdown) =>
+			.addDropdown((dropdown) => {
 				dropdown
 					.addOption("daily", t("Daily"))
 					.addOption("weekly", t("Weekly"))
 					.addOption("monthly", t("Monthly"))
-					.addOption("interval", t("Every N days"))
-					.setValue(this.frequency)
-					.onChange((value) => {
-						this.frequency = value as HabitFrequency;
-						this.build();
-					}),
-			);
+					.addOption("interval", t("Every N days"));
+				if (allowFlexible) {
+					dropdown
+						.addOption("flexibleWeekly", t("Weekly (any day)"))
+						.addOption("flexibleMonthly", t("Monthly (any day)"));
+				}
+				dropdown.setValue(this.frequency).onChange((value) => {
+					this.frequency = value as HabitFrequency;
+					this.build();
+				});
+			});
 
 		if (this.frequency === "weekly") {
 			const setting = new Setting(contentEl)

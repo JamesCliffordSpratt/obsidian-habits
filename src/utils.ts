@@ -3,6 +3,7 @@ import { t } from "./i18n";
 import type {
 	GroupStyle,
 	HabitDefinition,
+	HabitFrequency,
 	HabitSortMode,
 } from "./types";
 
@@ -105,7 +106,18 @@ export function habitScheduleLabel(habit: HabitDefinition): string {
 			? t("Every other day")
 			: t("Every {n} days", { n: habit.intervalDays });
 	}
+	if (habit.frequency === "flexibleWeekly") {
+		return t("{n}× a week · any day", { n: Math.max(1, habit.target) });
+	}
+	if (habit.frequency === "flexibleMonthly") {
+		return t("{n}× a month · any day", { n: Math.max(1, habit.target) });
+	}
 	return "";
+}
+
+/** True for the two "N times per period, any day" frequencies. */
+export function isFlexibleFrequency(frequency: HabitFrequency): boolean {
+	return frequency === "flexibleWeekly" || frequency === "flexibleMonthly";
 }
 
 /** Format a date as a `YYYY-MM-DD` key using local time. */

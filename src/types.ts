@@ -28,8 +28,20 @@ export type NoteCompletionMode = "chars" | "checklist";
  * - `monthly`: due once a month, on a chosen day of the month.
  * - `interval`: due every N days, counted from the habit's start date
  *   (e.g. every 2 days for an alternate-day schedule).
+ * - `flexibleWeekly`: due a set number of times each week, on any day the
+ *   user chooses (e.g. kayaking once a week, whichever day is free).
+ * - `flexibleMonthly`: the same idea, scored over a calendar month.
+ *
+ * `target` holds the "how many times" for the two flexible frequencies —
+ * see {@link HabitDefinition.target}.
  */
-export type HabitFrequency = "daily" | "weekly" | "monthly" | "interval";
+export type HabitFrequency =
+	| "daily"
+	| "weekly"
+	| "monthly"
+	| "interval"
+	| "flexibleWeekly"
+	| "flexibleMonthly";
 
 /**
  * Which way a habit's goal points.
@@ -138,7 +150,10 @@ export interface HabitDefinition {
 	times: string[];
 	/**
 	 * Daily target. For `repetition` this is a count; for `timed` it is a
-	 * number of minutes. Ignored for `binary`.
+	 * number of minutes. Ignored for `binary` — except when `frequency` is
+	 * `flexibleWeekly`/`flexibleMonthly`, where `target` instead holds the
+	 * number of times (for `binary`) or the cumulative amount (for
+	 * `repetition`/`timed`) required somewhere within the period.
 	 */
 	target: number;
 	/** Optional unit label shown next to the value (e.g. "cups"). */

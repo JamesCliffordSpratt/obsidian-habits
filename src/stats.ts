@@ -1,5 +1,11 @@
 import type { HabitDefinition } from "./types";
-import { addDays, daysInMonth, fromDateKey, toDateKey } from "./utils";
+import {
+	addDays,
+	daysInMonth,
+	fromDateKey,
+	isFlexibleFrequency,
+	toDateKey,
+} from "./utils";
 
 const MS_PER_DAY = 86_400_000;
 
@@ -28,6 +34,118 @@ function startOfWeek(date: Date): Date {
 	const base = startOfDay(date);
 	const offset = (base.getDay() + 6) % 7; // Monday = 0
 	return addDays(base, -offset);
+}
+
+/** True for the two "N times per period, any day" frequencies. */
+export function isFlexible(habit: HabitDefinition): boolean {
+	return isFlexibleFrequency(habit.frequency);
+}
+
+/**
+ * Whether a habit's card should show and be interactive on `date`.
+ *
+ * For every other frequency this is exactly {@link isDue}. Flexible
+ * habits are due (in the stats sense) only on their period's last day —
+ * see {@link isDue} — but need to be actionable every day so the user can
+ * log an occurrence whenever it actually happens.
+ */
+export function isActive(habit: HabitDefinition, date: Date): boolean {
+	return isDue(habit, date) || isFlexible(habit);
+}
+
+/** The Monday–Sunday week, or calendar month, containing `date`. */
+export function flexiblePeriodRange(
+	habit: HabitDefinition,
+	date: Date,
+): DateRange {
+	if (habit.frequency === "flexibleWeekly") {
+		const start = startOfWeek(date);
+		return { start, end: addDays(start, 6) };
+	}
+	const base = startOfDay(date);
+	return {
+		start: new Date(base.getFullYear(), base.getMonth(), 1),
+		end: new Date(base.getFullYear(), base.getMonth() + 1, 0),
+	};
+}
+
+/** The period immediately before `range` (mirrors its week/month shape). */
+function previousPeriodRange(
+	habit: HabitDefinition,
+	range: DateRange,
+): DateRange {
+	if (habit.frequency === "flexibleWeekly") {
+		const start = addDays(range.start, -7);
+		return { start, end: addDays(start, 6) };
+	}
+	const prevEnd = addDays(range.start, -1);
+	return {
+		start: new Date(prevEnd.getFullYear(), prevEnd.getMonth(), 1),
+		end: prevEnd,
+	};
+}
+
+/** The period immediately after `range` (mirrors its week/month shape). */
+function nextPeriodRange(
+	habit: HabitDefinition,
+	range: DateRange,
+): DateRange {
+	if (habit.frequency === "flexibleWeekly") {
+		const start = addDays(range.start, 7);
+		return { start, end: addDays(start, 6) };
+	}
+	const nextStart = addDays(range.end, 1);
+	return {
+		start: nextStart,
+		end: new Date(nextStart.getFullYear(), nextStart.getMonth() + 1, 0),
+	};
+}
+
+/** Every day in `range` is paused — a whole period to leave out of streaks. */
+function periodFullyPaused(habit: HabitDefinition, range: DateRange): boolean {
+	let cursor = new Date(range.start);
+	while (cursor.getTime() <= range.end.getTime()) {
+		if (!isPausedOn(habit, toDateKey(cursor))) {
+			return false;
+		}
+		cursor = addDays(cursor, 1);
+	}
+	return true;
+}
+
+/** Sum of `records` within `range`, from its start through `throughDate`. */
+function periodTotalThrough(
+	habit: HabitDefinition,
+	range: DateRange,
+	throughDate: Date,
+): number {
+	const end =
+		throughDate.getTime() < range.end.getTime() ? throughDate : range.end;
+	let total = 0;
+	let cursor = new Date(range.start);
+	while (cursor.getTime() <= end.getTime()) {
+		total += habit.records[toDateKey(cursor)] ?? 0;
+		cursor = addDays(cursor, 1);
+	}
+	return total;
+}
+
+/**
+ * A flexible habit's period-cumulative total, from the start of the period
+ * containing `date` through `date` itself. On a non-canonical day this is a
+ * live "have I hit quota yet this period" reading; on the period's last day
+ * it is the authoritative full-period total.
+ */
+export function flexiblePeriodTotal(
+	habit: HabitDefinition,
+	date: Date,
+): number {
+	return periodTotalThrough(habit, flexiblePeriodRange(habit, date), date);
+}
+
+/** Whether a period total reaches a flexible habit's "times per period" goal. */
+function meetsFlexibleTarget(habit: HabitDefinition, total: number): boolean {
+	return habit.target > 0 ? total >= habit.target : total > 0;
 }
 
 /** Number of whole days from start to end, inclusive. */
@@ -133,8 +251,21 @@ export function intervalAnchor(habit: HabitDefinition): Date | null {
  * - `interval` habits are due every N days counted from their anchor (see
  *   {@link intervalAnchor}); dates before the anchor are never due, and a
  *   habit with no anchor yet behaves as daily until one exists.
+ * - `flexibleWeekly`/`flexibleMonthly` habits are due, in this stats sense,
+ *   only on the last day of their period (Sunday, or the month's last day)
+ *   — the one canonical day a whole period's outcome is scored on. Use
+ *   {@link isActive} for "should this show up today" instead; it is true
+ *   every day for these two frequencies.
  */
 export function isDue(habit: HabitDefinition, date: Date): boolean {
+	if (habit.frequency === "flexibleWeekly") {
+		return date.getDay() === 0; // Sunday: the last day of a Monday-start week
+	}
+	if (habit.frequency === "flexibleMonthly") {
+		return (
+			date.getDate() === daysInMonth(date.getFullYear(), date.getMonth())
+		);
+	}
 	if (habit.frequency === "weekly") {
 		return habit.weekdays.includes(date.getDay());
 	}
@@ -203,12 +334,20 @@ export function trackingStartKey(
 /**
  * True when a habit met its goal on the given day.
  *
+ * For `flexibleWeekly`/`flexibleMonthly` habits: the running total for the
+ * period containing `dateKey`, summed from the period's start through
+ * `dateKey` itself, reaches `target`. Well-defined for any day, not just
+ * the period's canonical last day — see {@link flexiblePeriodTotal}.
  * For `min` habits: the logged value reached the target.
  * For `max` habits: the logged value stayed at or under the limit — an
  * unlogged day counts as within limit, but only from the habit's start
  * day onward (see {@link limitStartKey}).
  */
 export function isComplete(habit: HabitDefinition, dateKey: string): boolean {
+	if (isFlexible(habit)) {
+		const date = fromDateKey(dateKey);
+		return date ? meetsFlexibleTarget(habit, flexiblePeriodTotal(habit, date)) : false;
+	}
 	const value = habit.records[dateKey] ?? 0;
 	if (habit.goalDirection === "max") {
 		if (dateKey < trackingStartKey(habit)) {
@@ -232,15 +371,95 @@ export function isPausedOn(habit: HabitDefinition, dateKey: string): boolean {
 }
 
 /**
+ * {@link currentStreak} for a flexible habit: walks period by period (weeks
+ * or months) rather than day by day, since evaluating every day of an
+ * in-progress, not-yet-satisfied period would falsely look like a string of
+ * broken days. The current, still-open period counts if it is already
+ * satisfied and otherwise doesn't break anything — there is still time left
+ * in it, the same idea as the existing "today may still be blank" grace,
+ * just at period granularity. Every fully elapsed period after that is a
+ * plain pass/fail, so no grace is needed there.
+ */
+function flexibleCurrentStreak(habit: HabitDefinition, today: Date): number {
+	const habitStart = fromDateKey(trackingStartKey(habit, today));
+	let range = flexiblePeriodRange(habit, today);
+	let streak = 0;
+
+	if (toDateKey(range.end) !== toDateKey(startOfDay(today))) {
+		if (
+			habitStart &&
+			range.end.getTime() >= habitStart.getTime() &&
+			!periodFullyPaused(habit, range) &&
+			meetsFlexibleTarget(habit, periodTotalThrough(habit, range, today))
+		) {
+			streak++;
+		}
+		range = previousPeriodRange(habit, range);
+	}
+
+	for (;;) {
+		if (habitStart && range.end.getTime() < habitStart.getTime()) {
+			break;
+		}
+		if (periodFullyPaused(habit, range)) {
+			range = previousPeriodRange(habit, range);
+			continue;
+		}
+		if (meetsFlexibleTarget(habit, periodTotalThrough(habit, range, range.end))) {
+			streak++;
+		} else {
+			break;
+		}
+		range = previousPeriodRange(habit, range);
+	}
+	return streak;
+}
+
+/** {@link longestStreak} for a flexible habit; see {@link flexibleCurrentStreak}. */
+function flexibleLongestStreak(habit: HabitDefinition, today: Date): number {
+	const habitStart = fromDateKey(trackingStartKey(habit, today));
+	if (!habitStart) {
+		return 0;
+	}
+	const todayRange = flexiblePeriodRange(habit, today);
+	let range = flexiblePeriodRange(habit, habitStart);
+	let best = 0;
+	let run = 0;
+	while (range.start.getTime() <= todayRange.start.getTime()) {
+		if (periodFullyPaused(habit, range)) {
+			range = nextPeriodRange(habit, range);
+			continue;
+		}
+		const isCurrent = range.start.getTime() === todayRange.start.getTime();
+		const through = isCurrent ? today : range.end;
+		if (meetsFlexibleTarget(habit, periodTotalThrough(habit, range, through))) {
+			run++;
+			best = Math.max(best, run);
+		} else if (!isCurrent) {
+			// An unmet but still-open current period doesn't reset the run —
+			// mirrors flexibleCurrentStreak's grace for it.
+			run = 0;
+		}
+		range = nextPeriodRange(habit, range);
+	}
+	return best;
+}
+
+/**
  * Consecutive complete due periods ending with the most recent one.
  *
  * For daily habits every day is a period. For weekly and monthly habits only
  * their due dates count, so the streak measures consecutive weeks or months
  * completed. Paused due dates are skipped entirely (they neither break nor
  * extend a streak), and the most recent due date may still be blank (e.g. a
- * due date that is today) without breaking the streak.
+ * due date that is today) without breaking the streak. Flexible habits
+ * delegate to {@link flexibleCurrentStreak}, which walks whole periods
+ * instead of days.
  */
 export function currentStreak(habit: HabitDefinition, today: Date): number {
+	if (isFlexible(habit)) {
+		return flexibleCurrentStreak(habit, today);
+	}
 	let cursor = startOfDay(today);
 	let streak = 0;
 	let graceUsed = false;
@@ -289,11 +508,15 @@ export function currentStreak(habit: HabitDefinition, today: Date): number {
  * `min` habits anchor the scan on logged completions. `max` habits cannot
  * (silence is success, so there may be no logged "completions" at all);
  * they scan the whole tracked window, from the habit's start day to today.
+ * Flexible habits delegate to {@link flexibleLongestStreak}.
  */
 export function longestStreak(
 	habit: HabitDefinition,
 	today: Date = new Date(),
 ): number {
+	if (isFlexible(habit)) {
+		return flexibleLongestStreak(habit, today);
+	}
 	let first: Date | null;
 	let last: Date | null;
 	if (habit.goalDirection === "max") {
@@ -377,7 +600,15 @@ export function habitStats(
 		}
 		days++;
 		const value = habit.records[key] ?? 0;
-		if (habit.goalDirection === "max") {
+		if (isFlexible(habit)) {
+			// isDue only gates this loop through on the period's last day, so
+			// `cursor` is the period end here and this total is the whole
+			// period's, not just this one day's.
+			total += flexiblePeriodTotal(habit, cursor);
+			if (isComplete(habit, key)) {
+				completed++;
+			}
+		} else if (habit.goalDirection === "max") {
 			// For limit habits `total` is consumption (slips for binary),
 			// and a completed day is one that stayed within the limit.
 			total += value;

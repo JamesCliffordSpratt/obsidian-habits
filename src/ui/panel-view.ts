@@ -12,7 +12,14 @@ import {
 import type { HabitStore } from "../habit-store";
 import type { HabitsPluginSettings } from "../settings";
 import type { HabitDefinition } from "../types";
-import { isComplete, isDue, isPausedOn, limitOf } from "../stats";
+import {
+	flexiblePeriodTotal,
+	isActive,
+	isComplete,
+	isFlexible,
+	isPausedOn,
+	limitOf,
+} from "../stats";
 import { createNoteHabitEntry, notePathForDate } from "../note-habit";
 import {
 	formatTimeOfDay,
@@ -165,9 +172,12 @@ export class HabitsPanelView extends ItemView {
 		return isPausedOn(habit, this.todayKey());
 	}
 
-	/** Whether the habit is due today (daily habits always are). */
-	private isDueToday(habit: HabitDefinition): boolean {
-		return isDue(habit, new Date());
+	/**
+	 * Whether the habit should show/be interactive today — its normal due
+	 * date, or every day for a flexible habit (see {@link isActive}).
+	 */
+	private isActiveToday(habit: HabitDefinition): boolean {
+		return isActive(habit, new Date());
 	}
 
 	/**
@@ -194,7 +204,7 @@ export class HabitsPanelView extends ItemView {
 
 	/** Sections mirroring the dashboard's grouping behaviour. */
 	private sections(): HabitSection[] {
-		const due = this.habits.filter((habit) => this.isDueToday(habit));
+		const due = this.habits.filter((habit) => this.isActiveToday(habit));
 		return groupHabits(
 			due,
 			this.sectioned(),
@@ -239,7 +249,7 @@ export class HabitsPanelView extends ItemView {
 
 		const trackable = this.habits.filter(
 			(habit) =>
-				this.isDueToday(habit) && !this.isPausedToday(habit),
+				this.isActiveToday(habit) && !this.isPausedToday(habit),
 		);
 		const doneCount = trackable.filter((habit) =>
 			this.isDone(habit),
@@ -390,6 +400,11 @@ export class HabitsPanelView extends ItemView {
 		const done = this.isDone(habit);
 		row.toggleClass("is-done", done);
 
+		if (isFlexible(habit)) {
+			this.renderFlexibleRow(main, habit, row);
+			return;
+		}
+
 		if (habit.type === "binary" && habit.goalDirection === "max") {
 			// A limit day is clean unless a slip is logged, so the toggle
 			// inverts: it records the slip, and records it back away.
@@ -505,6 +520,70 @@ export class HabitsPanelView extends ItemView {
 	}
 
 	/**
+	 * Compact row for a flexible weekly/monthly habit: the same +1/−1 (and
+	 * +5/+10 for timed) buttons as the plain counter row, still logging
+	 * today's own value, but the readout and progress bar show the running
+	 * total for the whole period (see {@link flexiblePeriodTotal}) instead
+	 * of just today's — read-only, since it isn't itself what gets stored.
+	 */
+	private renderFlexibleRow(
+		main: HTMLElement,
+		habit: HabitDefinition,
+		row: HTMLElement,
+	): void {
+		const value = this.valueOf(habit);
+		const timed = habit.type === "timed";
+		const goalValue = habit.target > 0 ? habit.target : 1;
+		const periodTotal = flexiblePeriodTotal(habit, new Date());
+		main.createSpan({
+			cls: "habits-panel-value habits-panel-readout-value",
+			text: `${periodTotal}/${goalValue}`,
+		});
+
+		const minus = main.createEl("button", {
+			cls: "habits-icon-button habits-panel-mini",
+			attr: { type: "button", "aria-label": t("Decrease by 1") },
+		});
+		setIcon(minus, "minus");
+		this.registerDomEvent(minus, "click", async () => {
+			await this.commit(habit, value - 1, row);
+		});
+
+		if (timed) {
+			for (const step of [1, 5, 10]) {
+				const btn = main.createEl("button", {
+					cls: "habits-icon-button habits-panel-mini habits-panel-step",
+					text: `+${step}`,
+					attr: {
+						type: "button",
+						"aria-label": t("Increase by {n}", { n: step }),
+					},
+				});
+				this.registerDomEvent(btn, "click", async () => {
+					await this.commit(habit, value + step, row);
+				});
+			}
+		} else {
+			const plus = main.createEl("button", {
+				cls: "habits-icon-button habits-panel-mini",
+				attr: { type: "button", "aria-label": t("Increase by 1") },
+			});
+			setIcon(plus, "plus");
+			this.registerDomEvent(plus, "click", async () => {
+				await this.commit(habit, value + 1, row);
+			});
+		}
+
+		const progress = row.createDiv({ cls: "habits-panel-progress" });
+		const fill = progress.createDiv({ cls: "habits-panel-progress-fill" });
+		const pct = Math.min(100, Math.round((periodTotal / goalValue) * 100));
+		fill.setCssProps({ "--habits-progress": `${pct}%` });
+		if (periodTotal >= goalValue) {
+			progress.addClass("is-complete");
+		}
+	}
+
+	/**
 	 * Compact row for a note habit: a read-only char-count/percentage
 	 * readout (machine-derived, so not click-to-edit like other types) plus
 	 * a single Write/Open action for today's note.
@@ -512,7 +591,7 @@ export class HabitsPanelView extends ItemView {
 	private renderNoteRow(main: HTMLElement, habit: HabitDefinition): void {
 		const value = this.valueOf(habit);
 		main.createSpan({
-			cls: "habits-panel-value habits-panel-note-value",
+			cls: "habits-panel-value habits-panel-readout-value",
 			text: `${value}/${habit.target} ${habit.unit || "chars"}`,
 		});
 
