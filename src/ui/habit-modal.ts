@@ -4,6 +4,7 @@ import {
 	ButtonComponent,
 	ColorComponent,
 	Modal,
+	moment,
 	Setting,
 	setIcon,
 } from "obsidian";
@@ -13,6 +14,7 @@ import type {
 	HabitDefinition,
 	HabitFrequency,
 	HabitType,
+	NoteCompletionMode,
 } from "../types";
 import {
 	applyHabitIcon,
@@ -21,6 +23,8 @@ import {
 	isLucideIcon,
 } from "./icon-suggest-modal";
 import { EmojiSuggestModal } from "./emoji-suggest-modal";
+import { FolderSuggest, MarkdownFileSuggest } from "./vault-suggest";
+import { DEFAULT_NOTE_FILENAME_FORMAT } from "../note-habit";
 import { t } from "../i18n";
 
 /**
@@ -141,6 +145,18 @@ const EXAMPLES: Record<HabitType, HabitExample[]> = {
 		{ name: "Practise a language", target: 15 },
 		{ name: "Stretch", target: 10 },
 	],
+	note: [
+		{ name: "Journal" },
+		{ name: "Morning pages" },
+		{ name: "Gratitude log" },
+		{ name: "Daily reflection" },
+		{ name: "Dream journal" },
+		{ name: "Reading notes" },
+		{ name: "Work log" },
+		{ name: "Meal log" },
+		{ name: "Idea capture" },
+		{ name: "Trip diary" },
+	],
 };
 
 /** Example habits shown when the goal is a limit rather than a target. */
@@ -166,6 +182,9 @@ const LIMIT_EXAMPLES: Record<HabitType, HabitExample[]> = {
 		{ name: "TV", target: 60 },
 		{ name: "Phone before bed", target: 0 },
 	],
+	// Note habits have no limit variant; unreachable in the UI (the Goal
+	// picker is hidden for them), kept only so this record stays exhaustive.
+	note: EXAMPLES.note,
 };
 
 /** Constrain a text input to whole numbers within an optional range. */
@@ -206,6 +225,10 @@ export class HabitModal extends Modal {
 	private groupColor = "";
 	private groupIcon = "";
 	private useGroupColor = false;
+	private noteFolder = "";
+	private noteFilenameFormat = "";
+	private templatePath = "";
+	private noteCompletionMode: NoteCompletionMode = "chars";
 	/** Group whose saved style is currently loaded, to avoid clobbering
 	 * fresh picks with a reload on every keystroke. */
 	private loadedGroupName: string | null = null;
@@ -227,6 +250,7 @@ export class HabitModal extends Modal {
 		private onCreated: () => void,
 		editing: HabitDefinition | null = null,
 		private allowLimitHabits = false,
+		private allowNoteHabits = false,
 	) {
 		super(app);
 		this.editing = editing;
@@ -258,6 +282,10 @@ export class HabitModal extends Modal {
 			this.color = editing.color || "var(--interactive-accent)";
 			this.group = editing.group;
 			this.useGroupColor = editing.useGroupColor;
+			this.noteFolder = editing.noteFolder;
+			this.noteFilenameFormat = editing.noteFilenameFormat;
+			this.templatePath = editing.templatePath;
+			this.noteCompletionMode = editing.noteCompletionMode;
 		}
 	}
 
@@ -296,8 +324,11 @@ export class HabitModal extends Modal {
 		// The goal picker is the experimental feature's only entry point:
 		// it appears when the flag is on, or when editing a habit that is
 		// already a limit habit (so such habits stay editable even after
-		// the flag is switched off).
-		if (this.allowLimitHabits || this.editing?.goalDirection === "max") {
+		// the flag is switched off). Note habits have no limit variant.
+		if (
+			this.type !== "note" &&
+			(this.allowLimitHabits || this.editing?.goalDirection === "max")
+		) {
 			new Setting(contentEl)
 				.setName(t("Goal"))
 				.setDesc(
@@ -323,6 +354,8 @@ export class HabitModal extends Modal {
 		}
 
 		const isMax = this.goalDirection === "max";
+		const allowNote =
+			this.allowNoteHabits || this.editing?.type === "note";
 		new Setting(contentEl)
 			.setName(t("Type"))
 			.setDesc(
@@ -330,24 +363,34 @@ export class HabitModal extends Modal {
 					? t(
 							"Binary means avoiding it entirely. Repetition counts against a daily limit. Timed tracks minutes against a daily limit.",
 						)
-					: t(
-							"Binary is done or not done. Repetition counts towards a target. Timed tracks minutes.",
-						),
+					: allowNote
+						? t(
+								"Binary is done or not done. Repetition counts towards a target. Timed tracks minutes. Note is completed by writing in a per-day note.",
+							)
+						: t(
+								"Binary is done or not done. Repetition counts towards a target. Timed tracks minutes.",
+							),
 			)
-			.addDropdown((dropdown) =>
+			.addDropdown((dropdown) => {
 				dropdown
 					.addOption("binary", t("Binary"))
 					.addOption("repetition", t("Repetition"))
-					.addOption("timed", t("Timed"))
-					.setValue(this.type)
-					.onChange((value) => {
-						this.type = value as HabitType;
-						this.randomizeExample();
-						this.build();
-					}),
-			);
+					.addOption("timed", t("Timed"));
+				if (allowNote) {
+					dropdown.addOption("note", t("Note"));
+				}
+				dropdown.setValue(this.type).onChange((value) => {
+					this.type = value as HabitType;
+					if (this.type === "note") {
+						// Note habits have no limit variant.
+						this.goalDirection = "min";
+					}
+					this.randomizeExample();
+					this.build();
+				});
+			});
 
-		if (this.type !== "binary") {
+		if (this.type !== "binary" && this.type !== "note") {
 			const targetName = isMax
 				? this.type === "timed"
 					? t("Daily limit (minutes)")
@@ -403,6 +446,10 @@ export class HabitModal extends Modal {
 		}
 
 		this.renderTime(contentEl);
+
+		if (this.type === "note") {
+			this.renderNoteSettings(contentEl);
+		}
 
 		// Weekly and monthly goals count days completed within a period, which
 		// only makes sense for a daily habit; a weekly/monthly habit is due at
@@ -488,6 +535,12 @@ export class HabitModal extends Modal {
 					.setButtonText(this.editing ? t("Save changes") : t("Create habit"))
 					.setCta()
 					.onClick(async () => {
+						// A checklist habit's target/unit are fixed (a 0–100
+						// checked percentage); a chars habit uses the
+						// character goal the user typed.
+						const isNote = this.type === "note";
+						const isChecklist =
+							isNote && this.noteCompletionMode === "checklist";
 						const options = {
 							name: this.habitName,
 							type: this.type,
@@ -500,8 +553,18 @@ export class HabitModal extends Modal {
 							monthDay: this.monthDay,
 							intervalDays: this.intervalDays,
 							times: this.times.filter((value) => value !== ""),
-							target: this.target,
-							unit: this.unit,
+							target: isChecklist
+								? 100
+								: isNote
+									? this.target > 0
+										? this.target
+										: 500
+									: this.target,
+							unit: isNote
+								? isChecklist
+									? "%"
+									: "chars"
+								: this.unit,
 							weeklyTarget: this.weeklyTarget,
 							monthlyTarget: this.monthlyTarget,
 							weeklyPerfect: this.weeklyPerfect,
@@ -512,6 +575,10 @@ export class HabitModal extends Modal {
 							useGroupColor:
 								this.useGroupColor &&
 								this.group.trim() !== "",
+							noteFolder: this.noteFolder.trim(),
+							noteFilenameFormat: this.noteFilenameFormat.trim(),
+							templatePath: this.templatePath.trim(),
+							noteCompletionMode: this.noteCompletionMode,
 						};
 						const file = this.editing
 							? await this.store.updateHabit(this.editing, options)
@@ -879,6 +946,107 @@ export class HabitModal extends Modal {
 			});
 		};
 		renderRows();
+	}
+
+	/**
+	 * Settings specific to note habits: where day-notes live, how they are
+	 * named, an optional Templater template, and how a day counts as done.
+	 */
+	private renderNoteSettings(contentEl: HTMLElement): void {
+		new Setting(contentEl)
+			.setName(t("Notes folder"))
+			.setDesc(
+				t(
+					"Folder each day's note is created in. Leave blank for a dedicated subfolder named after this habit.",
+				),
+			)
+			.addText((text) => {
+				text
+					.setPlaceholder(t("e.g. Journal"))
+					.setValue(this.noteFolder)
+					.onChange((value) => {
+						this.noteFolder = value;
+					});
+				new FolderSuggest(this.app, text.inputEl);
+			});
+
+		const formatDesc = (): string => {
+			const format =
+				this.noteFilenameFormat.trim() || DEFAULT_NOTE_FILENAME_FORMAT;
+			const example = (
+				moment as unknown as (
+					date: Date,
+				) => { format(fmt: string): string }
+			)(new Date()).format(format);
+			return t(
+				"Moment.js format used to name each day's note, e.g. {example}. May include / for date-based subfolders.",
+				{ example },
+			);
+		};
+		const formatSetting = new Setting(contentEl).setName(
+			t("Filename format"),
+		);
+		formatSetting.setDesc(formatDesc());
+		formatSetting.addText((text) =>
+			text
+				.setPlaceholder(DEFAULT_NOTE_FILENAME_FORMAT)
+				.setValue(this.noteFilenameFormat)
+				.onChange((value) => {
+					this.noteFilenameFormat = value;
+					formatSetting.setDesc(formatDesc());
+				}),
+		);
+
+		new Setting(contentEl)
+			.setName(t("Template"))
+			.setDesc(
+				t(
+					"Optional template note used when a day's note is created. Expanded through the Templater plugin when it is installed, otherwise copied as plain text.",
+				),
+			)
+			.addText((text) => {
+				text
+					.setPlaceholder(t("e.g. Templates/Journal.md"))
+					.setValue(this.templatePath)
+					.onChange((value) => {
+						this.templatePath = value;
+					});
+				new MarkdownFileSuggest(this.app, text.inputEl);
+			});
+
+		new Setting(contentEl)
+			.setName(t("Completed when"))
+			.setDesc(
+				t(
+					"Reach a character count, or check off every task list item in the note.",
+				),
+			)
+			.addDropdown((dropdown) =>
+				dropdown
+					.addOption("chars", t("Character count is reached"))
+					.addOption("checklist", t("Every task is checked"))
+					.setValue(this.noteCompletionMode)
+					.onChange((value) => {
+						this.noteCompletionMode = value as NoteCompletionMode;
+						this.build();
+					}),
+			);
+
+		if (this.noteCompletionMode === "chars") {
+			new Setting(contentEl).setName(t("Character goal")).addText((text) => {
+				applyNumeric(text.inputEl, 1);
+				text
+					.setPlaceholder("500")
+					.setValue(String(this.target > 0 ? this.target : 500))
+					.onChange((value) => {
+						const parsed = Number(value);
+						this.target =
+							Number.isFinite(parsed) && parsed > 0
+								? Math.round(parsed)
+								: 500;
+					});
+			});
+		}
 	}
 
 	/** Collapsible, optional weekly/monthly targets section. */

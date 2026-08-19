@@ -10,11 +10,13 @@ import {
 	Notice,
 	setIcon,
 	setTooltip,
+	TFile,
 } from "obsidian";
 import type { HabitStore } from "../habit-store";
 import type { HabitsPluginSettings } from "../settings";
 import type { HabitDefinition } from "../types";
 import { HabitModal } from "./habit-modal";
+import { createNoteHabitEntry, notePathForDate } from "../note-habit";
 import { ConfirmModal } from "./confirm-modal";
 import { ExportModal } from "./export-modal";
 import { t } from "../i18n";
@@ -795,6 +797,8 @@ export class HabitsDashboard
 				this.renderLimitBinaryControl(body, habit, card);
 			} else if (habit.type === "binary") {
 				this.renderBinaryControl(body, habit, card);
+			} else if (habit.type === "note") {
+				this.renderNoteControl(body, habit);
 			} else {
 				this.renderCounterControl(body, habit, card);
 			}
@@ -1577,6 +1581,68 @@ export class HabitsDashboard
 		}
 	}
 
+	/**
+	 * Note habits are completed by writing, not by tapping a control: the
+	 * card shows the machine-derived progress (char count or percentage of
+	 * tasks checked) as read-only, plus a single Write/Open action for the
+	 * selected day's note. Its value updates on its own, in the background,
+	 * once {@link NoteHabitSync} sees the note change.
+	 */
+	private renderNoteControl(body: HTMLElement, habit: HabitDefinition): void {
+		const value = this.currentValue(habit);
+		const goalValue = habit.target;
+		const unit = habit.unit || "chars";
+
+		const readout = body.createDiv({ cls: "habits-readout" });
+		readout.createSpan({ cls: "habits-note-value", text: String(value) });
+		readout.createSpan({
+			cls: "habits-target",
+			text: `/ ${goalValue} ${unit}`,
+		});
+
+		const progress = body.createDiv({ cls: "habits-progress" });
+		const fill = progress.createDiv({ cls: "habits-progress-fill" });
+		const pct =
+			goalValue > 0 ? Math.min(100, Math.round((value / goalValue) * 100)) : 0;
+		fill.setCssProps({ "--habits-progress": `${pct}%` });
+		if (goalValue > 0 && value >= goalValue) {
+			progress.addClass("is-complete");
+		}
+
+		const dateKey = toDateKey(this.selectedDate);
+		const notePath = notePathForDate(habit, dateKey);
+		const exists =
+			this.app.vault.getAbstractFileByPath(notePath) instanceof TFile;
+
+		const action = body.createEl("button", {
+			cls: "habits-note-action",
+			attr: { type: "button" },
+		});
+		if (exists) {
+			setIcon(action, "file-text");
+			action.createSpan({ text: t("Open") });
+			setTooltip(action, t("Open this day's note"));
+			this.registerDomEvent(action, "click", () => {
+				void this.app.workspace.openLinkText(notePath, "", false);
+			});
+		} else {
+			setIcon(action, "square-pen");
+			action.createSpan({ text: t("Write") });
+			setTooltip(action, t("Write this day's note"));
+			this.registerDomEvent(action, "click", async () => {
+				const file = await createNoteHabitEntry(
+					this.app,
+					habit,
+					dateKey,
+				);
+				if (file) {
+					void this.app.workspace.openLinkText(file.path, "", false);
+					this.reload();
+				}
+			});
+		}
+	}
+
 	/** Last time a card menu opened; guards double-fire on long-press. */
 	private lastMenuAt = 0;
 
@@ -1603,6 +1669,7 @@ export class HabitsDashboard
 						() => this.reload(),
 						habit,
 						this.getSettings().experimental.limitHabits,
+						this.getSettings().experimental.noteHabits,
 					).open();
 				}),
 		);
@@ -1693,6 +1760,7 @@ export class HabitsDashboard
 			},
 			null,
 			this.getSettings().experimental.limitHabits,
+			this.getSettings().experimental.noteHabits,
 		).open();
 	}
 }

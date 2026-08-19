@@ -1,11 +1,24 @@
 /**
- * The three kinds of habit the plugin can track.
+ * The four kinds of habit the plugin can track.
  *
  * - `binary`: done or not done on a given day.
  * - `repetition`: a count towards a target (e.g. 8 cups of water).
  * - `timed`: minutes spent towards a target (e.g. 30 minutes of exercise).
+ * - `note`: writing in a per-day note, completed by reaching a character
+ *   count or checking off every task in it. See the `note*` fields below.
  */
-export type HabitType = "binary" | "repetition" | "timed";
+export type HabitType = "binary" | "repetition" | "timed" | "note";
+
+/**
+ * How a `note` habit's day is marked complete.
+ *
+ * - `chars`: the note's character count (frontmatter stripped) reaches
+ *   `target`.
+ * - `checklist`: every task-list item in the note is checked. Stored as a
+ *   0–100 percentage in `records` (against a fixed `target` of 100) since
+ *   the number of tasks can differ from day to day.
+ */
+export type NoteCompletionMode = "chars" | "checklist";
 
 /**
  * How often a habit is due.
@@ -175,6 +188,25 @@ export interface HabitDefinition {
 	records: Record<string, number>;
 	/** Per-day comments keyed by `YYYY-MM-DD`. */
 	comments: Record<string, string>;
+	/**
+	 * Folder that holds this habit's per-day notes. Only meaningful when
+	 * `type` is `note`.
+	 */
+	noteFolder: string;
+	/**
+	 * Moment.js format used to name each day's note (e.g. `YYYY-MM-DD`).
+	 * May contain `/` to file notes into date-based subfolders. Only
+	 * meaningful when `type` is `note`.
+	 */
+	noteFilenameFormat: string;
+	/**
+	 * Optional vault path of a template note applied when a day's note is
+	 * created. Expanded through Templater when that plugin is installed;
+	 * otherwise copied verbatim. Only meaningful when `type` is `note`.
+	 */
+	templatePath: string;
+	/** How a `note` habit's day is marked complete. */
+	noteCompletionMode: NoteCompletionMode;
 }
 
 /** Options used when creating a new habit note. */
@@ -197,4 +229,8 @@ export interface NewHabitOptions {
 	color: string;
 	group: string;
 	useGroupColor: boolean;
+	noteFolder: string;
+	noteFilenameFormat: string;
+	templatePath: string;
+	noteCompletionMode: NoteCompletionMode;
 }

@@ -6,12 +6,14 @@ import {
 	normalizePath,
 	setIcon,
 	setTooltip,
+	TFile,
 	WorkspaceLeaf,
 } from "obsidian";
 import type { HabitStore } from "../habit-store";
 import type { HabitsPluginSettings } from "../settings";
 import type { HabitDefinition } from "../types";
 import { isComplete, isDue, isPausedOn, limitOf } from "../stats";
+import { createNoteHabitEntry, notePathForDate } from "../note-habit";
 import {
 	formatTimeOfDay,
 	groupHabits,
@@ -261,6 +263,7 @@ export class HabitsPanelView extends ItemView {
 				() => this.reload(),
 				null,
 				this.getSettings().experimental.limitHabits,
+				this.getSettings().experimental.noteHabits,
 			).open();
 		});
 
@@ -279,6 +282,7 @@ export class HabitsPanelView extends ItemView {
 					() => this.reload(),
 					null,
 					this.getSettings().experimental.limitHabits,
+					this.getSettings().experimental.noteHabits,
 				).open();
 			});
 			return;
@@ -424,6 +428,11 @@ export class HabitsPanelView extends ItemView {
 			return;
 		}
 
+		if (habit.type === "note") {
+			this.renderNoteRow(main, habit);
+			return;
+		}
+
 		const value = this.valueOf(habit);
 		const timed = habit.type === "timed";
 		const isMax = habit.goalDirection === "max";
@@ -492,6 +501,50 @@ export class HabitsPanelView extends ItemView {
 			progress.addClass("is-over");
 		} else if (done) {
 			progress.addClass("is-complete");
+		}
+	}
+
+	/**
+	 * Compact row for a note habit: a read-only char-count/percentage
+	 * readout (machine-derived, so not click-to-edit like other types) plus
+	 * a single Write/Open action for today's note.
+	 */
+	private renderNoteRow(main: HTMLElement, habit: HabitDefinition): void {
+		const value = this.valueOf(habit);
+		main.createSpan({
+			cls: "habits-panel-value habits-panel-note-value",
+			text: `${value}/${habit.target} ${habit.unit || "chars"}`,
+		});
+
+		const dateKey = this.todayKey();
+		const notePath = notePathForDate(habit, dateKey);
+		const exists =
+			this.app.vault.getAbstractFileByPath(notePath) instanceof TFile;
+
+		const action = main.createEl("button", {
+			cls: "habits-icon-button habits-panel-mini",
+			attr: { type: "button" },
+		});
+		if (exists) {
+			setIcon(action, "file-text");
+			setTooltip(action, t("Open today's note"));
+			this.registerDomEvent(action, "click", () => {
+				void this.app.workspace.openLinkText(notePath, "", false);
+			});
+		} else {
+			setIcon(action, "square-pen");
+			setTooltip(action, t("Write today's note"));
+			this.registerDomEvent(action, "click", async () => {
+				const file = await createNoteHabitEntry(
+					this.app,
+					habit,
+					dateKey,
+				);
+				if (file) {
+					void this.app.workspace.openLinkText(file.path, "", false);
+					this.reload();
+				}
+			});
 		}
 	}
 
@@ -623,6 +676,7 @@ export class HabitsPanelView extends ItemView {
 						() => this.reload(),
 						habit,
 						this.getSettings().experimental.limitHabits,
+						this.getSettings().experimental.noteHabits,
 					).open();
 				}),
 		);

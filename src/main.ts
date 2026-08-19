@@ -12,6 +12,7 @@ import {
 import { t } from "./i18n";
 import { HabitStore } from "./habit-store";
 import { ReminderSync } from "./reminders";
+import { NoteHabitSync } from "./note-habit";
 import {
 	DEFAULT_AI_SUMMARY,
 	DEFAULT_EXPERIMENTAL,
@@ -135,6 +136,7 @@ export default class HabitsPlugin extends Plugin {
 					},
 					null,
 					this.settings.experimental.limitHabits,
+					this.settings.experimental.noteHabits,
 				).open();
 			},
 		});
@@ -186,6 +188,45 @@ export default class HabitsPlugin extends Plugin {
 		});
 
 		this.registerReminderSync();
+		this.registerNoteHabitSync();
+	}
+
+	/**
+	 * Keeps note habits' records in step with their day-notes: primes every
+	 * note habit's folder once the vault is ready, then watches for edits so
+	 * writing (or deleting) a day-note updates its habit's completion live.
+	 */
+	private registerNoteHabitSync(): void {
+		const sync = new NoteHabitSync(this.app, this.store);
+
+		this.app.workspace.onLayoutReady(() => void sync.primeAll());
+		this.registerEvent(
+			this.app.vault.on("modify", (file) => {
+				if (file instanceof TFile) {
+					void sync.syncFile(file);
+				}
+			}),
+		);
+		this.registerEvent(
+			this.app.vault.on("create", (file) => {
+				if (file instanceof TFile) {
+					void sync.syncFile(file);
+				}
+			}),
+		);
+		this.registerEvent(
+			this.app.vault.on("delete", (file) => {
+				void sync.handleDelete(file.path);
+			}),
+		);
+		this.registerEvent(
+			this.app.vault.on("rename", (file, oldPath) => {
+				void sync.handleDelete(oldPath);
+				if (file instanceof TFile) {
+					void sync.syncFile(file);
+				}
+			}),
+		);
 	}
 
 	/**

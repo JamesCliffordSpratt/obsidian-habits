@@ -11,13 +11,14 @@
 ## ✨ Features at a glance
 
 - 🎠 **Carousel dashboard** — log your habits from any note with a `habits` code block, with satisfying completion animations
-- ✅ **Three habit types** — done/not-done, counted (8 cups of water), and timed (30 minutes of exercise, with +1/+5/+10 quick buttons)
+- ✅ **Four habit types** — done/not-done, counted (8 cups of water), timed (30 minutes of exercise, with +1/+5/+10 quick buttons), and note (write in a per-day note)
 - 🗓️ **Flexible schedules** — daily, weekly on one or several weekdays (Mon/Wed/Fri), monthly, or every N days (alternate-day medication); non-daily habits appear only on their due day, and streaks count due days, not calendar days
 - 🔥 **Streaks and statistics** — current and best streaks, completion rates, perfect days, weekly and monthly goals, per-habit heatmaps over the week, month, or any custom date range
 - 📊 **Charts on every habit page** — 30-day activity and 12-week trend charts rendered in your theme's colours
 - 📋 **Habits overview table** — a `habits-table` code block lists every active habit with its schedule and completed/due counts for the current week and the last three months
 - 📄 **Printable PDF reports** — pick your metrics, date range, and layout with a live A4 preview
 - 🚭 **Break bad habits** *(experimental)* — track things you're cutting down or quitting by staying under a daily limit, with quiet streaks for every clean day
+- 📝 **Note habits** *(experimental)* — a Write/Open card backed by a per-day note, completed by a character count or checking off every task, with [Templater](https://silentvoid13.github.io/Templater/) support for the note it creates
 - ✨ **AI summaries** *(experimental)* — on-demand feedback and advice on your stats, on screen and in PDF reports, using your own AI service (including free and fully local options)
 - 📌 **Sidebar quick-log panel** — check off today's habits from anywhere, sized for narrow panes
 - ⏸️ **Pause without penalty** — ill or travelling? Paused days never break streaks or drag down your stats
@@ -208,6 +209,17 @@ Track habits you want to reduce or avoid by staying **under a daily limit** inst
 - **Done/not-done limit habits** get two buttons: **Clean** and **Slipped**. An unlogged day already counts as clean — silence is success.
 - **Counted and timed limit habits** log consumption against the limit; the progress bar fills toward the limit and turns red past it.
 - Streaks count consecutive days within the limit, and only from the habit's start date — the years before you started quitting don't inflate anything.
+
+### 📝 Note habits
+
+Track a habit by writing, not by tapping a button — journals, morning pages, work logs, anything that lives in a note. A note habit's card shows a **Write** button that creates that day's note and, once it exists, an **Open** button to jump back into it.
+
+- **Where notes live**: a folder you choose (or a dedicated subfolder named after the habit, if you leave it blank), with a filename built from a Moment.js format (`YYYY-MM-DD` by default — `/` in the format files notes into date subfolders, e.g. `YYYY/MM-DD`).
+- **Templater**: pick a template note and, if the [Templater](https://silentvoid13.github.io/Templater/) plugin is installed, it's expanded the same way Templater's own "new note from template" command would — dynamic dates, prompts, and all. Without Templater the template is copied as plain text instead.
+- **Completion**, your choice per habit:
+  - **Character count** — done once the note (frontmatter aside) reaches a length you set.
+  - **Every task checked** — done once every `- [ ]` task in the note is ticked.
+- The card's progress updates on its own as you write — no need to reopen the dashboard. Streaks, weekly/monthly targets, the habits table, and PDF export all work the same as any other habit.
 
 ### ✨ AI summaries
 

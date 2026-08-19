@@ -1,11 +1,9 @@
 import {
-	AbstractInputSuggest,
 	App,
 	PluginSettingTab,
 	requireApiVersion,
 	setIcon,
 	Setting,
-	TFolder,
 	type SettingDefinitionItem,
 } from "obsidian";
 import { t } from "./i18n";
@@ -14,38 +12,7 @@ import type { GroupStyle, HabitSortMode } from "./types";
 import { habitAccent, sortHabits } from "./utils";
 import { applyHabitIcon } from "./ui/icon-suggest-modal";
 import { GroupsModal } from "./ui/groups-modal";
-
-/** Suggests matching vault folders while typing in a folder field. */
-class FolderSuggest extends AbstractInputSuggest<TFolder> {
-	constructor(
-		app: App,
-		private textInputEl: HTMLInputElement,
-	) {
-		super(app, textInputEl);
-	}
-
-	getSuggestions(query: string): TFolder[] {
-		const needle = query.toLowerCase();
-		return this.app.vault
-			.getAllLoadedFiles()
-			.filter(
-				(file): file is TFolder =>
-					file instanceof TFolder && file.path !== "/",
-			)
-			.filter((folder) => folder.path.toLowerCase().includes(needle))
-			.slice(0, 20);
-	}
-
-	renderSuggestion(folder: TFolder, el: HTMLElement): void {
-		el.setText(folder.path);
-	}
-
-	selectSuggestion(folder: TFolder): void {
-		this.textInputEl.value = folder.path;
-		this.textInputEl.trigger("input");
-		this.close();
-	}
-}
+import { FolderSuggest } from "./ui/vault-suggest";
 
 /**
  * Feature flags for functionality that is still being tested.
@@ -61,11 +28,18 @@ export interface ExperimentalFlags {
 	limitHabits: boolean;
 	/** AI-generated summaries on the weekly and monthly stats tabs. */
 	aiSummaries: boolean;
+	/**
+	 * Note habits: a card backed by a per-day note, completed by reaching a
+	 * character count or checking off every task in it, optionally created
+	 * from a Templater template.
+	 */
+	noteHabits: boolean;
 }
 
 export const DEFAULT_EXPERIMENTAL: ExperimentalFlags = {
 	limitHabits: false,
 	aiSummaries: false,
+	noteHabits: false,
 };
 
 /**
@@ -580,6 +554,17 @@ export class HabitsSettingTab extends PluginSettingTab {
 							type: "toggle",
 							key: "experimental.limitHabits",
 							defaultValue: DEFAULT_EXPERIMENTAL.limitHabits,
+						},
+					},
+					{
+						name: t("Note habits"),
+						desc: t(
+							"Track a habit by writing in a per-day note instead of logging a value by hand. A day is complete once the note reaches a character count or every task in it is checked. Works with the Templater plugin to create each day's note from a template.",
+						),
+						control: {
+							type: "toggle",
+							key: "experimental.noteHabits",
+							defaultValue: DEFAULT_EXPERIMENTAL.noteHabits,
 						},
 					},
 					{
@@ -1299,6 +1284,22 @@ export class HabitsSettingTab extends PluginSettingTab {
 					.setValue(this.plugin.settings.experimental.limitHabits)
 					.onChange(async (value) => {
 						this.plugin.settings.experimental.limitHabits = value;
+						await this.plugin.saveSettings();
+					}),
+			);
+
+		new Setting(containerEl)
+			.setName(t("Note habits"))
+			.setDesc(
+				t(
+					"Track a habit by writing in a per-day note instead of logging a value by hand. A day is complete once the note reaches a character count or every task in it is checked. Works with the Templater plugin to create each day's note from a template.",
+				),
+			)
+			.addToggle((toggle) =>
+				toggle
+					.setValue(this.plugin.settings.experimental.noteHabits)
+					.onChange(async (value) => {
+						this.plugin.settings.experimental.noteHabits = value;
 						await this.plugin.saveSettings();
 					}),
 			);

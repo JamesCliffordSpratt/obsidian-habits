@@ -7,24 +7,42 @@ import type {
 	HabitPause,
 	HabitType,
 	NewHabitOptions,
+	NoteCompletionMode,
 } from "./types";
 import { addDays, sanitizeFileName, toDateKey } from "./utils";
 import { tagsInComments } from "./comment-text";
 import { applyCommentLog, parseCommentLog } from "./comment-log";
 import { t } from "./i18n";
+import { DEFAULT_NOTE_FILENAME_FORMAT } from "./note-habit";
 
-const HABIT_TYPES: readonly HabitType[] = ["binary", "repetition", "timed"];
+const HABIT_TYPES: readonly HabitType[] = [
+	"binary",
+	"repetition",
+	"timed",
+	"note",
+];
 const HABIT_FREQUENCIES: readonly HabitFrequency[] = [
 	"daily",
 	"weekly",
 	"monthly",
 	"interval",
 ];
+const NOTE_COMPLETION_MODES: readonly NoteCompletionMode[] = [
+	"chars",
+	"checklist",
+];
 
 function isHabitType(value: unknown): value is HabitType {
 	return (
 		typeof value === "string" &&
 		(HABIT_TYPES as readonly string[]).includes(value)
+	);
+}
+
+function isNoteCompletionMode(value: unknown): value is NoteCompletionMode {
+	return (
+		typeof value === "string" &&
+		(NOTE_COMPLETION_MODES as readonly string[]).includes(value)
 	);
 }
 
@@ -225,6 +243,17 @@ export class HabitStore {
 				...this.readComments(fm.comments),
 				...(this.commentCache.get(file.path) ?? {}),
 			},
+			noteFolder:
+				typeof fm.noteFolder === "string" ? fm.noteFolder : "",
+			noteFilenameFormat:
+				typeof fm.noteFilenameFormat === "string"
+					? fm.noteFilenameFormat
+					: "",
+			templatePath:
+				typeof fm.templatePath === "string" ? fm.templatePath : "",
+			noteCompletionMode: isNoteCompletionMode(fm.noteCompletionMode)
+				? fm.noteCompletionMode
+				: "chars",
 		};
 	}
 
@@ -447,6 +476,40 @@ export class HabitStore {
 			fm.time = times[0];
 		} else if (times.length > 1) {
 			fm.times = times;
+		}
+	}
+
+	/**
+	 * Write a `note` habit's folder/filename-format/template/completion-mode
+	 * fields, keeping frontmatter tidy: values equal to the default are
+	 * omitted, and every field is dropped for other habit types. A blank
+	 * folder defaults to a dedicated subfolder of the habits folder, named
+	 * after the habit, so every note habit gets a collision-free home
+	 * without the user having to think about it.
+	 */
+	private writeNoteFields(
+		fm: Record<string, unknown>,
+		options: NewHabitOptions,
+		cleanName: string,
+	): void {
+		delete fm.noteFolder;
+		delete fm.noteFilenameFormat;
+		delete fm.templatePath;
+		delete fm.noteCompletionMode;
+		if (options.type !== "note") {
+			return;
+		}
+		fm.noteFolder =
+			options.noteFolder.trim() || `${this.folderPath}/${cleanName}`;
+		const format = options.noteFilenameFormat.trim();
+		if (format && format !== DEFAULT_NOTE_FILENAME_FORMAT) {
+			fm.noteFilenameFormat = format;
+		}
+		if (options.templatePath.trim()) {
+			fm.templatePath = options.templatePath.trim();
+		}
+		if (options.noteCompletionMode === "checklist") {
+			fm.noteCompletionMode = "checklist";
 		}
 	}
 
@@ -764,9 +827,12 @@ export class HabitStore {
 			}
 			this.writeFrequency(fm, options);
 			this.writeTimes(fm, options);
+			this.writeNoteFields(fm, options, cleanName);
 			if (options.type !== "binary") {
 				// A limit of 0 is meaningful ("none at all"), so max habits
-				// always write the field even when it is zero.
+				// always write the field even when it is zero. A note
+				// habit's target is its character goal, or 100 for a
+				// checklist habit's checked percentage.
 				fm.target = options.target;
 			}
 			if (options.unit) {
@@ -851,6 +917,7 @@ export class HabitStore {
 			}
 			this.writeFrequency(fm, options);
 			this.writeTimes(fm, options);
+			this.writeNoteFields(fm, options, cleanName);
 			if (options.type === "binary") {
 				delete fm.target;
 			} else {

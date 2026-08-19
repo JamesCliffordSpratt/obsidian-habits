@@ -839,6 +839,32 @@
 	background: var(--color-green, var(--habits-accent));
 }
 
+.habits-note-value {
+	padding: 0 0.15rem;
+	font-size: 1.8rem;
+	font-weight: var(--font-bold);
+	line-height: 1;
+	color: var(--habits-accent);
+	font-variant-numeric: tabular-nums;
+}
+
+.habits-note-action {
+	display: flex;
+	align-items: center;
+	gap: 0.4rem;
+	padding: 0.5rem 1.25rem;
+	border-radius: var(--radius-m);
+	background: var(--interactive-accent);
+	color: var(--text-on-accent);
+	font-weight: var(--font-semibold);
+	border: none;
+	cursor: pointer;
+}
+
+.habits-note-action:hover {
+	background: var(--interactive-accent-hover);
+}
+
 .habits-counter-buttons {
 	display: flex;
 	align-items: center;
@@ -2001,6 +2027,17 @@
 	background: var(--background-modifier-form-field);
 	border: 1px solid var(--background-modifier-border);
 	border-radius: var(--radius-s);
+}
+
+/* Note habits: the readout is machine-derived, so it is plain text rather
+   than the click-to-edit button other types use. */
+.habits-panel .habits-panel-note-value {
+	cursor: default;
+}
+
+.habits-panel .habits-panel-note-value:hover {
+	color: var(--text-muted);
+	background: transparent;
 }
 
 .habits-panel .habits-panel-mini {
