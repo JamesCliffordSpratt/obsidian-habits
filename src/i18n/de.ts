@@ -439,4 +439,51 @@ export const de: Record<string, string> = {
 	"Stats rows per page": "Statistik-Zeilen pro Seite",
 	"How many habits each stats page shows.":
 		"Wie viele Gewohnheiten jede Statistik-Seite anzeigt.",
+	// Note habits
+	'"{name}" uses Templater syntax, but the Templater plugin is not installed — the template was copied as plain text.':
+		'„{name}" verwendet Templater-Syntax, aber das Templater-Plugin ist nicht installiert — die Vorlage wurde als reiner Text kopiert.',
+	"Binary is done or not done. Repetition counts towards a target. Timed tracks minutes. Note is completed by writing in a per-day note.":
+		"Binär ist erledigt oder nicht erledigt. Wiederholung zählt auf ein Ziel hin. Zeitbasiert erfasst Minuten. Notiz wird durch Schreiben in eine Tagesnotiz abgeschlossen.",
+	"Character count is reached": "Eine Zeichenzahl wird erreicht",
+	"Character goal": "Zeichenziel",
+	"Completed when": "Abgeschlossen, wenn",
+	"Every task is checked": "Alle Aufgaben sind abgehakt",
+	"Filename format": "Dateinamenformat",
+	"Folder each day's note is created in. Leave blank for a dedicated subfolder named after this habit.":
+		"Ordner, in dem die Notiz jedes Tages erstellt wird. Leer lassen für einen eigenen Unterordner mit dem Namen dieser Gewohnheit.",
+	"Moment.js format used to name each day's note, e.g. {example}. May include / for date-based subfolders.":
+		"Moment.js-Format zur Benennung der Notiz jedes Tages, z. B. {example}. Kann / für datumsbasierte Unterordner enthalten.",
+	Note: "Notiz",
+	"Note habits": "Notiz-Gewohnheiten",
+	"Notes folder": "Notizordner",
+	"Open this day's note": "Notiz dieses Tages öffnen",
+	"Open today's note": "Heutige Notiz öffnen",
+	"Optional template note used when a day's note is created. Expanded through the Templater plugin when it is installed, otherwise copied as plain text.":
+		"Optionale Vorlagennotiz, die beim Erstellen der Notiz eines Tages verwendet wird. Wird über das Templater-Plugin erweitert, wenn es installiert ist, andernfalls als reiner Text kopiert.",
+	"Reach a character count, or check off every task list item in the note.":
+		"Eine Zeichenzahl erreichen oder alle Aufgaben in der Notiz abhaken.",
+	Template: "Vorlage",
+	"Track a habit by writing in a per-day note instead of logging a value by hand. A day is complete once the note reaches a character count or every task in it is checked. Works with the Templater plugin to create each day's note from a template.":
+		"Verfolge eine Gewohnheit, indem du in eine Tagesnotiz schreibst, statt von Hand einen Wert einzutragen. Ein Tag ist abgeschlossen, sobald die Notiz eine Zeichenzahl erreicht oder alle ihre Aufgaben abgehakt sind. Funktioniert mit dem Templater-Plugin, um die Notiz jedes Tages aus einer Vorlage zu erstellen.",
+	Write: "Schreiben",
+	"Write this day's note": "Notiz dieses Tages schreiben",
+	"Write today's note": "Heutige Notiz schreiben",
+	"e.g. Journal": "z. B. Journal",
+	"e.g. Templates/Journal.md": "z. B. Templates/Journal.md",
+
+	// Flexible frequency (any day)
+	"How many times (or, for counted and timed habits, how much in total) this needs to happen somewhere in the period.":
+		"Wie oft (oder, bei gezählten oder zeitbasierten Gewohnheiten, wie viel insgesamt) dies irgendwann im Zeitraum geschehen muss.",
+	'How often this habit is due. Weekly and monthly habits only appear on their due date; the "any day" options appear every day until their quota is met.':
+		'Wie oft diese Gewohnheit fällig ist. Wöchentliche und monatliche Gewohnheiten erscheinen nur an ihrem Fälligkeitstag; die Optionen „an beliebigem Tag" erscheinen jeden Tag, bis das Kontingent erreicht ist.',
+	"Monthly (any day)": "Monatlich (beliebiger Tag)",
+	"Times per month": "Mal pro Monat",
+	"Times per week": "Mal pro Woche",
+	"Weekly (any day)": "Wöchentlich (beliebiger Tag)",
+	"this month": "diesen Monat",
+	"this week": "diese Woche",
+	"{completed}/{days} months": "{completed}/{days} Monate",
+	"{completed}/{days} weeks": "{completed}/{days} Wochen",
+	"{n}× a month · any day": "{n}× im Monat · beliebiger Tag",
+	"{n}× a week · any day": "{n}× in der Woche · beliebiger Tag",
 };

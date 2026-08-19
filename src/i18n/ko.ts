@@ -431,4 +431,51 @@ export const ko: Record<string, string> = {
 	"Stats rows per page": "페이지당 통계 행 수",
 	"How many habits each stats page shows.":
 		"각 통계 페이지에 표시할 습관 수입니다.",
+	// Note habits
+	'"{name}" uses Templater syntax, but the Templater plugin is not installed — the template was copied as plain text.':
+		'"{name}"에는 Templater 문법이 사용되었지만 Templater 플러그인이 설치되어 있지 않아 서식 없는 텍스트로 복사되었습니다.',
+	"Binary is done or not done. Repetition counts towards a target. Timed tracks minutes. Note is completed by writing in a per-day note.":
+		"이진은 완료 여부만 기록합니다. 반복은 목표 횟수를 세고, 시간은 분을 기록합니다. 노트는 매일의 노트에 글을 써서 완료합니다.",
+	"Character count is reached": "글자 수에 도달",
+	"Character goal": "글자 수 목표",
+	"Completed when": "완료 조건",
+	"Every task is checked": "모든 할 일 체크",
+	"Filename format": "파일명 형식",
+	"Folder each day's note is created in. Leave blank for a dedicated subfolder named after this habit.":
+		"매일의 노트가 생성될 폴더입니다. 비워두면 이 습관 이름을 딴 전용 하위 폴더가 사용됩니다.",
+	"Moment.js format used to name each day's note, e.g. {example}. May include / for date-based subfolders.":
+		"매일의 노트 이름에 사용할 Moment.js 형식입니다(예: {example}). 날짜별 하위 폴더를 만들려면 /를 포함할 수 있습니다.",
+	Note: "노트",
+	"Note habits": "노트 습관",
+	"Notes folder": "노트 폴더",
+	"Open this day's note": "이 날의 노트 열기",
+	"Open today's note": "오늘의 노트 열기",
+	"Optional template note used when a day's note is created. Expanded through the Templater plugin when it is installed, otherwise copied as plain text.":
+		"하루의 노트를 만들 때 사용할 선택적 템플릿 노트입니다. Templater 플러그인이 설치되어 있으면 이를 통해 확장되고, 그렇지 않으면 서식 없는 텍스트로 복사됩니다.",
+	"Reach a character count, or check off every task list item in the note.":
+		"글자 수에 도달하거나 노트의 모든 할 일에 체크합니다.",
+	Template: "템플릿",
+	"Track a habit by writing in a per-day note instead of logging a value by hand. A day is complete once the note reaches a character count or every task in it is checked. Works with the Templater plugin to create each day's note from a template.":
+		"값을 직접 기록하는 대신 매일의 노트에 글을 써서 습관을 기록합니다. 노트가 글자 수에 도달하거나 모든 할 일에 체크가 되면 그날은 완료로 처리됩니다. Templater 플러그인과 연동해 템플릿으로 매일의 노트를 만들 수 있습니다.",
+	Write: "쓰기",
+	"Write this day's note": "이 날의 노트 쓰기",
+	"Write today's note": "오늘의 노트 쓰기",
+	"e.g. Journal": "예: Journal",
+	"e.g. Templates/Journal.md": "예: Templates/Journal.md",
+
+	// Flexible frequency (any day)
+	"How many times (or, for counted and timed habits, how much in total) this needs to happen somewhere in the period.":
+		"이 기간 중 언제든 몇 번(횟수·시간 습관의 경우 총량) 발생해야 하는지입니다.",
+	'How often this habit is due. Weekly and monthly habits only appear on their due date; the "any day" options appear every day until their quota is met.':
+		'이 습관의 주기입니다. 주간·월간 습관은 예정일에만 표시되지만, "요일 무관" 옵션은 목표를 채울 때까지 매일 표시됩니다.',
+	"Monthly (any day)": "월간 (요일 무관)",
+	"Times per month": "월 횟수",
+	"Times per week": "주 횟수",
+	"Weekly (any day)": "주간 (요일 무관)",
+	"this month": "이번 달",
+	"this week": "이번 주",
+	"{completed}/{days} months": "{completed}/{days}개월",
+	"{completed}/{days} weeks": "{completed}/{days}주",
+	"{n}× a month · any day": "월 {n}회 · 요일 무관",
+	"{n}× a week · any day": "주 {n}회 · 요일 무관",
 };

@@ -436,4 +436,51 @@ export const es: Record<string, string> = {
 	"Stats rows per page": "Filas de estadísticas por página",
 	"How many habits each stats page shows.":
 		"Cuántos hábitos muestra cada página de estadísticas.",
+	// Note habits
+	'"{name}" uses Templater syntax, but the Templater plugin is not installed — the template was copied as plain text.':
+		'"{name}" usa la sintaxis de Templater, pero el plugin Templater no está instalado — la plantilla se copió como texto sin formato.',
+	"Binary is done or not done. Repetition counts towards a target. Timed tracks minutes. Note is completed by writing in a per-day note.":
+		"Binario es hecho o no hecho. Repetición cuenta hacia un objetivo. Temporizado registra minutos. Nota se completa escribiendo en una nota diaria.",
+	"Character count is reached": "Se alcanza un número de caracteres",
+	"Character goal": "Meta de caracteres",
+	"Completed when": "Completado cuando",
+	"Every task is checked": "Se marcan todas las tareas",
+	"Filename format": "Formato del nombre de archivo",
+	"Folder each day's note is created in. Leave blank for a dedicated subfolder named after this habit.":
+		"Carpeta donde se crea la nota de cada día. Déjalo en blanco para usar una subcarpeta dedicada con el nombre de este hábito.",
+	"Moment.js format used to name each day's note, e.g. {example}. May include / for date-based subfolders.":
+		"Formato de Moment.js usado para nombrar la nota de cada día, p. ej. {example}. Puede incluir / para subcarpetas basadas en fechas.",
+	Note: "Nota",
+	"Note habits": "Hábitos de notas",
+	"Notes folder": "Carpeta de notas",
+	"Open this day's note": "Abrir la nota de este día",
+	"Open today's note": "Abrir la nota de hoy",
+	"Optional template note used when a day's note is created. Expanded through the Templater plugin when it is installed, otherwise copied as plain text.":
+		"Nota de plantilla opcional usada al crear la nota de un día. Se expande mediante el plugin Templater cuando está instalado; si no, se copia como texto sin formato.",
+	"Reach a character count, or check off every task list item in the note.":
+		"Alcanza un número de caracteres, o marca todas las tareas de la nota.",
+	Template: "Plantilla",
+	"Track a habit by writing in a per-day note instead of logging a value by hand. A day is complete once the note reaches a character count or every task in it is checked. Works with the Templater plugin to create each day's note from a template.":
+		"Sigue un hábito escribiendo en una nota diaria en lugar de registrar un valor a mano. Un día se completa cuando la nota alcanza un número de caracteres o se marcan todas sus tareas. Funciona con el plugin Templater para crear la nota de cada día a partir de una plantilla.",
+	Write: "Escribir",
+	"Write this day's note": "Escribir la nota de este día",
+	"Write today's note": "Escribir la nota de hoy",
+	"e.g. Journal": "p. ej. Diario",
+	"e.g. Templates/Journal.md": "p. ej. Templates/Diario.md",
+
+	// Flexible frequency (any day)
+	"How many times (or, for counted and timed habits, how much in total) this needs to happen somewhere in the period.":
+		"Cuántas veces (o, en hábitos contados o temporizados, cuánto en total) debe ocurrir esto en algún momento del período.",
+	'How often this habit is due. Weekly and monthly habits only appear on their due date; the "any day" options appear every day until their quota is met.':
+		'Con qué frecuencia vence este hábito. Los hábitos semanales y mensuales solo aparecen en su día de vencimiento; las opciones "cualquier día" aparecen todos los días hasta alcanzar su cuota.',
+	"Monthly (any day)": "Mensual (cualquier día)",
+	"Times per month": "Veces al mes",
+	"Times per week": "Veces a la semana",
+	"Weekly (any day)": "Semanal (cualquier día)",
+	"this month": "este mes",
+	"this week": "esta semana",
+	"{completed}/{days} months": "{completed}/{days} meses",
+	"{completed}/{days} weeks": "{completed}/{days} semanas",
+	"{n}× a month · any day": "{n}× al mes · cualquier día",
+	"{n}× a week · any day": "{n}× a la semana · cualquier día",
 };

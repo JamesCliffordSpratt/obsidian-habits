@@ -438,4 +438,51 @@ export const fr: Record<string, string> = {
 	"Stats rows per page": "Lignes de statistiques par page",
 	"How many habits each stats page shows.":
 		"Combien d'habitudes chaque page de statistiques affiche.",
+	// Note habits
+	'"{name}" uses Templater syntax, but the Templater plugin is not installed — the template was copied as plain text.':
+		"« {name} » utilise la syntaxe Templater, mais le plugin Templater n'est pas installé — le modèle a été copié en texte brut.",
+	"Binary is done or not done. Repetition counts towards a target. Timed tracks minutes. Note is completed by writing in a per-day note.":
+		"Binaire : fait ou non fait. Répétition : compte vers un objectif. Chronométré : enregistre des minutes. Note : se complète en écrivant dans une note quotidienne.",
+	"Character count is reached": "Un nombre de caractères est atteint",
+	"Character goal": "Objectif de caractères",
+	"Completed when": "Complété quand",
+	"Every task is checked": "Toutes les tâches sont cochées",
+	"Filename format": "Format du nom de fichier",
+	"Folder each day's note is created in. Leave blank for a dedicated subfolder named after this habit.":
+		"Dossier où la note de chaque jour est créée. Laissez vide pour un sous-dossier dédié portant le nom de cette habitude.",
+	"Moment.js format used to name each day's note, e.g. {example}. May include / for date-based subfolders.":
+		"Format Moment.js utilisé pour nommer la note de chaque jour, p. ex. {example}. Peut inclure / pour des sous-dossiers basés sur la date.",
+	Note: "Note",
+	"Note habits": "Habitudes en note",
+	"Notes folder": "Dossier des notes",
+	"Open this day's note": "Ouvrir la note de ce jour",
+	"Open today's note": "Ouvrir la note d'aujourd'hui",
+	"Optional template note used when a day's note is created. Expanded through the Templater plugin when it is installed, otherwise copied as plain text.":
+		"Note modèle optionnelle utilisée lors de la création de la note d'un jour. Développée via le plugin Templater lorsqu'il est installé, sinon copiée en texte brut.",
+	"Reach a character count, or check off every task list item in the note.":
+		"Atteindre un nombre de caractères, ou cocher toutes les tâches de la note.",
+	Template: "Modèle",
+	"Track a habit by writing in a per-day note instead of logging a value by hand. A day is complete once the note reaches a character count or every task in it is checked. Works with the Templater plugin to create each day's note from a template.":
+		"Suivez une habitude en écrivant dans une note quotidienne plutôt qu'en enregistrant une valeur à la main. Un jour est complet une fois que la note atteint un nombre de caractères ou que toutes ses tâches sont cochées. Fonctionne avec le plugin Templater pour créer la note de chaque jour à partir d'un modèle.",
+	Write: "Écrire",
+	"Write this day's note": "Écrire la note de ce jour",
+	"Write today's note": "Écrire la note d'aujourd'hui",
+	"e.g. Journal": "p. ex. Journal",
+	"e.g. Templates/Journal.md": "p. ex. Templates/Journal.md",
+
+	// Flexible frequency (any day)
+	"How many times (or, for counted and timed habits, how much in total) this needs to happen somewhere in the period.":
+		"Combien de fois (ou, pour les habitudes comptées ou chronométrées, quelle quantité au total) cela doit se produire dans la période.",
+	'How often this habit is due. Weekly and monthly habits only appear on their due date; the "any day" options appear every day until their quota is met.':
+		"La fréquence à laquelle cette habitude est due. Les habitudes hebdomadaires et mensuelles n'apparaissent qu'à leur date d'échéance ; les options « n'importe quel jour » apparaissent chaque jour jusqu'à ce que le quota soit atteint.",
+	"Monthly (any day)": "Mensuel (n'importe quel jour)",
+	"Times per month": "Fois par mois",
+	"Times per week": "Fois par semaine",
+	"Weekly (any day)": "Hebdomadaire (n'importe quel jour)",
+	"this month": "ce mois-ci",
+	"this week": "cette semaine",
+	"{completed}/{days} months": "{completed}/{days} mois",
+	"{completed}/{days} weeks": "{completed}/{days} semaines",
+	"{n}× a month · any day": "{n}× par mois · n'importe quel jour",
+	"{n}× a week · any day": "{n}× par semaine · n'importe quel jour",
 };

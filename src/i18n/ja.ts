@@ -431,4 +431,51 @@ export const ja: Record<string, string> = {
 	"Stats rows per page": "1ページあたりの統計行数",
 	"How many habits each stats page shows.":
 		"各統計ページに表示する習慣の数。",
+	// Note habits
+	'"{name}" uses Templater syntax, but the Templater plugin is not installed — the template was copied as plain text.':
+		"「{name}」はTemplater構文を使用していますが、Templaterプラグインがインストールされていません — テンプレートはプレーンテキストとしてコピーされました。",
+	"Binary is done or not done. Repetition counts towards a target. Timed tracks minutes. Note is completed by writing in a per-day note.":
+		"バイナリは完了か未完了か。回数は目標に向けてカウント。時間は分を記録します。ノートは日ごとのノートに書き込むことで完了します。",
+	"Character count is reached": "文字数に到達する",
+	"Character goal": "文字数の目標",
+	"Completed when": "完了の条件",
+	"Every task is checked": "すべてのタスクにチェックが入る",
+	"Filename format": "ファイル名の形式",
+	"Folder each day's note is created in. Leave blank for a dedicated subfolder named after this habit.":
+		"毎日のノートを作成するフォルダー。空欄のままにすると、この習慣の名前が付いた専用サブフォルダーが使われます。",
+	"Moment.js format used to name each day's note, e.g. {example}. May include / for date-based subfolders.":
+		"毎日のノートの名前に使うMoment.js形式。例：{example}。日付ごとのサブフォルダーには / を含めることができます。",
+	Note: "ノート",
+	"Note habits": "ノート習慣",
+	"Notes folder": "ノートのフォルダー",
+	"Open this day's note": "この日のノートを開く",
+	"Open today's note": "今日のノートを開く",
+	"Optional template note used when a day's note is created. Expanded through the Templater plugin when it is installed, otherwise copied as plain text.":
+		"日ごとのノート作成時に使う任意のテンプレートノート。Templaterプラグインがインストールされていれば展開され、なければプレーンテキストとしてコピーされます。",
+	"Reach a character count, or check off every task list item in the note.":
+		"文字数に到達するか、ノート内のすべてのタスクにチェックを入れます。",
+	Template: "テンプレート",
+	"Track a habit by writing in a per-day note instead of logging a value by hand. A day is complete once the note reaches a character count or every task in it is checked. Works with the Templater plugin to create each day's note from a template.":
+		"値を手動で記録する代わりに、日ごとのノートに書き込むことで習慣を記録します。ノートが文字数に到達するか、すべてのタスクにチェックが入ると、その日は完了になります。Templaterプラグインと連携し、テンプレートから毎日のノートを作成できます。",
+	Write: "書く",
+	"Write this day's note": "この日のノートを書く",
+	"Write today's note": "今日のノートを書く",
+	"e.g. Journal": "例: Journal",
+	"e.g. Templates/Journal.md": "例: Templates/Journal.md",
+
+	// Flexible frequency (any day)
+	"How many times (or, for counted and timed habits, how much in total) this needs to happen somewhere in the period.":
+		"期間内のどこかでこれが何回（カウントや時間の習慣では合計でどれだけ）必要かを指定します。",
+	'How often this habit is due. Weekly and monthly habits only appear on their due date; the "any day" options appear every day until their quota is met.':
+		"この習慣の頻度。週間・月間の習慣は期日にのみ表示されますが、「任意の日」オプションはノルマを達成するまで毎日表示されます。",
+	"Monthly (any day)": "月間（任意の日）",
+	"Times per month": "月あたりの回数",
+	"Times per week": "週あたりの回数",
+	"Weekly (any day)": "週間（任意の日）",
+	"this month": "今月",
+	"this week": "今週",
+	"{completed}/{days} months": "{completed}/{days} か月",
+	"{completed}/{days} weeks": "{completed}/{days} 週",
+	"{n}× a month · any day": "月{n}回 · 任意の日",
+	"{n}× a week · any day": "週{n}回 · 任意の日",
 };

@@ -421,4 +421,51 @@ export const zh: Record<string, string> = {
 	// Stats carousel
 	"Stats rows per page": "每页统计行数",
 	"How many habits each stats page shows.": "每页统计显示多少个习惯。",
+	// Note habits
+	'"{name}" uses Templater syntax, but the Templater plugin is not installed — the template was copied as plain text.':
+		'"{name}" 使用了 Templater 语法，但未安装 Templater 插件——模板已作为纯文本复制。',
+	"Binary is done or not done. Repetition counts towards a target. Timed tracks minutes. Note is completed by writing in a per-day note.":
+		"二元型：完成或未完成。重复型：向目标计数。计时型：记录分钟数。笔记型：通过在每日笔记中写作来完成。",
+	"Character count is reached": "达到字数",
+	"Character goal": "字数目标",
+	"Completed when": "完成条件",
+	"Every task is checked": "勾选所有任务",
+	"Filename format": "文件名格式",
+	"Folder each day's note is created in. Leave blank for a dedicated subfolder named after this habit.":
+		"每日笔记的创建文件夹。留空则使用以此习惯命名的专用子文件夹。",
+	"Moment.js format used to name each day's note, e.g. {example}. May include / for date-based subfolders.":
+		"用于命名每日笔记的 Moment.js 格式，例如 {example}。可包含 / 以创建按日期划分的子文件夹。",
+	Note: "笔记",
+	"Note habits": "笔记习惯",
+	"Notes folder": "笔记文件夹",
+	"Open this day's note": "打开这一天的笔记",
+	"Open today's note": "打开今天的笔记",
+	"Optional template note used when a day's note is created. Expanded through the Templater plugin when it is installed, otherwise copied as plain text.":
+		"创建每日笔记时使用的可选模板笔记。安装 Templater 插件后会展开其语法，否则将作为纯文本复制。",
+	"Reach a character count, or check off every task list item in the note.":
+		"达到字数，或勾选笔记中的所有任务。",
+	Template: "模板",
+	"Track a habit by writing in a per-day note instead of logging a value by hand. A day is complete once the note reaches a character count or every task in it is checked. Works with the Templater plugin to create each day's note from a template.":
+		"通过在每日笔记中写作来追踪习惯，而不是手动记录数值。当笔记达到字数或其中所有任务都被勾选时，这一天即算完成。可与 Templater 插件配合，从模板创建每日笔记。",
+	Write: "写作",
+	"Write this day's note": "写这一天的笔记",
+	"Write today's note": "写今天的笔记",
+	"e.g. Journal": "例如：日记",
+	"e.g. Templates/Journal.md": "例如：Templates/Journal.md",
+
+	// Flexible frequency (any day)
+	"How many times (or, for counted and timed habits, how much in total) this needs to happen somewhere in the period.":
+		"需要在该周期内的某个时刻发生多少次（对于计数型或计时型习惯，则是总量）。",
+	'How often this habit is due. Weekly and monthly habits only appear on their due date; the "any day" options appear every day until their quota is met.':
+		'此习惯的到期频率。每周和每月习惯只在到期日显示；"任意日"选项每天都会显示，直到达到配额。',
+	"Monthly (any day)": "每月（任意日）",
+	"Times per month": "每月次数",
+	"Times per week": "每周次数",
+	"Weekly (any day)": "每周（任意日）",
+	"this month": "本月",
+	"this week": "本周",
+	"{completed}/{days} months": "{completed}/{days} 个月",
+	"{completed}/{days} weeks": "{completed}/{days} 周",
+	"{n}× a month · any day": "每月 {n} 次 · 任意日",
+	"{n}× a week · any day": "每周 {n} 次 · 任意日",
 };
