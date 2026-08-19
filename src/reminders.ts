@@ -6,6 +6,16 @@ import { isDue, isPausedOn } from "./stats";
 import { toDateKey } from "./utils";
 
 /**
+ * Obsidian's bundled Moment.js, typed by hand — its own type definitions
+ * are not always resolvable in stricter lint setups, which would otherwise
+ * make every call through `moment` unsafely typed (mirrors the same cast
+ * in utils.ts and note-habit.ts).
+ */
+const formatDate = moment as unknown as (
+	input: Date,
+) => { format(format: string): string };
+
+/**
  * Markers around the plugin-managed reminder block. Obsidian `%%` comments,
  * so they stay invisible in reading view while the checklist lines between
  * them render (and get scanned by the Reminder plugin) normally.
@@ -328,7 +338,7 @@ export class ReminderSync {
 			return path ? normalizePath(path) : null;
 		}
 		const options = dailyNoteOptions(this.app);
-		const name = moment(today).format(options.format || "YYYY-MM-DD");
+		const name = formatDate(today).format(options.format || "YYYY-MM-DD");
 		const folder = options.folder?.trim() ?? "";
 		return normalizePath(folder ? `${folder}/${name}.md` : `${name}.md`);
 	}
