@@ -13,6 +13,7 @@ import type { HabitsPluginSettings } from "../settings";
 import type { HabitDefinition } from "../types";
 import { isComplete, isDue, isPausedOn, limitOf } from "../stats";
 import {
+	formatTimeOfDay,
 	groupHabits,
 	habitAccent,
 	registerLongPress,
@@ -357,6 +358,15 @@ export class HabitsPanelView extends ItemView {
 		this.registerDomEvent(name, "click", () => {
 			void this.app.workspace.openLinkText(habit.path, "", false);
 		});
+
+		if (habit.times.length > 0) {
+			// All times stay visible; the name truncates instead and its
+			// tooltip already reveals the full name.
+			main.createSpan({
+				cls: "habits-panel-time",
+				text: habit.times.map(formatTimeOfDay).join(", "),
+			});
+		}
 
 		if (this.isPausedToday(habit)) {
 			row.addClass("is-paused");
