@@ -54,6 +54,15 @@ const context = await esbuild.context({
     "@lezer/common",
     "@lezer/highlight",
     "@lezer/lr",
+    // jsPDF's unused `.html()` addon lazily imports these three purely as an
+    // HTML-to-PDF rendering path — this plugin only ever draws vector/text
+    // content and adds pre-rendered chart images, so that path is dead code.
+    // Externalizing them (rather than letting esbuild inline the ~1.2MB of
+    // source behind that dynamic import) cuts the bundle by ~30% with zero
+    // behavior change: the import is still there, it just never runs.
+    "html2canvas",
+    "canvg",
+    "dompurify",
     ...builtins,
   ],
   format: "cjs",
