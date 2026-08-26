@@ -2500,6 +2500,44 @@
 	font-size: var(--font-ui-small);
 }
 
+.habits-advanced-note {
+	margin: 0 0 12px;
+	color: var(--text-muted);
+	font-size: var(--font-ui-small);
+}
+
+/* Hand-rolled top tab bar for the settings tab (General/Experimental/
+   Advanced) — Obsidian has no native tab component. */
+.habits-settings-tabs {
+	display: flex;
+	gap: 4px;
+	margin-bottom: 12px;
+	border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.habits-settings-tab {
+	padding: 6px 14px;
+	background: transparent;
+	border: none;
+	border-bottom: 2px solid transparent;
+	border-radius: 0;
+	box-shadow: none;
+	color: var(--text-muted);
+	font-size: var(--font-ui-medium);
+	cursor: pointer;
+}
+
+.habits-settings-tab:hover {
+	color: var(--text-normal);
+	background: transparent;
+}
+
+.habits-settings-tab.is-active {
+	color: var(--text-normal);
+	border-bottom-color: var(--interactive-accent);
+	font-weight: var(--font-weight-bold, 600);
+}
+
 /* Weekday pills (multi-day picker in the habit modal) */
 
 .habits-weekday-picker {

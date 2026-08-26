@@ -1,5 +1,9 @@
 import { App, normalizePath, Notice, TFile, TFolder } from "obsidian";
-import type { HabitsPluginSettings } from "./settings";
+import {
+	DEFAULT_FRONTMATTER_KEYS,
+	type FrontmatterKeys,
+	type HabitsPluginSettings,
+} from "./settings";
 import type {
 	GroupStyle,
 	HabitDefinition,
@@ -144,6 +148,11 @@ export class HabitStore {
 		return normalizePath(this.getSettings().habitsFolder);
 	}
 
+	/** The configured frontmatter property name for each stored field. */
+	private keys(): FrontmatterKeys {
+		return this.getSettings().frontmatterKeys;
+	}
+
 	/** Shared styling (colour, icon) for a group, if any is stored. */
 	getGroupStyle(name: string): GroupStyle | undefined {
 		return this.getSettings().groups[name.trim()];
@@ -207,61 +216,95 @@ export class HabitStore {
 	private parseFile(file: TFile): HabitDefinition | null {
 		const cache = this.app.metadataCache.getFileCache(file);
 		const fm = cache?.frontmatter;
-		if (!fm || !isHabitType(fm.type)) {
+		const k = this.keys();
+		if (!fm || !isHabitType(fm[k.type])) {
 			return null;
 		}
 
-		const pauses = this.readPauses(fm.pauses);
+		const pauses = this.readPauses(fm[k.pauses]);
 		return {
 			path: file.path,
 			name: file.basename,
-			type: fm.type,
-			goalDirection: fm.goalDirection === "max" ? "max" : "min",
-			frequency: isHabitFrequency(fm.frequency)
-				? fm.frequency
+			type: fm[k.type] as HabitType,
+			goalDirection: fm[k.goalDirection] === "max" ? "max" : "min",
+			frequency: isHabitFrequency(fm[k.frequency])
+				? (fm[k.frequency] as HabitFrequency)
 				: "daily",
-			weekdays: this.readWeekdays(fm.weekdays, fm.weekday),
-			monthDay: this.clampInt(this.readNumber(fm.monthDay, 1), 1, 31),
+			weekdays: this.readWeekdays(fm[`${k.weekday}s`], fm[k.weekday]),
+			monthDay: this.clampInt(this.readNumber(fm[k.monthDay], 1), 1, 31),
 			intervalDays: this.clampInt(
-				this.readNumber(fm.intervalDays, 2),
+				this.readNumber(fm[k.intervalDays], 2),
 				2,
 				365,
 			),
-			times: this.readTimes(fm.times, fm.time),
-			target: this.readNumber(fm.target, 1),
-			unit: typeof fm.unit === "string" ? fm.unit : "",
-			weeklyTarget: this.readNumber(fm.weeklyTarget, 0),
-			monthlyTarget: this.readNumber(fm.monthlyTarget, 0),
-			weeklyPerfect: fm.weeklyPerfect === true,
-			monthlyPerfect: fm.monthlyPerfect === true,
-			icon: typeof fm.icon === "string" ? fm.icon : "",
-			color: typeof fm.color === "string" ? fm.color : "",
-			group: typeof fm.group === "string" ? fm.group : "",
-			useGroupColor: fm.useGroupColor === true,
-			startDate: typeof fm.startDate === "string" ? fm.startDate : "",
+			times: this.readTimes(fm[`${k.time}s`], fm[k.time]),
+			target: this.readNumber(fm[k.target], 1),
+			unit: typeof fm[k.unit] === "string" ? (fm[k.unit] as string) : "",
+			weeklyTarget: this.readNumber(fm[k.weeklyTarget], 0),
+			monthlyTarget: this.readNumber(fm[k.monthlyTarget], 0),
+			weeklyPerfect: fm[k.weeklyPerfect] === true,
+			monthlyPerfect: fm[k.monthlyPerfect] === true,
+			icon: typeof fm[k.icon] === "string" ? (fm[k.icon] as string) : "",
+			color:
+				typeof fm[k.color] === "string" ? (fm[k.color] as string) : "",
+			group:
+				typeof fm[k.group] === "string" ? (fm[k.group] as string) : "",
+			useGroupColor: fm[k.useGroupColor] === true,
+			tags: this.readTagProperty(fm.tags),
+			startDate: this.readDateString(fm[k.startDate]),
 			paused: pauses.some((pause) => pause.end === ""),
 			pauses,
-			stopped: fm.stopped === true,
-			stopDate: typeof fm.stopDate === "string" ? fm.stopDate : "",
-			records: this.readRecords(fm.records),
+			stopped: fm[k.stopped] === true,
+			stopDate: this.readDateString(fm[k.stopDate]),
+			records: this.readRecords(fm[k.records]),
 			// Notes written before comments moved into the body still keep
 			// them in frontmatter; the body wins where both exist.
 			comments: {
-				...this.readComments(fm.comments),
+				...this.readComments(fm[k.comments]),
 				...(this.commentCache.get(file.path) ?? {}),
 			},
 			noteFolder:
-				typeof fm.noteFolder === "string" ? fm.noteFolder : "",
+				typeof fm[k.noteFolder] === "string"
+					? (fm[k.noteFolder] as string)
+					: "",
 			noteFilenameFormat:
-				typeof fm.noteFilenameFormat === "string"
-					? fm.noteFilenameFormat
+				typeof fm[k.noteFilenameFormat] === "string"
+					? (fm[k.noteFilenameFormat] as string)
 					: "",
 			templatePath:
-				typeof fm.templatePath === "string" ? fm.templatePath : "",
-			noteCompletionMode: isNoteCompletionMode(fm.noteCompletionMode)
-				? fm.noteCompletionMode
+				typeof fm[k.templatePath] === "string"
+					? (fm[k.templatePath] as string)
+					: "",
+			noteCompletionMode: isNoteCompletionMode(fm[k.noteCompletionMode])
+				? (fm[k.noteCompletionMode] as NoteCompletionMode)
 				: "chars",
 		};
+	}
+
+	/**
+	 * Read a `YYYY-MM-DD` scalar, tolerating a native `Date`.
+	 *
+	 * Obsidian's own frontmatter writer (used by `processFrontMatter`)
+	 * re-serializes a note's *entire* frontmatter on every edit, and drops
+	 * the quotes around a plain string that happens to look like a date.
+	 * Once unquoted, that value reads back as a YAML timestamp rather than
+	 * text, so Obsidian hands it to us as a `Date` object instead of a
+	 * string on the next read — for any note that's ever been touched by
+	 * `processFrontMatter`, not just ones written by this plugin. Recovered
+	 * via UTC fields, since YAML resolves a bare date as UTC midnight
+	 * regardless of the reader's own timezone.
+	 */
+	private readDateString(value: unknown): string {
+		if (typeof value === "string") {
+			return value.trim();
+		}
+		if (value instanceof Date && !Number.isNaN(value.getTime())) {
+			const year = value.getUTCFullYear();
+			const month = String(value.getUTCMonth() + 1).padStart(2, "0");
+			const day = String(value.getUTCDate()).padStart(2, "0");
+			return `${year}-${month}-${day}`;
+		}
+		return "";
 	}
 
 	private readNumber(value: unknown, fallback: number): number {
@@ -349,8 +392,26 @@ export class HabitStore {
 		return days.length > 0 ? days : [1];
 	}
 
+	/**
+	 * Parse the completion field in either of the two shapes it may be
+	 * stored in: this plugin's own day → value map, or a bare list of
+	 * done dates (the shape TaskNotes uses for `complete_instances`) —
+	 * each listed date is read as a completed day with value `1`. Both
+	 * shapes are always accepted on read, so a note already carrying
+	 * either one (e.g. authored by another plugin) is picked up without
+	 * configuration — see {@link setRecord} for which shape gets written.
+	 */
 	private readRecords(raw: unknown): Record<string, number> {
 		const records: Record<string, number> = {};
+		if (Array.isArray(raw)) {
+			for (const value of raw) {
+				const dateKey = this.readDateString(value);
+				if (dateKey) {
+					records[dateKey] = 1;
+				}
+			}
+			return records;
+		}
 		if (raw && typeof raw === "object") {
 			for (const [key, value] of Object.entries(
 				raw as Record<string, unknown>,
@@ -396,13 +457,11 @@ export class HabitStore {
 				continue;
 			}
 			const entry = item as Record<string, unknown>;
-			if (typeof entry.start !== "string" || entry.start === "") {
+			const start = this.readDateString(entry.start);
+			if (start === "") {
 				continue;
 			}
-			pauses.push({
-				start: entry.start,
-				end: typeof entry.end === "string" ? entry.end : "",
-			});
+			pauses.push({ start, end: this.readDateString(entry.end) });
 		}
 		return pauses;
 	}
@@ -444,31 +503,32 @@ export class HabitStore {
 		fm: Record<string, unknown>,
 		options: NewHabitOptions,
 	): void {
-		delete fm.weekday;
-		delete fm.weekdays;
-		delete fm.monthDay;
-		delete fm.intervalDays;
+		const k = this.keys();
+		delete fm[k.weekday];
+		delete fm[`${k.weekday}s`];
+		delete fm[k.monthDay];
+		delete fm[k.intervalDays];
 		if (options.frequency === "weekly") {
-			fm.frequency = "weekly";
+			fm[k.frequency] = "weekly";
 			const days = this.normalizeWeekdays(options.weekdays);
 			if (days.length === 1) {
-				fm.weekday = days[0];
+				fm[k.weekday] = days[0];
 			} else {
-				fm.weekdays = days;
+				fm[`${k.weekday}s`] = days;
 			}
 		} else if (options.frequency === "monthly") {
-			fm.frequency = "monthly";
-			fm.monthDay = this.clampInt(options.monthDay, 1, 31);
+			fm[k.frequency] = "monthly";
+			fm[k.monthDay] = this.clampInt(options.monthDay, 1, 31);
 		} else if (options.frequency === "interval") {
-			fm.frequency = "interval";
-			fm.intervalDays = this.clampInt(options.intervalDays, 2, 365);
+			fm[k.frequency] = "interval";
+			fm[k.intervalDays] = this.clampInt(options.intervalDays, 2, 365);
 		} else if (
 			options.frequency === "flexibleWeekly" ||
 			options.frequency === "flexibleMonthly"
 		) {
-			fm.frequency = options.frequency;
+			fm[k.frequency] = options.frequency;
 		} else {
-			delete fm.frequency;
+			delete fm[k.frequency];
 		}
 	}
 
@@ -481,13 +541,14 @@ export class HabitStore {
 		fm: Record<string, unknown>,
 		options: NewHabitOptions,
 	): void {
-		delete fm.time;
-		delete fm.times;
+		const k = this.keys();
+		delete fm[k.time];
+		delete fm[`${k.time}s`];
 		const times = this.normalizeTimes(options.times);
 		if (times.length === 1) {
-			fm.time = times[0];
+			fm[k.time] = times[0];
 		} else if (times.length > 1) {
-			fm.times = times;
+			fm[`${k.time}s`] = times;
 		}
 	}
 
@@ -504,24 +565,25 @@ export class HabitStore {
 		options: NewHabitOptions,
 		cleanName: string,
 	): void {
-		delete fm.noteFolder;
-		delete fm.noteFilenameFormat;
-		delete fm.templatePath;
-		delete fm.noteCompletionMode;
+		const k = this.keys();
+		delete fm[k.noteFolder];
+		delete fm[k.noteFilenameFormat];
+		delete fm[k.templatePath];
+		delete fm[k.noteCompletionMode];
 		if (options.type !== "note") {
 			return;
 		}
-		fm.noteFolder =
+		fm[k.noteFolder] =
 			options.noteFolder.trim() || `${this.folderPath}/${cleanName}`;
 		const format = options.noteFilenameFormat.trim();
 		if (format && format !== DEFAULT_NOTE_FILENAME_FORMAT) {
-			fm.noteFilenameFormat = format;
+			fm[k.noteFilenameFormat] = format;
 		}
 		if (options.templatePath.trim()) {
-			fm.templatePath = options.templatePath.trim();
+			fm[k.templatePath] = options.templatePath.trim();
 		}
 		if (options.noteCompletionMode === "checklist") {
-			fm.noteCompletionMode = "checklist";
+			fm[k.noteCompletionMode] = "checklist";
 		}
 	}
 
@@ -534,6 +596,16 @@ export class HabitStore {
 	 * Record `value` for `habit` on the day identified by `dateKey`.
 	 *
 	 * A value of zero or less removes the entry to keep the frontmatter tidy.
+	 *
+	 * Writes as a plain day → value map, unless both of these hold: the
+	 * habit is binary (its logged value is always exactly `1`, so a value
+	 * map and a bare date carry the same information) and the completion
+	 * key has been renamed away from its default `records` — the signal
+	 * that this note is meant to interoperate with something else, such as
+	 * TaskNotes' `complete_instances`. In that case it's written as a bare,
+	 * sorted list of completed dates instead (dropping any non-positive
+	 * entries). Repetition/timed habits always use the value map, since
+	 * only it can hold their logged count or duration.
 	 */
 	async setRecord(
 		habit: HabitDefinition,
@@ -550,18 +622,24 @@ export class HabitStore {
 			return;
 		}
 
+		const k = this.keys();
+		const useDateList =
+			habit.type === "binary" &&
+			k.records !== DEFAULT_FRONTMATTER_KEYS.records;
 		await this.app.fileManager.processFrontMatter(file, (frontmatter) => {
 			const fm = frontmatter as Record<string, unknown>;
-			const records =
-				fm.records && typeof fm.records === "object"
-					? (fm.records as Record<string, number>)
-					: {};
+			const records = this.readRecords(fm[k.records]);
 			if (value > 0) {
 				records[dateKey] = value;
 			} else {
 				delete records[dateKey];
 			}
-			fm.records = records;
+			fm[k.records] = useDateList
+				? Object.entries(records)
+						.filter(([, recorded]) => recorded > 0)
+						.map(([day]) => day)
+						.sort()
+				: records;
 		});
 	}
 
@@ -610,7 +688,7 @@ export class HabitStore {
 	/** Day comments still stored in a note's frontmatter, if any. */
 	private legacyComments(file: TFile): Record<string, string> {
 		const fm = this.app.metadataCache.getFileCache(file)?.frontmatter;
-		return this.readComments(fm?.comments);
+		return this.readComments(fm?.[this.keys().comments]);
 	}
 
 	/** True when any habit note still keeps its comments in frontmatter. */
@@ -644,6 +722,43 @@ export class HabitStore {
 	}
 
 	/**
+	 * Move each rename's value onto its new frontmatter key, across every
+	 * habit note, one `processFrontMatter` pass per file (not one pass per
+	 * key). A value is only ever moved, never overwritten: a rename is
+	 * skipped for a given note if its new key is already in use there, so
+	 * existing data can't be clobbered. Returns how many notes were changed.
+	 */
+	async renameFrontmatterKeys(
+		renames: { old: string; new: string }[],
+	): Promise<number> {
+		let changed = 0;
+		for (const file of this.habitFiles()) {
+			let fileChanged = false;
+			await this.app.fileManager.processFrontMatter(
+				file,
+				(frontmatter) => {
+					const fm = frontmatter as Record<string, unknown>;
+					for (const { old: oldKey, new: newKey } of renames) {
+						if (
+							oldKey !== newKey &&
+							fm[oldKey] !== undefined &&
+							fm[newKey] === undefined
+						) {
+							fm[newKey] = fm[oldKey];
+							delete fm[oldKey];
+							fileChanged = true;
+						}
+					}
+				},
+			);
+			if (fileChanged) {
+				changed++;
+			}
+		}
+		return changed;
+	}
+
+	/**
 	 * Drop the frontmatter `comments` key once its contents live in the
 	 * body, along with any tags an earlier version mirrored into `tags` —
 	 * the body now supplies those to Obsidian's index directly.
@@ -653,9 +768,10 @@ export class HabitStore {
 		legacy: Record<string, string>,
 	): Promise<void> {
 		const mirrored = tagsInComments(legacy);
+		const k = this.keys();
 		await this.app.fileManager.processFrontMatter(file, (frontmatter) => {
 			const fm = frontmatter as Record<string, unknown>;
-			delete fm.comments;
+			delete fm[k.comments];
 			if (mirrored.size === 0 || !("tags" in fm)) {
 				return;
 			}
@@ -713,14 +829,15 @@ export class HabitStore {
 			);
 			return;
 		}
+		const k = this.keys();
 		await this.app.fileManager.processFrontMatter(file, (frontmatter) => {
 			const fm = frontmatter as Record<string, unknown>;
-			const pauses = this.readPauses(fm.pauses);
+			const pauses = this.readPauses(fm[k.pauses]);
 			if (pauses.some((pause) => pause.end === "")) {
 				return;
 			}
 			pauses.push({ start: toDateKey(new Date()), end: "" });
-			fm.pauses = this.serializePauses(pauses);
+			fm[k.pauses] = this.serializePauses(pauses);
 		});
 		new Notice(t('Paused "{name}".', { name: habit.name }));
 	}
@@ -736,13 +853,14 @@ export class HabitStore {
 			);
 			return;
 		}
+		const k = this.keys();
 		await this.app.fileManager.processFrontMatter(file, (frontmatter) => {
 			const fm = frontmatter as Record<string, unknown>;
-			const pauses = this.closeOpenPause(this.readPauses(fm.pauses));
+			const pauses = this.closeOpenPause(this.readPauses(fm[k.pauses]));
 			if (pauses.length > 0) {
-				fm.pauses = this.serializePauses(pauses);
+				fm[k.pauses] = this.serializePauses(pauses);
 			} else {
-				delete fm.pauses;
+				delete fm[k.pauses];
 			}
 		});
 		new Notice(t('Resumed "{name}".', { name: habit.name }));
@@ -759,15 +877,16 @@ export class HabitStore {
 			);
 			return;
 		}
+		const k = this.keys();
 		await this.app.fileManager.processFrontMatter(file, (frontmatter) => {
 			const fm = frontmatter as Record<string, unknown>;
-			fm.stopped = true;
-			fm.stopDate = toDateKey(new Date());
-			const pauses = this.closeOpenPause(this.readPauses(fm.pauses));
+			fm[k.stopped] = true;
+			fm[k.stopDate] = toDateKey(new Date());
+			const pauses = this.closeOpenPause(this.readPauses(fm[k.pauses]));
 			if (pauses.length > 0) {
-				fm.pauses = this.serializePauses(pauses);
+				fm[k.pauses] = this.serializePauses(pauses);
 			} else {
-				delete fm.pauses;
+				delete fm[k.pauses];
 			}
 		});
 		new Notice(
@@ -788,10 +907,11 @@ export class HabitStore {
 			);
 			return;
 		}
+		const k = this.keys();
 		await this.app.fileManager.processFrontMatter(file, (frontmatter) => {
 			const fm = frontmatter as Record<string, unknown>;
-			delete fm.stopped;
-			delete fm.stopDate;
+			delete fm[k.stopped];
+			delete fm[k.stopDate];
 		});
 		new Notice(t('Resumed tracking "{name}".', { name: habit.name }));
 	}
@@ -828,14 +948,15 @@ export class HabitStore {
 		].join("\n");
 		const file = await this.app.vault.create(path, body);
 
+		const k = this.keys();
 		await this.app.fileManager.processFrontMatter(file, (frontmatter) => {
 			const fm = frontmatter as Record<string, unknown>;
 			fm.habit = true;
-			fm.type = options.type;
+			fm[k.type] = options.type;
 			// Only limit habits store the field; its absence means "min", so
 			// notes created before the field existed keep their meaning.
 			if (options.goalDirection === "max") {
-				fm.goalDirection = "max";
+				fm[k.goalDirection] = "max";
 			}
 			this.writeFrequency(fm, options);
 			this.writeTimes(fm, options);
@@ -851,35 +972,38 @@ export class HabitStore {
 				// target is its "times per period" goal, which a binary
 				// habit needs written too (unlike the normal binary case,
 				// where it is meaningless and left out).
-				fm.target = options.target;
+				fm[k.target] = options.target;
 			}
 			if (options.unit) {
-				fm.unit = options.unit;
+				fm[k.unit] = options.unit;
 			}
 			if (options.weeklyPerfect) {
-				fm.weeklyPerfect = true;
+				fm[k.weeklyPerfect] = true;
 			} else if (options.weeklyTarget > 0) {
-				fm.weeklyTarget = options.weeklyTarget;
+				fm[k.weeklyTarget] = options.weeklyTarget;
 			}
 			if (options.monthlyPerfect) {
-				fm.monthlyPerfect = true;
+				fm[k.monthlyPerfect] = true;
 			} else if (options.monthlyTarget > 0) {
-				fm.monthlyTarget = options.monthlyTarget;
+				fm[k.monthlyTarget] = options.monthlyTarget;
 			}
 			if (options.icon) {
-				fm.icon = options.icon;
+				fm[k.icon] = options.icon;
 			}
 			if (options.color) {
-				fm.color = options.color;
+				fm[k.color] = options.color;
 			}
 			if (options.group) {
-				fm.group = options.group;
+				fm[k.group] = options.group;
 			}
 			if (options.useGroupColor) {
-				fm.useGroupColor = true;
+				fm[k.useGroupColor] = true;
 			}
-			fm.startDate = toDateKey(new Date());
-			fm.records = {};
+			if (options.tags.length > 0) {
+				fm.tags = options.tags;
+			}
+			fm[k.startDate] = toDateKey(new Date());
+			fm[k.records] = {};
 		});
 
 		new Notice(t('Created habit "{name}".', { name: cleanName }));
@@ -924,14 +1048,15 @@ export class HabitStore {
 			}
 		}
 
+		const k = this.keys();
 		await this.app.fileManager.processFrontMatter(file, (frontmatter) => {
 			const fm = frontmatter as Record<string, unknown>;
 			fm.habit = true;
-			fm.type = options.type;
+			fm[k.type] = options.type;
 			if (options.goalDirection === "max") {
-				fm.goalDirection = "max";
+				fm[k.goalDirection] = "max";
 			} else {
-				delete fm.goalDirection;
+				delete fm[k.goalDirection];
 			}
 			this.writeFrequency(fm, options);
 			this.writeTimes(fm, options);
@@ -940,56 +1065,61 @@ export class HabitStore {
 				options.type === "binary" &&
 				!isFlexibleFrequency(options.frequency)
 			) {
-				delete fm.target;
+				delete fm[k.target];
 			} else {
-				fm.target = options.target;
+				fm[k.target] = options.target;
 			}
 			if (options.unit) {
-				fm.unit = options.unit;
+				fm[k.unit] = options.unit;
 			} else {
-				delete fm.unit;
+				delete fm[k.unit];
 			}
 			if (options.weeklyPerfect) {
-				fm.weeklyPerfect = true;
-				delete fm.weeklyTarget;
+				fm[k.weeklyPerfect] = true;
+				delete fm[k.weeklyTarget];
 			} else {
-				delete fm.weeklyPerfect;
+				delete fm[k.weeklyPerfect];
 				if (options.weeklyTarget > 0) {
-					fm.weeklyTarget = options.weeklyTarget;
+					fm[k.weeklyTarget] = options.weeklyTarget;
 				} else {
-					delete fm.weeklyTarget;
+					delete fm[k.weeklyTarget];
 				}
 			}
 			if (options.monthlyPerfect) {
-				fm.monthlyPerfect = true;
-				delete fm.monthlyTarget;
+				fm[k.monthlyPerfect] = true;
+				delete fm[k.monthlyTarget];
 			} else {
-				delete fm.monthlyPerfect;
+				delete fm[k.monthlyPerfect];
 				if (options.monthlyTarget > 0) {
-					fm.monthlyTarget = options.monthlyTarget;
+					fm[k.monthlyTarget] = options.monthlyTarget;
 				} else {
-					delete fm.monthlyTarget;
+					delete fm[k.monthlyTarget];
 				}
 			}
 			if (options.icon) {
-				fm.icon = options.icon;
+				fm[k.icon] = options.icon;
 			} else {
-				delete fm.icon;
+				delete fm[k.icon];
 			}
 			if (options.color) {
-				fm.color = options.color;
+				fm[k.color] = options.color;
 			} else {
-				delete fm.color;
+				delete fm[k.color];
 			}
 			if (options.group) {
-				fm.group = options.group;
+				fm[k.group] = options.group;
 			} else {
-				delete fm.group;
+				delete fm[k.group];
 			}
 			if (options.useGroupColor) {
-				fm.useGroupColor = true;
+				fm[k.useGroupColor] = true;
 			} else {
-				delete fm.useGroupColor;
+				delete fm[k.useGroupColor];
+			}
+			if (options.tags.length > 0) {
+				fm.tags = options.tags;
+			} else {
+				delete fm.tags;
 			}
 		});
 
@@ -1011,13 +1141,14 @@ export class HabitStore {
 			return;
 		}
 		const cleaned = group.trim();
+		const k = this.keys();
 		await this.app.fileManager.processFrontMatter(file, (frontmatter) => {
 			const fm = frontmatter as Record<string, unknown>;
 			if (cleaned) {
-				fm.group = cleaned;
+				fm[k.group] = cleaned;
 			} else {
-				delete fm.group;
-				delete fm.useGroupColor;
+				delete fm[k.group];
+				delete fm[k.useGroupColor];
 			}
 		});
 		habit.group = cleaned;

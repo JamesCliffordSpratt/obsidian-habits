@@ -183,6 +183,13 @@ export interface HabitDefinition {
 	 * the group colour instead of its own.
 	 */
 	useGroupColor: boolean;
+	/**
+	 * Obsidian tags on the note (no leading `#`), stored in the note's
+	 * native `tags` property rather than through the configurable
+	 * frontmatter keys — useful for making a habit recognisable to another
+	 * plugin's own tag-based rules, e.g. TaskNotes' task tag.
+	 */
+	tags: string[];
 	/** Date the habit started, as `YYYY-MM-DD`. */
 	startDate: string;
 	/** True while an open pause exists. Paused days are skipped by stats. */
@@ -244,6 +251,7 @@ export interface NewHabitOptions {
 	color: string;
 	group: string;
 	useGroupColor: boolean;
+	tags: string[];
 	noteFolder: string;
 	noteFilenameFormat: string;
 	templatePath: string;

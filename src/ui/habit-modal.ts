@@ -226,6 +226,8 @@ export class HabitModal extends Modal {
 	private groupColor = "";
 	private groupIcon = "";
 	private useGroupColor = false;
+	/** Raw text of the Tags field, comma/space-separated; split at submit. */
+	private tagsInput = "";
 	private noteFolder = "";
 	private noteFilenameFormat = "";
 	private templatePath = "";
@@ -283,6 +285,7 @@ export class HabitModal extends Modal {
 			this.color = editing.color || "var(--interactive-accent)";
 			this.group = editing.group;
 			this.useGroupColor = editing.useGroupColor;
+			this.tagsInput = editing.tags.join(", ");
 			this.noteFolder = editing.noteFolder;
 			this.noteFilenameFormat = editing.noteFilenameFormat;
 			this.templatePath = editing.templatePath;
@@ -547,6 +550,22 @@ export class HabitModal extends Modal {
 		this.updateGroupStyleUi();
 
 		new Setting(contentEl)
+			.setName(t("Tags"))
+			.setDesc(
+				t(
+					"Optional Obsidian tags for this note, separated by commas or spaces. Useful for making this habit recognisable to another plugin's own tag-based rules — for example TaskNotes' task tag.",
+				),
+			)
+			.addText((text) =>
+				text
+					.setPlaceholder(t("e.g. task"))
+					.setValue(this.tagsInput)
+					.onChange((value) => {
+						this.tagsInput = value;
+					}),
+			);
+
+		new Setting(contentEl)
 			.addButton((button) =>
 				button.setButtonText(t("Cancel")).onClick(() => this.close()),
 			)
@@ -600,6 +619,10 @@ export class HabitModal extends Modal {
 							useGroupColor:
 								this.useGroupColor &&
 								this.group.trim() !== "",
+							tags: this.tagsInput
+								.split(/[,\s]+/)
+								.map((tag) => tag.trim().replace(/^#/, ""))
+								.filter((tag) => tag !== ""),
 							noteFolder: this.noteFolder.trim(),
 							noteFilenameFormat: this.noteFilenameFormat.trim(),
 							templatePath: this.templatePath.trim(),
