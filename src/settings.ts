@@ -1218,10 +1218,18 @@ class FrontmatterKeysEditor {
 			),
 			confirmText: t("Apply"),
 			onConfirm: async () => {
-				const changed =
-					await this.plugin.store.renameFrontmatterKeys(renames);
+				// Settings are saved *before* the notes are rewritten: the
+				// rewrite fires metadataCache "changed" events for each
+				// file as it's touched, and anything reacting to those
+				// (e.g. a habit-metrics block) must already see the new
+				// key mapping — otherwise it re-reads a note whose data
+				// just moved to the new key using the old one, finds
+				// nothing, and stays empty until something else happens
+				// to trigger a further refresh.
 				this.plugin.settings.frontmatterKeys = { ...this.pending };
 				await this.plugin.saveSettings();
+				const changed =
+					await this.plugin.store.renameFrontmatterKeys(renames);
 				new Notice(
 					t("Updated the frontmatter keys in {count} note(s).", {
 						count: changed,
