@@ -128,7 +128,13 @@ export class HabitMetrics extends MarkdownRenderChild {
 						requested.toLowerCase(),
 				)
 			: habits.find((entry) => entry.path === this.sourcePath);
-		this.watchedPath = habit?.path ?? "";
+		// With no `habit: <name>` override, the block is inherently tied to
+		// its own note, so it must keep watching that note even while it
+		// isn't a recognised habit yet — otherwise adding `type: binary`
+		// (turning a plain note into one) would go undetected, and the
+		// block would keep showing its "not a habit note" message until
+		// the note is reopened.
+		this.watchedPath = requested ? (habit?.path ?? "") : this.sourcePath;
 
 		if (!habit) {
 			root.createEl("p", {
