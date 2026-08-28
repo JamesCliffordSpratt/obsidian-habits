@@ -1,16 +1,10 @@
-import {
-	App,
-	PluginSettingTab,
-	requireApiVersion,
-	setIcon,
-	Setting,
-	type SettingDefinitionItem,
-} from "obsidian";
+import { App, Notice, PluginSettingTab, setIcon, Setting } from "obsidian";
 import { t } from "./i18n";
 import type HabitsPlugin from "./main";
 import type { GroupStyle, HabitSortMode } from "./types";
 import { habitAccent, sortHabits } from "./utils";
 import { applyHabitIcon } from "./ui/icon-suggest-modal";
+import { ConfirmModal } from "./ui/confirm-modal";
 import { GroupsModal } from "./ui/groups-modal";
 import { FolderSuggest } from "./ui/vault-suggest";
 
@@ -40,6 +34,83 @@ export const DEFAULT_EXPERIMENTAL: ExperimentalFlags = {
 	limitHabits: false,
 	aiSummaries: false,
 	noteHabits: false,
+};
+
+/**
+ * The frontmatter property name used for every field a habit note stores.
+ * Renaming one here only changes what the plugin reads and writes going
+ * forward — see {@link HabitStore.renameFrontmatterKeys} for moving a
+ * field's existing value onto its new key across a vault's habit notes.
+ *
+ * Defaults match the plugin's original, fixed key names, so an existing
+ * vault is unaffected until a user changes one in Settings → Advanced. Kept
+ * deliberately separate from `HabitDefinition`'s field names (in `types.ts`),
+ * which never change: only the on-disk key is configurable, not the
+ * in-memory shape the rest of the plugin works with.
+ *
+ * `weekday`/`time` each cover two on-disk encodings of the same concept — a
+ * scalar for a single value, or a `<key>s` list for several — so only the
+ * singular form is configurable; the plural is always derived from it.
+ */
+export interface FrontmatterKeys {
+	type: string;
+	records: string;
+	frequency: string;
+	weekday: string;
+	monthDay: string;
+	intervalDays: string;
+	time: string;
+	goalDirection: string;
+	target: string;
+	unit: string;
+	weeklyTarget: string;
+	monthlyTarget: string;
+	weeklyPerfect: string;
+	monthlyPerfect: string;
+	startDate: string;
+	pauses: string;
+	stopped: string;
+	stopDate: string;
+	icon: string;
+	color: string;
+	group: string;
+	useGroupColor: string;
+	noteFolder: string;
+	noteFilenameFormat: string;
+	templatePath: string;
+	noteCompletionMode: string;
+	/** Legacy: day comments, before they moved into the note body. */
+	comments: string;
+}
+
+export const DEFAULT_FRONTMATTER_KEYS: FrontmatterKeys = {
+	type: "type",
+	records: "records",
+	frequency: "frequency",
+	weekday: "weekday",
+	monthDay: "monthDay",
+	intervalDays: "intervalDays",
+	time: "time",
+	goalDirection: "goalDirection",
+	target: "target",
+	unit: "unit",
+	weeklyTarget: "weeklyTarget",
+	monthlyTarget: "monthlyTarget",
+	weeklyPerfect: "weeklyPerfect",
+	monthlyPerfect: "monthlyPerfect",
+	startDate: "startDate",
+	pauses: "pauses",
+	stopped: "stopped",
+	stopDate: "stopDate",
+	icon: "icon",
+	color: "color",
+	group: "group",
+	useGroupColor: "useGroupColor",
+	noteFolder: "noteFolder",
+	noteFilenameFormat: "noteFilenameFormat",
+	templatePath: "templatePath",
+	noteCompletionMode: "noteCompletionMode",
+	comments: "comments",
 };
 
 /**
@@ -164,6 +235,11 @@ export interface HabitsPluginSettings {
 	aiSummary: AiSummarySettings;
 	/** Reminder-line generation for the Reminder plugin. */
 	reminders: ReminderSettings;
+	/**
+	 * Frontmatter property names, so a habit note's frontmatter can share a
+	 * note with another plugin's own properties without colliding.
+	 */
+	frontmatterKeys: FrontmatterKeys;
 }
 
 export const DEFAULT_SETTINGS: HabitsPluginSettings = {
@@ -186,41 +262,11 @@ export const DEFAULT_SETTINGS: HabitsPluginSettings = {
 	experimental: { ...DEFAULT_EXPERIMENTAL },
 	aiSummary: { ...DEFAULT_AI_SUMMARY },
 	reminders: { ...DEFAULT_REMINDERS },
+	frontmatterKeys: { ...DEFAULT_FRONTMATTER_KEYS },
 };
 
-/** Settings stored as numbers but edited through string-valued dropdowns. */
-const NUMERIC_DROPDOWN_KEYS = new Set([
-	"cardsPerView",
-	"mobileCardsPerView",
-	"statsRowsPerPage",
-]);
-
-/** Read a possibly nested settings value by a dot-separated key. */
-function getPath(obj: unknown, key: string): unknown {
-	let current: unknown = obj;
-	for (const part of key.split(".")) {
-		if (current === null || typeof current !== "object") {
-			return undefined;
-		}
-		current = (current as Record<string, unknown>)[part];
-	}
-	return current;
-}
-
-/** Write a possibly nested settings value by a dot-separated key. */
-function setPath(obj: object, key: string, value: unknown): void {
-	const parts = key.split(".");
-	const last = parts.pop() as string;
-	let current = obj as Record<string, unknown>;
-	for (const part of parts) {
-		const next = current[part];
-		if (next === null || typeof next !== "object") {
-			return;
-		}
-		current = next as Record<string, unknown>;
-	}
-	current[last] = value;
-}
+/** The three top-level tabs the settings UI is split into. */
+type SettingsTabId = "general" | "experimental" | "advanced";
 
 /** Settings tab shown under Settings → Community plugins → Habits. */
 export class HabitsSettingTab extends PluginSettingTab {
@@ -229,467 +275,6 @@ export class HabitsSettingTab extends PluginSettingTab {
 	constructor(app: App, plugin: HabitsPlugin) {
 		super(app, plugin);
 		this.plugin = plugin;
-	}
-
-	/**
-	 * Declarative settings (Obsidian 1.13+), which also makes every option
-	 * discoverable through the settings search. `display()` below remains
-	 * as the fallback for older Obsidian versions and is only called when
-	 * this method is unavailable.
-	 */
-	getSettingDefinitions(): SettingDefinitionItem[] {
-		const aiSummariesOn = (): boolean =>
-			this.plugin.settings.experimental.aiSummaries;
-		return [
-			{
-				type: "group",
-				heading: t("General"),
-				items: [
-					{
-						name: t("Habits folder"),
-						desc: t(
-							"Folder where each habit is stored as its own note. It is created automatically if it does not exist.",
-						),
-						control: {
-							type: "folder",
-							key: "habitsFolder",
-							placeholder: DEFAULT_SETTINGS.habitsFolder,
-							defaultValue: DEFAULT_SETTINGS.habitsFolder,
-						},
-					},
-					{
-						name: t("Follow daily note date"),
-						desc: t(
-							"When a dashboard is embedded in a daily note (a note whose name contains a date like 2026-07-01), open it on that note's date instead of today.",
-						),
-						control: {
-							type: "toggle",
-							key: "followDailyNoteDate",
-							defaultValue: DEFAULT_SETTINGS.followDailyNoteDate,
-						},
-					},
-					{
-						name: t("Daily note date format"),
-						desc: t(
-							"Moment.js format used to read the date from a daily note's name, such as YYYY-MM-DD or YYYYMMDD.",
-						),
-						control: {
-							type: "text",
-							key: "dailyNoteDateFormat",
-							placeholder: DEFAULT_SETTINGS.dailyNoteDateFormat,
-							defaultValue: DEFAULT_SETTINGS.dailyNoteDateFormat,
-						},
-					},
-					{
-						name: t("Comments on cards"),
-						desc: t(
-							"Show a comment flap on dashboard cards for jotting a note about any day.",
-						),
-						control: {
-							type: "toggle",
-							key: "enableComments",
-							defaultValue: DEFAULT_SETTINGS.enableComments,
-						},
-					},
-					{
-						name: t("Completion animations"),
-						desc: t(
-							"Play the check swoosh, card departure, and perfect-day confetti when habits are completed. Turn off for instant, quiet updates.",
-						),
-						control: {
-							type: "toggle",
-							key: "animations",
-							defaultValue: DEFAULT_SETTINGS.animations,
-						},
-					},
-				],
-			},
-			{
-				type: "group",
-				heading: t("Layout"),
-				items: [
-					{
-						name: t("Dashboard layout"),
-						desc: t(
-							"How to move through your habit cards: a paged carousel with arrows, a grid that wraps onto new rows, or a fixed-height grid that scrolls vertically. The stats page follows the same choice.",
-						),
-						control: {
-							type: "dropdown",
-							key: "dashboardLayout",
-							options: {
-								carousel: t("Carousel"),
-								grid: t("Grid"),
-								vertical: t("Vertical scroll"),
-							},
-							defaultValue: DEFAULT_SETTINGS.dashboardLayout,
-						},
-					},
-					{
-						name: t("Cards per view"),
-						desc: t(
-							"How many habit cards fit side by side on wider screens.",
-						),
-						control: {
-							type: "dropdown",
-							key: "cardsPerView",
-							options: { "1": "1", "2": "2", "3": "3", "4": "4" },
-							defaultValue: String(DEFAULT_SETTINGS.cardsPerView),
-						},
-					},
-					{
-						name: t("Cards per view on mobile"),
-						desc: t(
-							"How many habit cards fit side by side on phone-sized screens.",
-						),
-						control: {
-							type: "dropdown",
-							key: "mobileCardsPerView",
-							options: { "1": "1", "2": "2" },
-							defaultValue: String(
-								DEFAULT_SETTINGS.mobileCardsPerView,
-							),
-						},
-					},
-					{
-						name: t("Stats rows per page"),
-						desc: t("How many habits each stats page shows."),
-						visible: () =>
-							this.plugin.settings.dashboardLayout ===
-							"carousel",
-						control: {
-							type: "dropdown",
-							key: "statsRowsPerPage",
-							options: {
-								"1": "1",
-								"2": "2",
-								"3": "3",
-								"4": "4",
-								"5": "5",
-								"6": "6",
-								"7": "7",
-								"8": "8",
-							},
-							defaultValue: String(
-								DEFAULT_SETTINGS.statsRowsPerPage,
-							),
-						},
-					},
-				],
-			},
-			{
-				type: "group",
-				heading: t("Sorting"),
-				items: [
-					{
-						name: t("Sort habits by"),
-						desc: t(
-							"The base order of habit cards in the dashboard and side panel.",
-						),
-						control: {
-							type: "dropdown",
-							key: "sortMode",
-							options: {
-								name: t("Name (A–Z)"),
-								color: t("Color"),
-								startDate: t("Start date"),
-								lastLogged: t("Last logged"),
-								time: t("Planned time"),
-								group: t("Group"),
-								manual: t("Manual"),
-							},
-							defaultValue: DEFAULT_SETTINGS.sortMode,
-						},
-					},
-					{
-						name: t("Manual order"),
-						desc: t(
-							"Drag the cards into the order you want. New habits join the end of the list.",
-						),
-						visible: () =>
-							this.plugin.settings.sortMode === "manual",
-						render: (setting: Setting) => {
-							this.renderManualOrderEditor(setting);
-						},
-					},
-					{
-						name: t("Group order"),
-						desc: t(
-							"Drag the groups into the order you want. Sections follow the same order.",
-						),
-						visible: () =>
-							this.plugin.settings.sortMode === "group",
-						render: (setting: Setting) => {
-							this.renderGroupOrderEditor(setting);
-						},
-					},
-					{
-						name: t("Move completed cards to the end"),
-						desc: t(
-							"Completed habits drift to the end of the queue and paused ones park behind them. Turn this off to keep every card in its sorted position.",
-						),
-						control: {
-							type: "toggle",
-							key: "statusOrdering",
-							defaultValue: DEFAULT_SETTINGS.statusOrdering,
-						},
-					},
-				],
-			},
-			{
-				type: "group",
-				heading: t("Groups"),
-				items: [
-					{
-						name: t("Enable groups"),
-						desc: t(
-							"Show habits in sections by their group, with a group lip on each card.",
-						),
-						control: {
-							type: "toggle",
-							key: "groupsEnabled",
-							defaultValue: DEFAULT_SETTINGS.groupsEnabled,
-						},
-					},
-					{
-						name: t("Group the habits table"),
-						desc: t(
-							"Group the rows of habits-table blocks by habit group, with a heading row per group. Turn off for one flat list ordered by planned time.",
-						),
-						control: {
-							type: "toggle",
-							key: "tableGrouping",
-							defaultValue: DEFAULT_SETTINGS.tableGrouping,
-						},
-					},
-					{
-						name: t("Manage groups"),
-						desc: t(
-							"See every habit by group and drag cards between groups.",
-						),
-						visible: () => this.plugin.settings.groupsEnabled,
-						render: (setting: Setting) => {
-							setting.addButton((button) =>
-								button
-									.setButtonText(t("Open"))
-									.onClick(() => {
-										new GroupsModal(
-											this.app,
-											this.plugin.store,
-											() => this.plugin.settings,
-											() =>
-												this.plugin.saveSettings(),
-										).open();
-									}),
-							);
-						},
-					},
-				],
-			},
-			{
-				type: "group",
-				heading: t("Reminders"),
-				items: [
-					{
-						name: t("Write reminders for due habits"),
-						desc: t(
-							"Each day, write one reminder checklist line per planned time of every habit due that day, in the format the Reminder plugin picks up. The lines live in a marked block and refresh as you log habits.",
-						),
-						control: {
-							type: "toggle",
-							key: "reminders.enabled",
-							defaultValue: DEFAULT_REMINDERS.enabled,
-						},
-					},
-					{
-						name: t("Where to write reminders"),
-						desc: t(
-							"The daily note follows the Daily notes core plugin's folder and date format; the block is added once the note exists. A fixed note is created automatically.",
-						),
-						visible: () => this.plugin.settings.reminders.enabled,
-						control: {
-							type: "dropdown",
-							key: "reminders.target",
-							options: {
-								"daily-note": t("Today's daily note"),
-								"fixed-note": t("A fixed note"),
-							},
-							defaultValue: DEFAULT_REMINDERS.target,
-						},
-					},
-					{
-						name: t("Reminder note path"),
-						desc: t(
-							"Vault path of the note that holds the reminder block.",
-						),
-						visible: () =>
-							this.plugin.settings.reminders.enabled &&
-							this.plugin.settings.reminders.target ===
-								"fixed-note",
-						control: {
-							type: "text",
-							key: "reminders.notePath",
-							placeholder: DEFAULT_REMINDERS.notePath,
-							defaultValue: DEFAULT_REMINDERS.notePath,
-						},
-					},
-				],
-			},
-			{
-				type: "group",
-				heading: t("Experimental"),
-				items: [
-					{
-						name: "",
-						desc: t(
-							"These features are still being tested and may change before they become permanent. Turning one off only hides it from menus — anything you created with it keeps working.",
-						),
-						searchable: false,
-					},
-					{
-						name: t("Break bad habits"),
-						desc: t(
-							"Track habits you want to reduce or avoid by staying under a daily limit — for example at most 2 hours of gaming, or no smoking at all.",
-						),
-						control: {
-							type: "toggle",
-							key: "experimental.limitHabits",
-							defaultValue: DEFAULT_EXPERIMENTAL.limitHabits,
-						},
-					},
-					{
-						name: t("Note habits"),
-						desc: t(
-							"Track a habit by writing in a per-day note instead of logging a value by hand. A day is complete once the note reaches a character count or every task in it is checked. Works with the Templater plugin to create each day's note from a template.",
-						),
-						control: {
-							type: "toggle",
-							key: "experimental.noteHabits",
-							defaultValue: DEFAULT_EXPERIMENTAL.noteHabits,
-						},
-					},
-					{
-						name: t("AI summaries"),
-						desc: t(
-							"Show an AI-generated summary with feedback and advice on the stats page tabs. Uses an OpenAI-compatible service you configure below; your habit stats are sent to it only when you press the generate button.",
-						),
-						control: {
-							type: "toggle",
-							key: "experimental.aiSummaries",
-							defaultValue: DEFAULT_EXPERIMENTAL.aiSummaries,
-						},
-					},
-					{
-						name: t("AI base URL"),
-						desc: t(
-							"Base URL of an OpenAI-compatible API. Works with OpenAI, OpenRouter, or local servers like Ollama (http://localhost:11434/v1).",
-						),
-						visible: aiSummariesOn,
-						control: {
-							type: "text",
-							key: "aiSummary.baseUrl",
-							placeholder: DEFAULT_AI_SUMMARY.baseUrl,
-							defaultValue: DEFAULT_AI_SUMMARY.baseUrl,
-						},
-					},
-					{
-						name: t("AI API key"),
-						desc: t(
-							"Stored locally in this vault's plugin data. Leave blank for local servers that need no key.",
-						),
-						visible: aiSummariesOn,
-						// A masked input; the declarative text control has no
-						// password variant, so this row renders imperatively.
-						render: (setting: Setting) => {
-							setting.addText((text) => {
-								text.inputEl.type = "password";
-								text
-									.setValue(
-										this.plugin.settings.aiSummary.apiKey,
-									)
-									.onChange(async (value) => {
-										this.plugin.settings.aiSummary.apiKey =
-											value.trim();
-										await this.plugin.saveSettings();
-									});
-							});
-						},
-					},
-					{
-						name: t("AI model"),
-						desc: t("Model name the service should use."),
-						visible: aiSummariesOn,
-						control: {
-							type: "text",
-							key: "aiSummary.model",
-							placeholder: DEFAULT_AI_SUMMARY.model,
-							defaultValue: DEFAULT_AI_SUMMARY.model,
-						},
-					},
-				],
-			},
-		];
-	}
-
-	/** Read a control's current value from the plugin settings. */
-	getControlValue(key: string): unknown {
-		const value = getPath(this.plugin.settings, key);
-		return NUMERIC_DROPDOWN_KEYS.has(key) ? String(value) : value;
-	}
-
-	/** Normalise, store, and persist a control's new value. */
-	async setControlValue(key: string, value: unknown): Promise<void> {
-		setPath(this.plugin.settings, key, this.normalizeValue(key, value));
-		await this.plugin.saveSettings();
-		// Re-evaluate `visible` predicates so dependent rows (stats rows
-		// per page, the AI connection fields) follow their toggles. Only
-		// ever called on the 1.13+ declarative path, but guard anyway to
-		// honour the plugin's older minAppVersion.
-		if (requireApiVersion("1.13.0")) {
-			this.refreshDomState();
-		}
-	}
-
-	/** Mirror the trims and empty-value fallbacks of the legacy tab. */
-	private normalizeValue(key: string, value: unknown): unknown {
-		if (NUMERIC_DROPDOWN_KEYS.has(key)) {
-			return Number(value);
-		}
-		if (typeof value !== "string") {
-			return value;
-		}
-		const trimmed = value.trim();
-		switch (key) {
-			case "sortMode":
-				return [
-					"name",
-					"color",
-					"startDate",
-					"lastLogged",
-					"time",
-					"group",
-					"manual",
-				].includes(trimmed)
-					? trimmed
-					: "name";
-			case "dashboardLayout":
-				return trimmed === "grid" || trimmed === "vertical"
-					? trimmed
-					: "carousel";
-			case "reminders.target":
-				return trimmed === "fixed-note" ? trimmed : "daily-note";
-			case "reminders.notePath":
-				return trimmed || DEFAULT_REMINDERS.notePath;
-			case "habitsFolder":
-				return trimmed || DEFAULT_SETTINGS.habitsFolder;
-			case "dailyNoteDateFormat":
-				return trimmed || DEFAULT_SETTINGS.dailyNoteDateFormat;
-			case "aiSummary.baseUrl":
-				return trimmed || DEFAULT_AI_SUMMARY.baseUrl;
-			case "aiSummary.model":
-				return trimmed || DEFAULT_AI_SUMMARY.model;
-			default:
-				return trimmed;
-		}
 	}
 
 	/**
@@ -872,13 +457,72 @@ export class HabitsSettingTab extends PluginSettingTab {
 		await this.plugin.saveSettings();
 	}
 
-	/** Imperative fallback for Obsidian versions older than 1.13. */
+	/** Which of the three tabs is currently shown. */
+	private activeTab: SettingsTabId = "general";
+
+	/**
+	 * Renders the settings tab as three persistent top tabs (General,
+	 * Experimental, Advanced) rather than one long scrolling page. Obsidian
+	 * has no built-in tab-bar control, so this is hand-rolled; that also
+	 * means the plugin's settings are no longer indexed by Obsidian's own
+	 * settings search (that only worked through the declarative
+	 * getSettingDefinitions() API this tab used to implement, which cannot
+	 * coexist with custom chrome drawn around its content).
+	 */
 	display(): void {
 		const { containerEl } = this;
 		containerEl.empty();
 
-		new Setting(containerEl).setName(t("General")).setHeading();
+		const tabBar = containerEl.createDiv({ cls: "habits-settings-tabs" });
+		const content = containerEl.createDiv({
+			cls: "habits-settings-tab-content",
+		});
 
+		const tabs: {
+			id: SettingsTabId;
+			label: string;
+			render: (el: HTMLElement) => void;
+		}[] = [
+			{
+				id: "general",
+				label: t("General"),
+				render: (el) => this.displayGeneral(el),
+			},
+			{
+				id: "experimental",
+				label: t("Experimental"),
+				render: (el) => this.displayExperimental(el),
+			},
+			{
+				id: "advanced",
+				label: t("Advanced"),
+				render: (el) => this.displayAdvanced(el),
+			},
+		];
+
+		const selectTab = (id: SettingsTabId): void => {
+			this.activeTab = id;
+			buttons.forEach((button, i) =>
+				button.toggleClass("is-active", tabs[i].id === id),
+			);
+			content.empty();
+			tabs.find((tab) => tab.id === id)?.render(content);
+		};
+
+		const buttons = tabs.map((tab) => {
+			const button = tabBar.createEl("button", {
+				cls: "habits-settings-tab",
+				text: tab.label,
+			});
+			button.addEventListener("click", () => selectTab(tab.id));
+			return button;
+		});
+
+		selectTab(this.activeTab);
+	}
+
+	/** General settings: everything that isn't Experimental or Advanced. */
+	private displayGeneral(containerEl: HTMLElement): void {
 		new Setting(containerEl)
 			.setName(t("Habits folder"))
 			.setDesc(
@@ -1182,7 +826,6 @@ export class HabitsSettingTab extends PluginSettingTab {
 		groupDetails.toggle(this.plugin.settings.groupsEnabled);
 
 		this.displayReminders(containerEl);
-		this.displayExperimental(containerEl);
 	}
 
 	/** Reminder-line generation for the Reminder plugin. */
@@ -1263,8 +906,6 @@ export class HabitsSettingTab extends PluginSettingTab {
 	 * it keeps working and keeps its meaning.
 	 */
 	private displayExperimental(containerEl: HTMLElement): void {
-		new Setting(containerEl).setName(t("Experimental")).setHeading();
-
 		containerEl.createEl("p", {
 			cls: "habits-experimental-note",
 			text: t(
@@ -1384,5 +1025,218 @@ export class HabitsSettingTab extends PluginSettingTab {
 						await this.plugin.saveSettings();
 					}),
 			);
+	}
+
+	/** Content of the "Advanced" tab: frontmatter property-key remapping. */
+	private displayAdvanced(containerEl: HTMLElement): void {
+		new FrontmatterKeysEditor(this.app, this.plugin).render(containerEl);
+	}
+}
+
+/**
+ * Human-readable label for each configurable frontmatter key, grouped the
+ * way they're presented in the Advanced page/section.
+ */
+const FRONTMATTER_KEY_GROUPS: {
+	heading: () => string;
+	fields: [keyof FrontmatterKeys, () => string][];
+}[] = [
+	{
+		heading: () => t("Identity"),
+		fields: [
+			["type", () => t("Habit type key")],
+			["records", () => t("Completion records key")],
+		],
+	},
+	{
+		heading: () => t("Schedule"),
+		fields: [
+			["frequency", () => t("Frequency key")],
+			["weekday", () => t("Weekday key")],
+			["monthDay", () => t("Month day key")],
+			["intervalDays", () => t("Interval days key")],
+			["time", () => t("Planned time key")],
+		],
+	},
+	{
+		heading: () => t("Goal"),
+		fields: [
+			["goalDirection", () => t("Goal direction key")],
+			["target", () => t("Target key")],
+			["unit", () => t("Unit key")],
+			["weeklyTarget", () => t("Weekly target key")],
+			["monthlyTarget", () => t("Monthly target key")],
+			["weeklyPerfect", () => t("Weekly perfect key")],
+			["monthlyPerfect", () => t("Monthly perfect key")],
+		],
+	},
+	{
+		heading: () => t("Lifecycle"),
+		fields: [
+			["startDate", () => t("Start date key")],
+			["pauses", () => t("Pauses key")],
+			["stopped", () => t("Stopped key")],
+			["stopDate", () => t("Stop date key")],
+		],
+	},
+	{
+		heading: () => t("Presentation"),
+		fields: [
+			["icon", () => t("Icon key")],
+			["color", () => t("Color key")],
+			["group", () => t("Group key")],
+			["useGroupColor", () => t("Use group color key")],
+		],
+	},
+	{
+		heading: () => t("Note habit"),
+		fields: [
+			["noteFolder", () => t("Note folder key")],
+			["noteFilenameFormat", () => t("Note filename format key")],
+			["templatePath", () => t("Template path key")],
+			["noteCompletionMode", () => t("Note completion mode key")],
+		],
+	},
+	{
+		heading: () => t("Legacy"),
+		fields: [["comments", () => t("Legacy comments key")]],
+	},
+];
+
+/**
+ * Editor for the frontmatter-key remapping, rendered inline into the
+ * "Advanced" tab's content by {@link HabitsSettingTab.displayAdvanced}.
+ *
+ * Edits are held locally until "Apply key changes" is pressed: applying
+ * validates the whole set at once (no blanks, no two fields sharing a key),
+ * confirms with the user via {@link ConfirmModal}, then moves each renamed
+ * field's existing value onto its new key across every habit note before
+ * saving the setting — see {@link HabitStore.renameFrontmatterKeys}.
+ */
+class FrontmatterKeysEditor {
+	private pending: FrontmatterKeys;
+	private applySetting?: Setting;
+
+	constructor(
+		private app: App,
+		private plugin: HabitsPlugin,
+	) {
+		this.pending = { ...this.plugin.settings.frontmatterKeys };
+	}
+
+	render(containerEl: HTMLElement): void {
+		containerEl.createEl("p", {
+			cls: "habits-advanced-note",
+			text: t(
+				"Rename the frontmatter properties habit notes use. Useful for avoiding collisions with another plugin's own properties in the same note (for example TaskNotes).",
+			),
+		});
+
+		for (const group of FRONTMATTER_KEY_GROUPS) {
+			new Setting(containerEl).setName(group.heading()).setHeading();
+			for (const [field, label] of group.fields) {
+				const setting = new Setting(containerEl).setName(label());
+				if (field === "records") {
+					setting.setDesc(
+						t(
+							"Renaming this away from the default also changes how binary habits log a day: instead of {\"2026-08-25\": 1}, a completed day becomes a bare date, like [\"2026-08-25\"] — the shape TaskNotes uses for complete_instances. Repetition and timed habits are unaffected either way; they always need a value, never just a date.",
+						),
+					);
+				}
+				setting.addText((text) =>
+					text.setValue(this.pending[field]).onChange((value) => {
+						this.pending[field] = value;
+						this.refreshApplyVisibility();
+					}),
+				);
+			}
+		}
+
+		this.applySetting = new Setting(containerEl).addButton((button) =>
+			button
+				.setButtonText(t("Apply key changes"))
+				.setCta()
+				.onClick(() => {
+					void this.apply();
+				}),
+		);
+		this.refreshApplyVisibility();
+	}
+
+	private isDirty(): boolean {
+		const saved = this.plugin.settings.frontmatterKeys;
+		return (Object.keys(this.pending) as (keyof FrontmatterKeys)[]).some(
+			(field) => this.pending[field].trim() !== saved[field],
+		);
+	}
+
+	private refreshApplyVisibility(): void {
+		this.applySetting?.settingEl.toggle(this.isDirty());
+	}
+
+	private async apply(): Promise<void> {
+		const saved = this.plugin.settings.frontmatterKeys;
+		const fields = Object.keys(this.pending) as (keyof FrontmatterKeys)[];
+
+		const seen = new Map<string, keyof FrontmatterKeys>();
+		for (const field of fields) {
+			const value = this.pending[field].trim();
+			if (!value) {
+				new Notice(t("Property keys can't be empty."));
+				return;
+			}
+			this.pending[field] = value;
+			const clash = seen.get(value);
+			if (clash) {
+				new Notice(
+					t(
+						'"{a}" and "{b}" can\'t use the same property key ("{value}").',
+						{ a: clash, b: field, value },
+					),
+				);
+				return;
+			}
+			seen.set(value, field);
+		}
+
+		const renames = fields
+			.filter((field) => this.pending[field] !== saved[field])
+			.map((field) => ({ old: saved[field], new: this.pending[field] }));
+		if (renames.length === 0) {
+			return;
+		}
+
+		const summary = renames
+			.map((r) => `"${r.old}" → "${r.new}"`)
+			.join(", ");
+		const count = this.plugin.store.getHabits().length;
+		new ConfirmModal(this.app, {
+			title: t("Apply key changes"),
+			message: t(
+				"This renames {summary} in every note in your habits folder ({count} habit(s) currently). Existing values are moved, not discarded. Continue?",
+				{ summary, count },
+			),
+			confirmText: t("Apply"),
+			onConfirm: async () => {
+				// Settings are saved *before* the notes are rewritten: the
+				// rewrite fires metadataCache "changed" events for each
+				// file as it's touched, and anything reacting to those
+				// (e.g. a habit-metrics block) must already see the new
+				// key mapping — otherwise it re-reads a note whose data
+				// just moved to the new key using the old one, finds
+				// nothing, and stays empty until something else happens
+				// to trigger a further refresh.
+				this.plugin.settings.frontmatterKeys = { ...this.pending };
+				await this.plugin.saveSettings();
+				const changed =
+					await this.plugin.store.renameFrontmatterKeys(renames);
+				new Notice(
+					t("Updated the frontmatter keys in {count} note(s).", {
+						count: changed,
+					}),
+				);
+				this.refreshApplyVisibility();
+			},
+		}).open();
 	}
 }

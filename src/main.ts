@@ -16,6 +16,7 @@ import { NoteHabitSync } from "./note-habit";
 import {
 	DEFAULT_AI_SUMMARY,
 	DEFAULT_EXPERIMENTAL,
+	DEFAULT_FRONTMATTER_KEYS,
 	DEFAULT_REMINDERS,
 	DEFAULT_SETTINGS,
 	HabitsSettingTab,
@@ -400,6 +401,10 @@ export default class HabitsPlugin extends Plugin {
 		this.settings.reminders = {
 			...DEFAULT_REMINDERS,
 			...(data?.reminders ?? {}),
+		};
+		this.settings.frontmatterKeys = {
+			...DEFAULT_FRONTMATTER_KEYS,
+			...(data?.frontmatterKeys ?? {}),
 		};
 		this.settings.groups = { ...(data?.groups ?? {}) };
 	}
