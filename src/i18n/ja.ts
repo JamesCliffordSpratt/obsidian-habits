@@ -60,9 +60,6 @@ export const ja: Record<string, string> = {
 	"Group order": "グループの順序",
 	"Drag the groups into the order you want. Sections follow the same order.":
 		"グループを好きな順序にドラッグします。セクションも同じ順序に従います。",
-	"Group the habits table": "習慣テーブルをグループ化",
-	"Group the rows of habits-table blocks by habit group, with a heading row per group. Turn off for one flat list ordered by planned time.":
-		"habits-table ブロックの行を習慣のグループごとにまとめ、グループごとに見出し行を表示します。オフにすると予定時刻順のフラットなリストになります。",
 	"Completion animations": "完了アニメーション",
 	"Play the check swoosh, card departure, and perfect-day confetti when habits are completed. Turn off for instant, quiet updates.":
 		"習慣の完了時にチェックのスウッシュ、カードの退場、パーフェクトデーの紙吹雪を再生します。オフにすると即座に静かに更新されます。",
@@ -245,15 +242,8 @@ export const ja: Record<string, string> = {
 	"Export PDF": "PDF をエクスポート",
 	"No habits to export yet.":
 		"エクスポートできる習慣がまだありません。",
-	"Completion trend": "達成率トレンド",
-	"(paused)": "（一時停止中）",
-	"{rate}% · {total} · streak {current} (best {best})":
-		"{rate}% · {total} · ストリーク {current}（最高 {best}）",
-	"Goal: {completed}/{goal} days met":
-		"目標：{completed}/{goal} 日達成",
 	'Exported to "{path}" in your vault.':
 		"ボルト内の「{path}」にエクスポートしました。",
-	"{range} · exported {date}": "{range} · {date} にエクスポート",
 
 	// Habit modal
 	"New habit": "新しい習慣",
@@ -301,15 +291,6 @@ export const ja: Record<string, string> = {
 	// Icon and colour pickers
 	"Search icons…": "アイコンを検索…",
 	"Search emojis…": "絵文字を検索…",
-	Accent: "アクセント",
-	Red: "赤",
-	Orange: "オレンジ",
-	Yellow: "黄",
-	Green: "緑",
-	Cyan: "シアン",
-	Blue: "青",
-	Purple: "紫",
-	Pink: "ピンク",
 
 	// Comments
 	"Comments on cards": "カードのコメント",
@@ -324,7 +305,6 @@ export const ja: Record<string, string> = {
 	"Moved comments in {n} notes.": "{n} 件のノートのコメントを移動しました。",
 	"Add a comment for this day…": "この日のコメントを追加…",
 	Comments: "コメント",
-	"+{n} more": "他 {n} 件",
 
 	// Limit habits (experimental)
 	Experimental: "実験的機能",
@@ -366,8 +346,6 @@ export const ja: Record<string, string> = {
 	"Every N days": "N日ごと",
 	"Repeat every": "繰り返し間隔",
 	"Day of month": "日にち",
-	"How often this habit is due. Weekly and monthly habits only appear on their due date.":
-		"この習慣の頻度。週間・月間の習慣は期日にのみ表示されます。",
 	"The weekdays this habit is due on. Pick as many as you need.":
 		"この習慣の期日となる曜日。複数選択できます。",
 	"Number of days between due dates, counted from the habit's start date. Use 2 for an alternate-day schedule.":
@@ -452,8 +430,6 @@ export const ja: Record<string, string> = {
 	"Open today's note": "今日のノートを開く",
 	"Optional template note used when a day's note is created. Expanded through the Templater plugin when it is installed, otherwise copied as plain text.":
 		"日ごとのノート作成時に使う任意のテンプレートノート。Templaterプラグインがインストールされていれば展開され、なければプレーンテキストとしてコピーされます。",
-	"Reach a character count, or check off every task list item in the note.":
-		"文字数に到達するか、ノート内のすべてのタスクにチェックを入れます。",
 	Template: "テンプレート",
 	"Track a habit by writing in a per-day note instead of logging a value by hand. A day is complete once the note reaches a character count or every task in it is checked. Works with the Templater plugin to create each day's note from a template.":
 		"値を手動で記録する代わりに、日ごとのノートに書き込むことで習慣を記録します。ノートが文字数に到達するか、すべてのタスクにチェックが入ると、その日は完了になります。Templaterプラグインと連携し、テンプレートから毎日のノートを作成できます。",
@@ -478,4 +454,115 @@ export const ja: Record<string, string> = {
 	"{completed}/{days} weeks": "{completed}/{days} 週",
 	"{n}× a month · any day": "月{n}回 · 任意の日",
 	"{n}× a week · any day": "週{n}回 · 任意の日",
+
+	// Commands
+	"Insert habits heatmap": "習慣ヒートマップを挿入",
+
+	// Habit metrics: heatmap tabs
+	Charts: "グラフ",
+	Month: "月",
+	History: "履歴",
+	"{month} heatmap": "{month}のヒートマップ",
+	"Last {n} weeks": "直近{n}週間",
+
+	// Heatmap cell states and tooltips
+	Upcoming: "今後",
+	"Not tracked yet": "まだ記録なし",
+	"Outside this month": "今月の範囲外",
+	Complete: "達成",
+	"Over limit": "上限超過",
+	"Not logged": "未記録",
+
+	// Whole-vault heatmap block
+	"Add a habit to see its heatmap here.": "習慣を追加すると、ここにヒートマップが表示されます。",
+	"No habits in the \"{group}\" group.": "「{group}」グループに習慣がありません。",
+	"No habits due": "予定されている習慣なし",
+	"Perfect day": "パーフェクトな日",
+	"{completed}/{considered} habits · {pct}%":
+		"{completed}/{considered} 件の習慣 · {pct}%",
+	"This year": "今年",
+	"Past 6 months": "過去6か月",
+	"{year} heatmap": "{year}年のヒートマップ",
+
+	// Note habits: checklist requirement and fail keyword
+	"Both are true": "両方とも満たす",
+	"Checklist requirement is met": "チェックリストの条件を満たす",
+	"Checklist requirement": "チェックリストの条件",
+	"Require every task to be checked, or just some — useful for a list of alternatives where doing any one of them counts (e.g. \"Cardio\" / \"Weights\" / \"Rest day\").":
+		"すべてのタスクにチェックを必須にするか、一部だけでもよいことにするか選べます — 「有酸素運動」「筋トレ」「休養日」のように、どれか一つで達成とみなしたい選択肢リストに便利です。",
+	"At least this many are checked": "少なくともこの数だけチェックが入る",
+	"Tasks required": "必要なタスク数",
+	"Fail keyword": "失敗キーワード",
+	"Optional. Checking a task whose text contains this word forces the day to fail, whatever else is checked — e.g. \"Slipped\" as one of several checklist options. Leave blank to turn this off.":
+		"任意設定です。テキストにこの単語を含むタスクにチェックを入れると、他に何をチェックしていても、その日は強制的に失敗扱いになります — 例えば「失敗」をチェックリストの選択肢の一つにする、といった使い方です。空欄にするとオフになります。",
+	"e.g. Slipped": "例: 失敗",
+	"Reach a character count, meet a checklist requirement, or require both.":
+		"文字数に到達する、チェックリストの条件を満たす、またはその両方を必須にする、から選べます。",
+
+	// Tags (cross-plugin compatibility)
+	Tags: "タグ",
+	"e.g. task": "例: task",
+	"Optional Obsidian tags for this note, separated by commas or spaces. Useful for making this habit recognisable to another plugin's own tag-based rules — for example TaskNotes' task tag.":
+		"このノートの任意の Obsidian タグです。カンマまたはスペースで区切ります。別のプラグイン独自のタグルールにこの習慣を認識させるのに便利です — 例えば TaskNotes の task タグなど。",
+
+	// Advanced settings: frontmatter key remapping
+	Advanced: "詳細設定",
+	Apply: "適用",
+	"Apply key changes": "キーの変更を適用",
+	"Rename the frontmatter properties habit notes use. Useful for avoiding collisions with another plugin's own properties in the same note (for example TaskNotes).":
+		"習慣ノートが使用するフロントマターのプロパティ名を変更します。同じノート内で別のプラグイン（例: TaskNotes）独自のプロパティと衝突するのを避けるのに便利です。",
+	"\"{a}\" and \"{b}\" can't use the same property key (\"{value}\").":
+		"「{a}」と「{b}」に同じプロパティキー（「{value}」）は使用できません。",
+	"Property keys can't be empty.": "プロパティキーを空にすることはできません。",
+	"This renames {summary} in every note in your habits folder ({count} habit(s) currently). Existing values are moved, not discarded. Continue?":
+		"これにより、習慣フォルダー内のすべてのノート（現在 {count} 件の習慣）で {summary} の名前が変更されます。既存の値は破棄されず移動します。続行しますか?",
+	"Updated the frontmatter keys in {count} note(s).":
+		"{count} 件のノートでフロントマターのキーを更新しました。",
+	"Renaming this away from the default also changes how binary habits log a day: instead of {\"2026-08-25\": 1}, a completed day becomes a bare date, like [\"2026-08-25\"] — the shape TaskNotes uses for complete_instances. Repetition and timed habits are unaffected either way; they always need a value, never just a date.":
+		'このキーを既定値から変更すると、バイナリ習慣が1日をどう記録するかも変わります。{"2026-08-25": 1} の代わりに、完了した日は ["2026-08-25"] のような単なる日付になります — これは TaskNotes が complete_instances に使う形式です。回数記録・時間記録の習慣はどちらの場合も影響を受けません。常に値が必要で、日付だけになることはありません。',
+	Identity: "識別情報",
+	Legacy: "レガシー",
+	Lifecycle: "ライフサイクル",
+	Presentation: "表示",
+	"Note habit": "ノート習慣",
+	"Habit type key": "習慣タイプキー",
+	"Completion records key": "完了記録キー",
+	"Frequency key": "頻度キー",
+	"Weekday key": "曜日キー",
+	"Month day key": "月内日キー",
+	"Interval days key": "間隔日数キー",
+	"Planned time key": "予定時刻キー",
+	"Goal direction key": "目標の方向キー",
+	"Target key": "目標キー",
+	"Unit key": "単位キー",
+	"Weekly target key": "週間目標キー",
+	"Monthly target key": "月間目標キー",
+	"Weekly perfect key": "パーフェクト週キー",
+	"Monthly perfect key": "パーフェクト月キー",
+	"Start date key": "開始日キー",
+	"Pauses key": "一時停止記録キー",
+	"Stopped key": "停止状態キー",
+	"Stop date key": "停止日キー",
+	"Icon key": "アイコンキー",
+	"Color key": "色キー",
+	"Group key": "グループキー",
+	"Use group color key": "「グループの色を使用」キー",
+	"Note folder key": "ノートフォルダーキー",
+	"Note filename format key": "ノートのファイル名形式キー",
+	"Template path key": "テンプレートパスキー",
+	"Note completion mode key": "ノート完了モードキー",
+	"Note checklist requirement key": "チェックリスト条件キー",
+	"Note checklist minimum key": "チェックリスト最小数キー",
+	"Note fail keyword key": "失敗ワードのキー",
+	"Legacy comments key": "旧形式コメントキー",
+
+	// PDF export (read via docT() in export-modal.ts, which falls back to English for zh — jsPDF's built-in fonts can't render CJK)
+	"Completion trend": "達成率トレンド",
+	"(paused)": "（一時停止中）",
+	"{rate}% · {total} · streak {current} (best {best})":
+		"{rate}% · {total} · ストリーク {current}（最高 {best}）",
+	"Goal: {completed}/{goal} days met":
+		"目標：{completed}/{goal} 日達成",
+	"{range} · exported {date}": "{range} · {date} にエクスポート",
+	"+{n} more": "他 {n} 件",
 };

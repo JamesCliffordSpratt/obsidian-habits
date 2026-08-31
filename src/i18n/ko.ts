@@ -60,9 +60,6 @@ export const ko: Record<string, string> = {
 	"Group order": "그룹 순서",
 	"Drag the groups into the order you want. Sections follow the same order.":
 		"그룹을 원하는 순서로 드래그하세요. 섹션도 같은 순서를 따릅니다.",
-	"Group the habits table": "습관 표 그룹화",
-	"Group the rows of habits-table blocks by habit group, with a heading row per group. Turn off for one flat list ordered by planned time.":
-		"habits-table 블록의 행을 습관 그룹별로 묶고 그룹마다 머리글 행을 표시합니다. 끄면 예정 시간순의 단일 목록이 됩니다.",
 	"Completion animations": "완료 애니메이션",
 	"Play the check swoosh, card departure, and perfect-day confetti when habits are completed. Turn off for instant, quiet updates.":
 		"습관을 완료할 때 체크 스우시, 카드 퇴장, 완벽한 하루 색종이를 재생합니다. 끄면 즉시 조용히 갱신됩니다.",
@@ -245,15 +242,8 @@ export const ko: Record<string, string> = {
 	"Export PDF": "PDF 내보내기",
 	"No habits to export yet.":
 		"아직 내보낼 습관이 없습니다.",
-	"Completion trend": "달성률 추이",
-	"(paused)": "(일시정지됨)",
-	"{rate}% · {total} · streak {current} (best {best})":
-		"{rate}% · {total} · 연속 {current} (최고 {best})",
-	"Goal: {completed}/{goal} days met":
-		"목표: {completed}/{goal}일 달성",
 	'Exported to "{path}" in your vault.':
 		"보관소의 “{path}”에 내보냈습니다.",
-	"{range} · exported {date}": "{range} · {date} 내보냄",
 
 	// Habit modal
 	"New habit": "새 습관",
@@ -301,15 +291,6 @@ export const ko: Record<string, string> = {
 	// Icon and colour pickers
 	"Search icons…": "아이콘 검색…",
 	"Search emojis…": "이모지 검색…",
-	Accent: "강조",
-	Red: "빨강",
-	Orange: "주황",
-	Yellow: "노랑",
-	Green: "초록",
-	Cyan: "청록",
-	Blue: "파랑",
-	Purple: "보라",
-	Pink: "분홍",
 
 	// Comments
 	"Comments on cards": "카드 코멘트",
@@ -324,7 +305,6 @@ export const ko: Record<string, string> = {
 	"Moved comments in {n} notes.": "노트 {n}개의 코멘트를 이동했습니다.",
 	"Add a comment for this day…": "이 날에 대한 코멘트 추가…",
 	Comments: "코멘트",
-	"+{n} more": "+{n}개 더",
 
 	// Limit habits (experimental)
 	Experimental: "실험 기능",
@@ -366,8 +346,6 @@ export const ko: Record<string, string> = {
 	"Every N days": "N일마다",
 	"Repeat every": "반복 주기",
 	"Day of month": "날짜(일)",
-	"How often this habit is due. Weekly and monthly habits only appear on their due date.":
-		"이 습관의 주기입니다. 주간·월간 습관은 예정일에만 표시됩니다.",
 	"The weekdays this habit is due on. Pick as many as you need.":
 		"이 습관이 예정된 요일입니다. 여러 개를 선택할 수 있습니다.",
 	"Number of days between due dates, counted from the habit's start date. Use 2 for an alternate-day schedule.":
@@ -452,8 +430,6 @@ export const ko: Record<string, string> = {
 	"Open today's note": "오늘의 노트 열기",
 	"Optional template note used when a day's note is created. Expanded through the Templater plugin when it is installed, otherwise copied as plain text.":
 		"하루의 노트를 만들 때 사용할 선택적 템플릿 노트입니다. Templater 플러그인이 설치되어 있으면 이를 통해 확장되고, 그렇지 않으면 서식 없는 텍스트로 복사됩니다.",
-	"Reach a character count, or check off every task list item in the note.":
-		"글자 수에 도달하거나 노트의 모든 할 일에 체크합니다.",
 	Template: "템플릿",
 	"Track a habit by writing in a per-day note instead of logging a value by hand. A day is complete once the note reaches a character count or every task in it is checked. Works with the Templater plugin to create each day's note from a template.":
 		"값을 직접 기록하는 대신 매일의 노트에 글을 써서 습관을 기록합니다. 노트가 글자 수에 도달하거나 모든 할 일에 체크가 되면 그날은 완료로 처리됩니다. Templater 플러그인과 연동해 템플릿으로 매일의 노트를 만들 수 있습니다.",
@@ -478,4 +454,115 @@ export const ko: Record<string, string> = {
 	"{completed}/{days} weeks": "{completed}/{days}주",
 	"{n}× a month · any day": "월 {n}회 · 요일 무관",
 	"{n}× a week · any day": "주 {n}회 · 요일 무관",
+
+	// Commands
+	"Insert habits heatmap": "습관 히트맵 삽입",
+
+	// Habit metrics: heatmap tabs
+	Charts: "차트",
+	Month: "월",
+	History: "기록",
+	"{month} heatmap": "{month} 히트맵",
+	"Last {n} weeks": "최근 {n}주",
+
+	// Heatmap cell states and tooltips
+	Upcoming: "예정",
+	"Not tracked yet": "아직 추적 안 됨",
+	"Outside this month": "이번 달 아님",
+	Complete: "완료",
+	"Over limit": "한도 초과",
+	"Not logged": "기록 없음",
+
+	// Whole-vault heatmap block
+	"Add a habit to see its heatmap here.": "습관을 추가하면 여기에 히트맵이 표시됩니다.",
+	"No habits in the \"{group}\" group.": '"{group}" 그룹에 습관이 없습니다.',
+	"No habits due": "예정된 습관 없음",
+	"Perfect day": "퍼펙트한 날",
+	"{completed}/{considered} habits · {pct}%":
+		"습관 {completed}/{considered} · {pct}%",
+	"This year": "올해",
+	"Past 6 months": "지난 6개월",
+	"{year} heatmap": "{year}년 히트맵",
+
+	// Note habits: checklist requirement and fail keyword
+	"Both are true": "둘 다 충족",
+	"Checklist requirement is met": "체크리스트 요건 충족",
+	"Checklist requirement": "체크리스트 요건",
+	"Require every task to be checked, or just some — useful for a list of alternatives where doing any one of them counts (e.g. \"Cardio\" / \"Weights\" / \"Rest day\").":
+		'모든 할 일에 체크해야 하는지, 일부만 체크해도 되는지 정할 수 있습니다 — "유산소" / "웨이트" / "휴식일"처럼 그중 하나만 해도 되는 선택지 목록에 유용합니다.',
+	"At least this many are checked": "최소한 이 개수만큼 체크됨",
+	"Tasks required": "필요한 할 일 수",
+	"Fail keyword": "실패 키워드",
+	"Optional. Checking a task whose text contains this word forces the day to fail, whatever else is checked — e.g. \"Slipped\" as one of several checklist options. Leave blank to turn this off.":
+		'선택 사항입니다. 텍스트에 이 단어가 포함된 할 일에 체크하면, 다른 항목을 체크했더라도 그날은 강제로 실패 처리됩니다 — 예를 들어 여러 체크리스트 항목 중 하나로 "실패"를 넣어두는 식입니다. 비워 두면 이 기능은 꺼집니다.',
+	"e.g. Slipped": "예: 실패",
+	"Reach a character count, meet a checklist requirement, or require both.":
+		"글자 수 도달, 체크리스트 요건 충족, 또는 둘 다 요구하는 방식 중에서 선택할 수 있습니다.",
+
+	// Tags (cross-plugin compatibility)
+	Tags: "태그",
+	"e.g. task": "예: task",
+	"Optional Obsidian tags for this note, separated by commas or spaces. Useful for making this habit recognisable to another plugin's own tag-based rules — for example TaskNotes' task tag.":
+		"이 노트에 대한 선택적 Obsidian 태그입니다. 쉼표나 공백으로 구분합니다. 다른 플러그인의 태그 기반 규칙이 이 습관을 인식하게 하는 데 유용합니다 — 예를 들어 TaskNotes의 task 태그입니다.",
+
+	// Advanced settings: frontmatter key remapping
+	Advanced: "고급",
+	Apply: "적용",
+	"Apply key changes": "키 변경 적용",
+	"Rename the frontmatter properties habit notes use. Useful for avoiding collisions with another plugin's own properties in the same note (for example TaskNotes).":
+		"습관 노트가 사용하는 프런트매터 속성 이름을 바꿉니다. 같은 노트에서 다른 플러그인(예: TaskNotes) 고유의 속성과 충돌하는 것을 피할 때 유용합니다.",
+	"\"{a}\" and \"{b}\" can't use the same property key (\"{value}\").":
+		'"{a}"와 "{b}"는 같은 속성 키("{value}")를 사용할 수 없습니다.',
+	"Property keys can't be empty.": "속성 키는 비워 둘 수 없습니다.",
+	"This renames {summary} in every note in your habits folder ({count} habit(s) currently). Existing values are moved, not discarded. Continue?":
+		"이 작업은 습관 폴더에 있는 모든 노트(현재 {count}개 습관)에서 {summary}의 이름을 바꿉니다. 기존 값은 삭제되지 않고 이동됩니다. 계속할까요?",
+	"Updated the frontmatter keys in {count} note(s).":
+		"{count}개 노트에서 프런트매터 키를 업데이트했습니다.",
+	"Renaming this away from the default also changes how binary habits log a day: instead of {\"2026-08-25\": 1}, a completed day becomes a bare date, like [\"2026-08-25\"] — the shape TaskNotes uses for complete_instances. Repetition and timed habits are unaffected either way; they always need a value, never just a date.":
+		'이 키를 기본값에서 다른 이름으로 바꾸면 이진 습관이 하루를 기록하는 방식도 달라집니다. {"2026-08-25": 1} 대신, 완료한 날은 ["2026-08-25"]처럼 단순한 날짜가 됩니다 — 이는 TaskNotes가 complete_instances에 사용하는 형식입니다. 반복 및 시간 습관은 어느 경우든 영향을 받지 않습니다. 항상 값이 필요하며, 날짜만으로는 안 됩니다.',
+	Identity: "식별 정보",
+	Legacy: "레거시",
+	Lifecycle: "라이프사이클",
+	Presentation: "표시",
+	"Note habit": "노트 습관",
+	"Habit type key": "습관 유형 키",
+	"Completion records key": "완료 기록 키",
+	"Frequency key": "빈도 키",
+	"Weekday key": "요일 키",
+	"Month day key": "월중 날짜 키",
+	"Interval days key": "간격 일수 키",
+	"Planned time key": "예정 시간 키",
+	"Goal direction key": "목표 방향 키",
+	"Target key": "목표 키",
+	"Unit key": "단위 키",
+	"Weekly target key": "주간 목표 키",
+	"Monthly target key": "월간 목표 키",
+	"Weekly perfect key": "퍼펙트 주 키",
+	"Monthly perfect key": "퍼펙트 달 키",
+	"Start date key": "시작일 키",
+	"Pauses key": "일시중지 기록 키",
+	"Stopped key": "중단 상태 키",
+	"Stop date key": "중단일 키",
+	"Icon key": "아이콘 키",
+	"Color key": "색상 키",
+	"Group key": "그룹 키",
+	"Use group color key": "그룹 색상 사용 키",
+	"Note folder key": "노트 폴더 키",
+	"Note filename format key": "노트 파일명 형식 키",
+	"Template path key": "템플릿 경로 키",
+	"Note completion mode key": "노트 완료 모드 키",
+	"Note checklist requirement key": "노트 체크리스트 요건 키",
+	"Note checklist minimum key": "노트 체크리스트 최소 개수 키",
+	"Note fail keyword key": "노트 실패 키워드 키",
+	"Legacy comments key": "이전 코멘트 키",
+
+	// PDF export (read via docT() in export-modal.ts, which falls back to English for zh — jsPDF's built-in fonts can't render CJK)
+	"Completion trend": "달성률 추이",
+	"(paused)": "(일시정지됨)",
+	"{rate}% · {total} · streak {current} (best {best})":
+		"{rate}% · {total} · 연속 {current} (최고 {best})",
+	"Goal: {completed}/{goal} days met":
+		"목표: {completed}/{goal}일 달성",
+	"{range} · exported {date}": "{range} · {date} 내보냄",
+	"+{n} more": "+{n}개 더",
 };

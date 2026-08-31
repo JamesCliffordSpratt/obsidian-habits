@@ -59,9 +59,6 @@ export const zh: Record<string, string> = {
 	"Group order": "分组顺序",
 	"Drag the groups into the order you want. Sections follow the same order.":
 		"拖动分组以调整顺序。分区遵循相同顺序。",
-	"Group the habits table": "按分组显示习惯表格",
-	"Group the rows of habits-table blocks by habit group, with a heading row per group. Turn off for one flat list ordered by planned time.":
-		"将 habits-table 块的行按习惯分组显示，每组一个标题行。关闭后为按计划时间排序的单一列表。",
 	"Completion animations": "完成动画",
 	"Play the check swoosh, card departure, and perfect-day confetti when habits are completed. Turn off for instant, quiet updates.":
 		"完成习惯时播放对勾划入、卡片退场和完美一天的彩纸动画。关闭后立即静默更新。",
@@ -239,15 +236,8 @@ export const zh: Record<string, string> = {
 		"使用省墨的灰色代替强调色。",
 	"Export PDF": "导出 PDF",
 	"No habits to export yet.": "还没有可导出的习惯。",
-	"Completion trend": "完成趋势",
-	"(paused)": "（已暂停）",
-	"{rate}% · {total} · streak {current} (best {best})":
-		"{rate}% · {total} · 连击 {current}（最佳 {best}）",
-	"Goal: {completed}/{goal} days met":
-		"目标：已达成 {completed}/{goal} 天",
 	'Exported to "{path}" in your vault.':
 		"已导出到仓库中的“{path}”。",
-	"{range} · exported {date}": "{range} · 导出于 {date}",
 
 	// Habit modal
 	"New habit": "新习惯",
@@ -295,15 +285,6 @@ export const zh: Record<string, string> = {
 	// Icon and colour pickers
 	"Search icons…": "搜索图标…",
 	"Search emojis…": "搜索表情符号…",
-	Accent: "强调色",
-	Red: "红色",
-	Orange: "橙色",
-	Yellow: "黄色",
-	Green: "绿色",
-	Cyan: "青色",
-	Blue: "蓝色",
-	Purple: "紫色",
-	Pink: "粉色",
 
 	// Comments
 	"Comments on cards": "卡片评论",
@@ -318,7 +299,6 @@ export const zh: Record<string, string> = {
 	"Moved comments in {n} notes.": "已移动 {n} 篇笔记中的评论。",
 	"Add a comment for this day…": "为这一天添加评论…",
 	Comments: "评论",
-	"+{n} more": "还有 {n} 条",
 
 	// Limit habits (experimental)
 	Experimental: "实验性功能",
@@ -360,8 +340,6 @@ export const zh: Record<string, string> = {
 	"Every N days": "每 N 天",
 	"Repeat every": "重复间隔",
 	"Day of month": "每月日期",
-	"How often this habit is due. Weekly and monthly habits only appear on their due date.":
-		"此习惯的到期频率。每周和每月习惯只在到期日显示。",
 	"The weekdays this habit is due on. Pick as many as you need.":
 		"此习惯到期的星期几。可选择多个。",
 	"Number of days between due dates, counted from the habit's start date. Use 2 for an alternate-day schedule.":
@@ -442,8 +420,6 @@ export const zh: Record<string, string> = {
 	"Open today's note": "打开今天的笔记",
 	"Optional template note used when a day's note is created. Expanded through the Templater plugin when it is installed, otherwise copied as plain text.":
 		"创建每日笔记时使用的可选模板笔记。安装 Templater 插件后会展开其语法，否则将作为纯文本复制。",
-	"Reach a character count, or check off every task list item in the note.":
-		"达到字数，或勾选笔记中的所有任务。",
 	Template: "模板",
 	"Track a habit by writing in a per-day note instead of logging a value by hand. A day is complete once the note reaches a character count or every task in it is checked. Works with the Templater plugin to create each day's note from a template.":
 		"通过在每日笔记中写作来追踪习惯，而不是手动记录数值。当笔记达到字数或其中所有任务都被勾选时，这一天即算完成。可与 Templater 插件配合，从模板创建每日笔记。",
@@ -468,4 +444,115 @@ export const zh: Record<string, string> = {
 	"{completed}/{days} weeks": "{completed}/{days} 周",
 	"{n}× a month · any day": "每月 {n} 次 · 任意日",
 	"{n}× a week · any day": "每周 {n} 次 · 任意日",
+
+	// Commands
+	"Insert habits heatmap": "插入习惯热力图",
+
+	// Habit metrics: heatmap tabs
+	Charts: "图表",
+	Month: "月",
+	History: "历史",
+	"{month} heatmap": "{month}热力图",
+	"Last {n} weeks": "最近 {n} 周",
+
+	// Heatmap cell states and tooltips
+	Upcoming: "未到",
+	"Not tracked yet": "尚未开始记录",
+	"Outside this month": "不在本月内",
+	Complete: "已完成",
+	"Over limit": "超出限制",
+	"Not logged": "未记录",
+
+	// Whole-vault heatmap block
+	"Add a habit to see its heatmap here.": "添加一个习惯即可在此查看其热力图。",
+	"No habits in the \"{group}\" group.": "“{group}”分组中没有习惯。",
+	"No habits due": "当天没有到期习惯",
+	"Perfect day": "完美的一天",
+	"{completed}/{considered} habits · {pct}%":
+		"{completed}/{considered} 个习惯 · {pct}%",
+	"This year": "今年",
+	"Past 6 months": "过去 6 个月",
+	"{year} heatmap": "{year} 年热力图",
+
+	// Note habits: checklist requirement and fail keyword
+	"Both are true": "两者均满足",
+	"Checklist requirement is met": "满足清单要求",
+	"Checklist requirement": "清单要求",
+	"Require every task to be checked, or just some — useful for a list of alternatives where doing any one of them counts (e.g. \"Cardio\" / \"Weights\" / \"Rest day\").":
+		"要求勾选所有任务，或只需勾选其中一部分——适用于一组可任选其一即可的备选项（例如“有氧”/“力量训练”/“休息日”）。",
+	"At least this many are checked": "至少勾选这么多项",
+	"Tasks required": "所需任务数",
+	"Fail keyword": "失败关键词",
+	"Optional. Checking a task whose text contains this word forces the day to fail, whatever else is checked — e.g. \"Slipped\" as one of several checklist options. Leave blank to turn this off.":
+		"可选。勾选文本中包含该词的任务，会强制当天判定为失败，无论其他项是否勾选——例如把“破功”设为清单中的一个选项。留空可关闭此功能。",
+	"e.g. Slipped": "例如：破功",
+	"Reach a character count, meet a checklist requirement, or require both.":
+		"达到字数目标、满足清单要求，或两者都要求。",
+
+	// Tags (cross-plugin compatibility)
+	Tags: "标签",
+	"e.g. task": "例如：task",
+	"Optional Obsidian tags for this note, separated by commas or spaces. Useful for making this habit recognisable to another plugin's own tag-based rules — for example TaskNotes' task tag.":
+		"此笔记的可选 Obsidian 标签，用逗号或空格分隔。可用于让其他插件通过自己基于标签的规则识别这个习惯——例如 TaskNotes 的 task 标签。",
+
+	// Advanced settings: frontmatter key remapping
+	Advanced: "高级",
+	Apply: "应用",
+	"Apply key changes": "应用键更改",
+	"Rename the frontmatter properties habit notes use. Useful for avoiding collisions with another plugin's own properties in the same note (for example TaskNotes).":
+		"重命名习惯笔记使用的 frontmatter 属性。可用于避免与同一笔记中另一个插件自身属性发生冲突（例如 TaskNotes）。",
+	"\"{a}\" and \"{b}\" can't use the same property key (\"{value}\").":
+		"“{a}”和“{b}”不能使用相同的属性键（“{value}”）。",
+	"Property keys can't be empty.": "属性键不能为空。",
+	"This renames {summary} in every note in your habits folder ({count} habit(s) currently). Existing values are moved, not discarded. Continue?":
+		"这将重命名习惯文件夹中每篇笔记的 {summary}（当前共 {count} 个习惯）。已有的值会被迁移，不会丢弃。是否继续？",
+	"Updated the frontmatter keys in {count} note(s).":
+		"已在 {count} 篇笔记中更新 frontmatter 键。",
+	"Renaming this away from the default also changes how binary habits log a day: instead of {\"2026-08-25\": 1}, a completed day becomes a bare date, like [\"2026-08-25\"] — the shape TaskNotes uses for complete_instances. Repetition and timed habits are unaffected either way; they always need a value, never just a date.":
+		'把这个键改成默认值以外的名称，也会改变二元习惯记录当天的方式：不再是 {"2026-08-25": 1}，已完成的一天会变成一个纯日期，如 ["2026-08-25"] —— 这正是 TaskNotes 用于 complete_instances 的格式。计数和计时习惯不受影响，它们始终需要一个数值，而不仅仅是日期。',
+	Identity: "标识",
+	Legacy: "遗留",
+	Lifecycle: "生命周期",
+	Presentation: "外观",
+	"Note habit": "笔记习惯",
+	"Habit type key": "习惯类型键",
+	"Completion records key": "完成记录键",
+	"Frequency key": "频率键",
+	"Weekday key": "星期键",
+	"Month day key": "月内日期键",
+	"Interval days key": "间隔天数键",
+	"Planned time key": "计划时间键",
+	"Goal direction key": "目标方向键",
+	"Target key": "目标键",
+	"Unit key": "单位键",
+	"Weekly target key": "周目标键",
+	"Monthly target key": "月目标键",
+	"Weekly perfect key": "完美一周键",
+	"Monthly perfect key": "完美一月键",
+	"Start date key": "开始日期键",
+	"Pauses key": "暂停记录键",
+	"Stopped key": "停止状态键",
+	"Stop date key": "停止日期键",
+	"Icon key": "图标键",
+	"Color key": "颜色键",
+	"Group key": "分组键",
+	"Use group color key": "使用分组颜色键",
+	"Note folder key": "笔记文件夹键",
+	"Note filename format key": "笔记文件名格式键",
+	"Template path key": "模板路径键",
+	"Note completion mode key": "笔记完成模式键",
+	"Note checklist requirement key": "笔记清单要求键",
+	"Note checklist minimum key": "笔记清单最少数量键",
+	"Note fail keyword key": "笔记失败关键词键",
+	"Legacy comments key": "旧版评论键",
+
+	// PDF export (read via docT() in export-modal.ts, which falls back to English for zh — jsPDF's built-in fonts can't render CJK)
+	"Completion trend": "完成趋势",
+	"(paused)": "（已暂停）",
+	"{rate}% · {total} · streak {current} (best {best})":
+		"{rate}% · {total} · 连击 {current}（最佳 {best}）",
+	"Goal: {completed}/{goal} days met":
+		"目标：已达成 {completed}/{goal} 天",
+	"{range} · exported {date}": "{range} · 导出于 {date}",
+	"+{n} more": "还有 {n} 条",
 };

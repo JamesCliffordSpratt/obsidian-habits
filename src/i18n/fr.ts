@@ -62,9 +62,6 @@ export const fr: Record<string, string> = {
 	"Group order": "Ordre des groupes",
 	"Drag the groups into the order you want. Sections follow the same order.":
 		"Faites glisser les groupes dans l'ordre souhaité. Les sections suivent le même ordre.",
-	"Group the habits table": "Grouper le tableau des habitudes",
-	"Group the rows of habits-table blocks by habit group, with a heading row per group. Turn off for one flat list ordered by planned time.":
-		"Groupe les lignes des blocs habits-table par groupe d'habitude, avec une ligne d'en-tête par groupe. Désactivez pour une seule liste plate triée par heure prévue.",
 	"Completion animations": "Animations de complétion",
 	"Play the check swoosh, card departure, and perfect-day confetti when habits are completed. Turn off for instant, quiet updates.":
 		"Joue le swoosh de la coche, le départ de la carte et les confettis du jour parfait quand une habitude est complétée. Désactivez pour des mises à jour instantanées et discrètes.",
@@ -247,15 +244,8 @@ export const fr: Record<string, string> = {
 		"Des gris économes en encre plutôt que des couleurs d'accent.",
 	"Export PDF": "Exporter le PDF",
 	"No habits to export yet.": "Aucune habitude à exporter pour l'instant.",
-	"Completion trend": "Tendance de réussite",
-	"(paused)": "(en pause)",
-	"{rate}% · {total} · streak {current} (best {best})":
-		"{rate} % · {total} · série {current} (record {best})",
-	"Goal: {completed}/{goal} days met":
-		"Objectif : {completed}/{goal} jours atteints",
 	'Exported to "{path}" in your vault.':
 		'Exporté vers « {path} » dans votre coffre.',
-	"{range} · exported {date}": "{range} · exporté le {date}",
 
 	// Habit modal
 	"New habit": "Nouvelle habitude",
@@ -303,15 +293,6 @@ export const fr: Record<string, string> = {
 	// Icon and colour pickers
 	"Search icons…": "Rechercher des icônes…",
 	"Search emojis…": "Rechercher des émojis…",
-	Accent: "Accent",
-	Red: "Rouge",
-	Orange: "Orange",
-	Yellow: "Jaune",
-	Green: "Vert",
-	Cyan: "Cyan",
-	Blue: "Bleu",
-	Purple: "Violet",
-	Pink: "Rose",
 
 	// Comments
 	"Comments on cards": "Commentaires sur les cartes",
@@ -330,7 +311,6 @@ export const fr: Record<string, string> = {
 		"Commentaires déplacés dans {n} notes.",
 	"Add a comment for this day…": "Ajoutez un commentaire pour ce jour…",
 	Comments: "Commentaires",
-	"+{n} more": "+{n} de plus",
 
 	// Limit habits (experimental)
 	Experimental: "Expérimental",
@@ -372,8 +352,6 @@ export const fr: Record<string, string> = {
 	"Every N days": "Tous les N jours",
 	"Repeat every": "Répéter tous les",
 	"Day of month": "Jour du mois",
-	"How often this habit is due. Weekly and monthly habits only appear on their due date.":
-		"La fréquence à laquelle cette habitude est due. Les habitudes hebdomadaires et mensuelles n'apparaissent qu'à leur date d'échéance.",
 	"The weekdays this habit is due on. Pick as many as you need.":
 		"Les jours de la semaine où cette habitude est due. Choisissez-en autant que nécessaire.",
 	"Number of days between due dates, counted from the habit's start date. Use 2 for an alternate-day schedule.":
@@ -459,8 +437,6 @@ export const fr: Record<string, string> = {
 	"Open today's note": "Ouvrir la note d'aujourd'hui",
 	"Optional template note used when a day's note is created. Expanded through the Templater plugin when it is installed, otherwise copied as plain text.":
 		"Note modèle optionnelle utilisée lors de la création de la note d'un jour. Développée via le plugin Templater lorsqu'il est installé, sinon copiée en texte brut.",
-	"Reach a character count, or check off every task list item in the note.":
-		"Atteindre un nombre de caractères, ou cocher toutes les tâches de la note.",
 	Template: "Modèle",
 	"Track a habit by writing in a per-day note instead of logging a value by hand. A day is complete once the note reaches a character count or every task in it is checked. Works with the Templater plugin to create each day's note from a template.":
 		"Suivez une habitude en écrivant dans une note quotidienne plutôt qu'en enregistrant une valeur à la main. Un jour est complet une fois que la note atteint un nombre de caractères ou que toutes ses tâches sont cochées. Fonctionne avec le plugin Templater pour créer la note de chaque jour à partir d'un modèle.",
@@ -485,4 +461,118 @@ export const fr: Record<string, string> = {
 	"{completed}/{days} weeks": "{completed}/{days} semaines",
 	"{n}× a month · any day": "{n}× par mois · n'importe quel jour",
 	"{n}× a week · any day": "{n}× par semaine · n'importe quel jour",
+
+	// Commands
+	"Insert habits heatmap": "Insérer la carte de chaleur des habitudes",
+
+	// Habit metrics: heatmap tabs
+	Charts: "Graphiques",
+	Month: "Mois",
+	History: "Historique",
+	"{month} heatmap": "Carte de chaleur de {month}",
+	"Last {n} weeks": "{n} dernières semaines",
+
+	// Heatmap cell states and tooltips
+	Upcoming: "À venir",
+	"Not tracked yet": "Pas encore suivi",
+	"Outside this month": "Hors de ce mois",
+	Complete: "Terminé",
+	"Over limit": "Dépassement de limite",
+	"Not logged": "Non enregistré",
+
+	// Whole-vault heatmap block
+	"Add a habit to see its heatmap here.":
+		"Ajoutez une habitude pour voir sa carte de chaleur ici.",
+	"No habits in the \"{group}\" group.":
+		"Aucune habitude dans le groupe « {group} ».",
+	"No habits due": "Aucune habitude prévue",
+	"Perfect day": "Journée parfaite",
+	"{completed}/{considered} habits · {pct}%":
+		"{completed}/{considered} habitudes · {pct} %",
+	"This year": "Cette année",
+	"Past 6 months": "6 derniers mois",
+	"{year} heatmap": "Carte de chaleur de {year}",
+
+	// Note habits: checklist requirement and fail keyword
+	"Both are true": "Les deux sont vraies",
+	"Checklist requirement is met": "L'exigence de la liste de tâches est remplie",
+	"Checklist requirement": "Exigence de la liste de tâches",
+	"Require every task to be checked, or just some — useful for a list of alternatives where doing any one of them counts (e.g. \"Cardio\" / \"Weights\" / \"Rest day\").":
+		"Exigez que toutes les tâches soient cochées, ou seulement certaines — utile pour une liste d'alternatives où faire l'une d'elles suffit (par ex. « Cardio » / « Musculation » / « Jour de repos »).",
+	"At least this many are checked": "Au moins ce nombre est coché",
+	"Tasks required": "Tâches requises",
+	"Fail keyword": "Mot-clé d'échec",
+	"Optional. Checking a task whose text contains this word forces the day to fail, whatever else is checked — e.g. \"Slipped\" as one of several checklist options. Leave blank to turn this off.":
+		"Facultatif. Cocher une tâche dont le texte contient ce mot force la journée à échouer, quoi que vous ayez coché par ailleurs — par exemple « Raté » comme l'une des options de la liste. Laissez vide pour désactiver.",
+	"e.g. Slipped": "p. ex. Raté",
+	"Reach a character count, meet a checklist requirement, or require both.":
+		"Atteignez un nombre de caractères, remplissez une exigence de liste de tâches, ou exigez les deux.",
+
+	// Tags (cross-plugin compatibility)
+	Tags: "Étiquettes",
+	"e.g. task": "p. ex. task",
+	"Optional Obsidian tags for this note, separated by commas or spaces. Useful for making this habit recognisable to another plugin's own tag-based rules — for example TaskNotes' task tag.":
+		"Tags Obsidian optionnels pour cette note, séparés par des virgules ou des espaces. Utile pour rendre cette habitude reconnaissable par les règles basées sur les tags d'un autre plugin — par exemple le tag « task » de TaskNotes.",
+
+	// Advanced settings: frontmatter key remapping
+	Advanced: "Avancé",
+	Apply: "Appliquer",
+	"Apply key changes": "Appliquer les changements de clés",
+	"Rename the frontmatter properties habit notes use. Useful for avoiding collisions with another plugin's own properties in the same note (for example TaskNotes).":
+		"Renommez les propriétés de frontmatter utilisées par les notes d'habitude. Utile pour éviter les collisions avec les propriétés d'un autre plugin dans la même note (par exemple TaskNotes).",
+	"\"{a}\" and \"{b}\" can't use the same property key (\"{value}\").":
+		"« {a} » et « {b} » ne peuvent pas utiliser la même clé de propriété (« {value} »).",
+	"Property keys can't be empty.":
+		"Les clés de propriété ne peuvent pas être vides.",
+	"This renames {summary} in every note in your habits folder ({count} habit(s) currently). Existing values are moved, not discarded. Continue?":
+		"Cette opération renomme {summary} dans toutes les notes de votre dossier d'habitudes ({count} habitude(s) actuellement). Les valeurs existantes sont déplacées, pas supprimées. Continuer ?",
+	"Updated the frontmatter keys in {count} note(s).":
+		"Clés de frontmatter mises à jour dans {count} note(s).",
+	"Renaming this away from the default also changes how binary habits log a day: instead of {\"2026-08-25\": 1}, a completed day becomes a bare date, like [\"2026-08-25\"] — the shape TaskNotes uses for complete_instances. Repetition and timed habits are unaffected either way; they always need a value, never just a date.":
+		"Renommer cette clé par rapport à sa valeur par défaut change aussi la façon dont les habitudes binaires enregistrent un jour : au lieu de {\"2026-08-25\": 1}, un jour terminé devient une simple date, comme [\"2026-08-25\"] — le format que TaskNotes utilise pour complete_instances. Les habitudes à répétitions et chronométrées ne sont pas concernées dans tous les cas ; elles ont toujours besoin d'une valeur, jamais d'une simple date.",
+	Identity: "Identité",
+	Legacy: "Hérité",
+	Lifecycle: "Cycle de vie",
+	Presentation: "Présentation",
+	"Note habit": "Habitude de note",
+	"Habit type key": "Clé du type d'habitude",
+	"Completion records key": "Clé des enregistrements",
+	"Frequency key": "Clé de fréquence",
+	"Weekday key": "Clé du jour de la semaine",
+	"Month day key": "Clé du jour du mois",
+	"Interval days key": "Clé des jours d'intervalle",
+	"Planned time key": "Clé de l'heure prévue",
+	"Goal direction key": "Clé du sens de l'objectif",
+	"Target key": "Clé de l'objectif",
+	"Unit key": "Clé de l'unité",
+	"Weekly target key": "Clé de l'objectif hebdomadaire",
+	"Monthly target key": "Clé de l'objectif mensuel",
+	"Weekly perfect key": "Clé de la semaine parfaite",
+	"Monthly perfect key": "Clé du mois parfait",
+	"Start date key": "Clé de la date de début",
+	"Pauses key": "Clé des pauses",
+	"Stopped key": "Clé de l'arrêt",
+	"Stop date key": "Clé de la date d'arrêt",
+	"Icon key": "Clé de l'icône",
+	"Color key": "Clé de la couleur",
+	"Group key": "Clé du groupe",
+	"Use group color key": "Clé « utiliser la couleur du groupe »",
+	"Note folder key": "Clé du dossier des notes",
+	"Note filename format key": "Clé du format de nom de fichier",
+	"Template path key": "Clé du chemin du modèle",
+	"Note completion mode key": "Clé du mode d'achèvement",
+	"Note checklist requirement key": "Clé de l'exigence de la liste de tâches",
+	"Note checklist minimum key": "Clé du minimum de la liste de tâches",
+	"Note fail keyword key": "Clé du mot-clé d'échec",
+	"Legacy comments key": "Clé des commentaires hérités",
+
+	// PDF export (read via docT() in export-modal.ts, which falls back to English for zh — jsPDF's built-in fonts can't render CJK)
+	"Completion trend": "Tendance de réussite",
+	"(paused)": "(en pause)",
+	"{rate}% · {total} · streak {current} (best {best})":
+		"{rate} % · {total} · série {current} (record {best})",
+	"Goal: {completed}/{goal} days met":
+		"Objectif : {completed}/{goal} jours atteints",
+	"{range} · exported {date}": "{range} · exporté le {date}",
+	"+{n} more": "+{n} de plus",
 };
