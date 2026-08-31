@@ -24,6 +24,7 @@ import {
 } from "./settings";
 import { HabitsDashboard } from "./ui/dashboard";
 import { HabitMetrics } from "./ui/habit-metrics";
+import { HabitsHeatmap } from "./ui/habits-heatmap";
 import { HabitsTable } from "./ui/habits-table";
 import { HabitModal } from "./ui/habit-modal";
 import { HabitMetricsSuggest } from "./ui/metrics-suggest";
@@ -78,6 +79,7 @@ export default class HabitsPlugin extends Plugin {
 						ctx.sourcePath,
 						source,
 						el,
+						ctx,
 					),
 				);
 			},
@@ -93,6 +95,23 @@ export default class HabitsPlugin extends Plugin {
 						() => this.settings,
 						this.events,
 						el,
+					),
+				);
+			},
+		);
+
+		this.registerMarkdownCodeBlockProcessor(
+			"habits-heatmap",
+			(source, el, ctx) => {
+				ctx.addChild(
+					new HabitsHeatmap(
+						this.app,
+						this.store,
+						this.events,
+						ctx.sourcePath,
+						source,
+						el,
+						ctx,
 					),
 				);
 			},
@@ -185,6 +204,14 @@ export default class HabitsPlugin extends Plugin {
 			name: t("Insert habits table"),
 			editorCallback: (editor: Editor) => {
 				editor.replaceSelection("```habits-table\n```\n");
+			},
+		});
+
+		this.addCommand({
+			id: "insert-heatmap",
+			name: t("Insert habits heatmap"),
+			editorCallback: (editor: Editor) => {
+				editor.replaceSelection("```habits-heatmap\n```\n");
 			},
 		});
 

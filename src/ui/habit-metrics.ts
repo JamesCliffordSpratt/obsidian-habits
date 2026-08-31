@@ -1,19 +1,21 @@
-import { App, debounce, MarkdownRenderChild, setIcon } from "obsidian";
+import {
+	App,
+	debounce,
+	MarkdownPostProcessorContext,
+	MarkdownRenderChild,
+	setIcon,
+	TFile,
+} from "obsidian";
+import "./chart-setup";
 import { t } from "../i18n";
 import {
-	BarController,
-	BarElement,
-	CategoryScale,
 	Chart,
-	Filler,
-	LineController,
-	LineElement,
-	LinearScale,
-	PointElement,
-	Tooltip,
 	type ChartConfiguration,
 	type ChartDataset,
 } from "chart.js";
+import type { MatrixDataPoint } from "chartjs-chart-matrix";
+import { resolveColor, withAlpha } from "./color-utils";
+import { monthGrid, mountHeatmapChart, pointsFromGrid, weekGrid } from "./heatmap";
 import type { HabitStore } from "../habit-store";
 import type { HabitDefinition, HabitFrequency } from "../types";
 import {
@@ -28,20 +30,30 @@ import {
 } from "../stats";
 import { addDays, fromDateKey, toDateKey } from "../utils";
 
-Chart.register(
-	BarController,
-	BarElement,
-	CategoryScale,
-	Filler,
-	LineController,
-	LineElement,
-	LinearScale,
-	PointElement,
-	Tooltip,
-);
-
 const DAILY_DAYS = 30;
 const WEEKLY_WEEKS = 12;
+/** Width, in weeks, of the multi-month history heatmap (~6 months). */
+const HISTORY_WEEKS = 26;
+
+/** A day's state on the activity heatmaps, driving both colour and tooltip. */
+type HeatmapState =
+	| "future"
+	| "prestart"
+	| "outside"
+	| "paused"
+	| "complete"
+	| "over"
+	| "partial"
+	| "empty";
+
+interface HeatmapPoint extends MatrixDataPoint {
+	key: string;
+	value: number;
+	state: HeatmapState;
+}
+
+/** Which section of a daily habit's metrics block is on screen. */
+type MetricsView = "charts" | "month" | "history";
 
 /**
  * How many recent due dates to plot for weekly and monthly habits. Daily
@@ -76,6 +88,13 @@ export class HabitMetrics extends MarkdownRenderChild {
 	private charts: Chart[] = [];
 	/** Path of the habit note currently rendered, for live refresh. */
 	private watchedPath = "";
+	/**
+	 * Which section is on screen for a daily habit. Set once from the block
+	 * source on load, then mutated in place by the tab clicks so a refresh
+	 * triggered by our own source rewrite (see {@link persistView}) doesn't
+	 * stomp it back to whatever was last saved.
+	 */
+	private view: MetricsView = "charts";
 
 	constructor(
 		private app: App,
@@ -83,12 +102,14 @@ export class HabitMetrics extends MarkdownRenderChild {
 		private sourcePath: string,
 		private source: string,
 		root: HTMLElement,
+		private ctx: MarkdownPostProcessorContext,
 	) {
 		super(root);
 	}
 
 	onload(): void {
 		this.containerEl.addClass("habits-metrics");
+		this.view = this.requestedView();
 		// Refresh when the rendered habit's note changes, so blocks that
 		// live outside the habit note (via `habit: <name>`) stay current.
 		const requestRender = debounce(() => this.render(), 250, true);
@@ -112,6 +133,13 @@ export class HabitMetrics extends MarkdownRenderChild {
 			return "";
 		}
 		return match[1].replace(/^["']|["']$/g, "");
+	}
+
+	/** The view named in the block source (`view: month`/`view: history`), if any. */
+	private requestedView(): MetricsView {
+		const match = /^\s*view\s*:\s*(.+?)\s*$/im.exec(this.source);
+		const value = match?.[1].toLowerCase();
+		return value === "month" || value === "history" ? value : "charts";
 	}
 
 	private render(): void {
@@ -180,12 +208,274 @@ export class HabitMetrics extends MarkdownRenderChild {
 
 		this.renderSummary(habit);
 		if (habit.frequency === "daily") {
-			this.renderDailyChart(habit);
-			this.renderWeeklyChart(habit);
+			// A heatmap only makes sense against a daily cadence — weekly and
+			// monthly habits keep their due-date charts as the only view.
+			this.renderViewTabs();
+			if (this.view === "month") {
+				this.renderMonthHeatmap(habit);
+			} else if (this.view === "history") {
+				this.renderHistoryHeatmap(habit);
+			} else {
+				this.renderDailyChart(habit);
+				this.renderWeeklyChart(habit);
+			}
 		} else {
 			this.renderDueActivityChart(habit);
 			this.renderDueRateChart(habit);
 		}
+	}
+
+	/** Charts/Month/History tab bar for daily habits. */
+	private renderViewTabs(): void {
+		const tabs = this.containerEl.createDiv({ cls: "habits-metrics-tabs" });
+		const makeTab = (view: MetricsView, label: string): void => {
+			const button = tabs.createEl("button", {
+				cls: "habits-metrics-tab",
+				text: label,
+				attr: { type: "button" },
+			});
+			button.toggleClass("is-active", this.view === view);
+			this.registerDomEvent(button, "click", () => {
+				if (this.view === view) {
+					return;
+				}
+				this.view = view;
+				void this.persistView(view);
+				this.render();
+			});
+		};
+		makeTab("charts", t("Charts"));
+		makeTab("month", t("Month"));
+		makeTab("history", t("History"));
+	}
+
+	/**
+	 * Save the chosen view onto the block's own `view:` source line, so it
+	 * reopens on the same tab next time. Best-effort: if the section can't
+	 * be located (e.g. the block is mid-edit), the in-memory tab selection
+	 * still stands, it just won't survive a reload.
+	 */
+	private async persistView(view: MetricsView): Promise<void> {
+		const file = this.app.vault.getAbstractFileByPath(this.sourcePath);
+		if (!(file instanceof TFile)) {
+			return;
+		}
+		const info = this.ctx.getSectionInfo(this.containerEl);
+		if (!info) {
+			return;
+		}
+		const { lineStart, lineEnd } = info;
+		await this.app.vault.process(file, (content) => {
+			const lines = content.split("\n");
+			if (lines[lineStart] === undefined || lines[lineEnd] === undefined) {
+				return content;
+			}
+			const inner = lines
+				.slice(lineStart + 1, lineEnd)
+				.filter((line) => !/^\s*view\s*:/i.test(line));
+			if (view !== "charts") {
+				inner.push(`view: ${view}`);
+			}
+			return [
+				...lines.slice(0, lineStart + 1),
+				...inner,
+				...lines.slice(lineEnd),
+			].join("\n");
+		});
+	}
+
+	/** A day's colour/tooltip state on either heatmap. */
+	private heatmapState(
+		habit: HabitDefinition,
+		key: string,
+		todayKey: string,
+		startKey: string,
+	): { state: HeatmapState; value: number } {
+		const value = habit.records[key] ?? 0;
+		if (key > todayKey) {
+			return { state: "future", value };
+		}
+		if (key < startKey) {
+			return { state: "prestart", value };
+		}
+		if (isPausedOn(habit, key)) {
+			return { state: "paused", value };
+		}
+		if (isComplete(habit, key)) {
+			return { state: "complete", value };
+		}
+		if (habit.goalDirection === "max" && value > limitOf(habit)) {
+			return { state: "over", value };
+		}
+		return { state: value > 0 ? "partial" : "empty", value };
+	}
+
+	/** Cell fill for a heatmap state, coloured by the habit's own accent. */
+	private heatmapFill(state: HeatmapState, accent: string, red: string, neutral: string): string {
+		switch (state) {
+			case "complete":
+				return accent;
+			case "partial":
+				return withAlpha(accent, 0.45);
+			case "over":
+				return withAlpha(red, 0.8);
+			case "paused":
+			case "future":
+				return "transparent";
+			case "outside":
+			case "prestart":
+				return withAlpha(neutral, 0.25);
+			default:
+				return neutral;
+		}
+	}
+
+	/** Cell border for a heatmap state; only paused/future days get one. */
+	private heatmapBorder(
+		state: HeatmapState,
+		neutral: string,
+	): { color: string; width: number } {
+		if (state === "paused" || state === "future") {
+			return { color: withAlpha(neutral, 0.8), width: 1 };
+		}
+		return { color: "transparent", width: 0 };
+	}
+
+	/** Tooltip lines for a heatmap cell. */
+	private heatmapTooltip(point: HeatmapPoint, habit: HabitDefinition): string[] {
+		const date = fromDateKey(point.key);
+		const dateLabel = date
+			? date.toLocaleDateString(undefined, {
+					day: "numeric",
+					month: "short",
+					year: "numeric",
+				})
+			: point.key;
+		const unit = habit.unit || (habit.type === "timed" ? "min" : "");
+		const stateLabel: Record<HeatmapState, string> = {
+			future: t("Upcoming"),
+			prestart: t("Not tracked yet"),
+			outside: t("Outside this month"),
+			paused: t("Paused"),
+			complete: t("Complete"),
+			over: t("Over limit"),
+			partial: t("Logged"),
+			empty: t("Not logged"),
+		};
+		const lines = [dateLabel, stateLabel[point.state]];
+		if (habit.type !== "binary" && point.state !== "future" && point.state !== "prestart" && point.state !== "outside") {
+			lines.push(`${point.value}${unit ? ` ${unit}` : ""}`);
+		}
+		return lines;
+	}
+
+	/**
+	 * Calendar-style heatmap of the current month: weekdays across, weeks
+	 * down, matching a normal wall calendar. Leading/trailing days from the
+	 * neighbouring months fill out the grid and are shown dimmed.
+	 */
+	private renderMonthHeatmap(habit: HabitDefinition): void {
+		const today = new Date();
+		const todayKey = toDateKey(today);
+		const startKey = trackingStartKey(habit, today);
+		const grid = monthGrid(today);
+
+		const points = pointsFromGrid(grid, (cell) => {
+			const info = cell.inRange
+				? this.heatmapState(habit, cell.key, todayKey, startKey)
+				: { state: "outside" as HeatmapState, value: 0 };
+			return {
+				v: info.value,
+				key: cell.key,
+				value: info.value,
+				state: info.state,
+			};
+		});
+
+		const title = t("{month} heatmap", {
+			month: today.toLocaleDateString(undefined, {
+				month: "long",
+				year: "numeric",
+			}),
+		});
+		this.renderHeatmapChart(habit, title, points, grid.xLabels, grid.yLabels);
+	}
+
+	/**
+	 * GitHub-style activity heatmap: one column per week over the last
+	 * {@link HISTORY_WEEKS} (~6 months), Monday to Sunday top to bottom.
+	 */
+	private renderHistoryHeatmap(habit: HabitDefinition): void {
+		const today = new Date();
+		const todayKey = toDateKey(today);
+		const startKey = trackingStartKey(habit, today);
+		const grid = weekGrid(today, HISTORY_WEEKS);
+
+		const points = pointsFromGrid(grid, (cell) => {
+			const info = this.heatmapState(habit, cell.key, todayKey, startKey);
+			return {
+				v: info.value,
+				key: cell.key,
+				value: info.value,
+				state: info.state,
+			};
+		});
+
+		this.renderHeatmapChart(
+			habit,
+			t("Last {n} weeks", { n: HISTORY_WEEKS }),
+			points,
+			grid.xLabels,
+			grid.yLabels,
+			grid.monthTicks,
+		);
+	}
+
+	/** Shared matrix-chart builder for both heatmap views. */
+	private renderHeatmapChart(
+		habit: HabitDefinition,
+		title: string,
+		points: HeatmapPoint[],
+		xLabels: string[],
+		yLabels: string[],
+		/** Column tick text, e.g. only the weeks where the month changes. */
+		xTickLabels?: string[],
+	): void {
+		const accent = resolveColor(
+			this.containerEl,
+			habit.color,
+			"var(--interactive-accent)",
+		);
+		const red = resolveColor(this.containerEl, "", "var(--color-red, #e05d5d)");
+		const neutral = resolveColor(
+			this.containerEl,
+			"",
+			"var(--background-modifier-border)",
+		);
+		const text = resolveColor(this.containerEl, "", "var(--text-muted)");
+
+		mountHeatmapChart(
+			this.containerEl,
+			this.charts,
+			title,
+			points,
+			xLabels,
+			yLabels,
+			{
+				background: points.map((p) =>
+					this.heatmapFill(p.state, accent, red, neutral),
+				),
+				border: points.map(
+					(p) => this.heatmapBorder(p.state, neutral).color,
+				),
+				borderWidth: points.map(
+					(p) => this.heatmapBorder(p.state, neutral).width,
+				),
+			},
+			(point) => this.heatmapTooltip(point, habit),
+			text,
+			xTickLabels,
+		);
 	}
 
 	/** Status banner with a resume action for paused or stopped habits. */
@@ -327,15 +617,15 @@ export class HabitMetrics extends MarkdownRenderChild {
 	/** Bar chart of the last 30 days; complete days show in theme green. */
 	private renderDailyChart(habit: HabitDefinition): void {
 		const today = new Date();
-		const accent = this.resolveColor(
+		const accent = resolveColor(this.containerEl,
 			habit.color,
 			"var(--interactive-accent)",
 		);
-		const green = this.resolveColor(
+		const green = resolveColor(this.containerEl,
 			"",
 			"var(--color-green, var(--text-success))",
 		);
-		const red = this.resolveColor("", "var(--color-red, #e05d5d)");
+		const red = resolveColor(this.containerEl,"", "var(--color-red, #e05d5d)");
 		const isMax = habit.goalDirection === "max";
 
 		const labels: string[] = [];
@@ -356,10 +646,10 @@ export class HabitMetrics extends MarkdownRenderChild {
 			// days before a limit habit started) stay dim and neutral.
 			colors.push(
 				isMax && value > limitOf(habit)
-					? this.withAlpha(red, 0.8)
+					? withAlpha(red, 0.8)
 					: isComplete(habit, key)
 						? green
-						: this.withAlpha(accent, 0.45),
+						: withAlpha(accent, 0.45),
 			);
 		}
 
@@ -379,7 +669,7 @@ export class HabitMetrics extends MarkdownRenderChild {
 				type: "line",
 				label: isMax ? t("Limit") : t("Target"),
 				data: new Array(DAILY_DAYS).fill(habit.target) as number[],
-				borderColor: this.withAlpha(isMax ? red : green, 0.7),
+				borderColor: withAlpha(isMax ? red : green, 0.7),
 				borderDash: [6, 4],
 				borderWidth: 1.5,
 				pointRadius: 0,
@@ -402,7 +692,7 @@ export class HabitMetrics extends MarkdownRenderChild {
 			today.getDate(),
 		);
 		const thisMonday = addDays(base, -((base.getDay() + 6) % 7));
-		const accent = this.resolveColor(
+		const accent = resolveColor(this.containerEl,
 			habit.color,
 			"var(--interactive-accent)",
 		);
@@ -475,7 +765,7 @@ export class HabitMetrics extends MarkdownRenderChild {
 						label: "Completion",
 						data: rates,
 						borderColor: accent,
-						backgroundColor: this.withAlpha(accent, 0.18),
+						backgroundColor: withAlpha(accent, 0.18),
 						fill: true,
 						tension: 0.3,
 						pointRadius: 3,
@@ -524,11 +814,11 @@ export class HabitMetrics extends MarkdownRenderChild {
 			RECENT_POINTS[habit.frequency],
 			today,
 		);
-		const accent = this.resolveColor(
+		const accent = resolveColor(this.containerEl,
 			habit.color,
 			"var(--interactive-accent)",
 		);
-		const green = this.resolveColor(
+		const green = resolveColor(this.containerEl,
 			"",
 			"var(--color-green, var(--text-success))",
 		);
@@ -548,7 +838,7 @@ export class HabitMetrics extends MarkdownRenderChild {
 			colors.push(
 				isComplete(habit, key)
 					? green
-					: this.withAlpha(accent, 0.45),
+					: withAlpha(accent, 0.45),
 			);
 		}
 
@@ -566,7 +856,7 @@ export class HabitMetrics extends MarkdownRenderChild {
 				type: "line",
 				label: t("Target"),
 				data: new Array(dates.length).fill(habit.target) as number[],
-				borderColor: this.withAlpha(green, 0.7),
+				borderColor: withAlpha(green, 0.7),
 				borderDash: [6, 4],
 				borderWidth: 1.5,
 				pointRadius: 0,
@@ -598,7 +888,7 @@ export class HabitMetrics extends MarkdownRenderChild {
 			RECENT_POINTS[habit.frequency],
 			today,
 		);
-		const accent = this.resolveColor(
+		const accent = resolveColor(this.containerEl,
 			habit.color,
 			"var(--interactive-accent)",
 		);
@@ -655,7 +945,7 @@ export class HabitMetrics extends MarkdownRenderChild {
 						label: "Completion",
 						data: rates,
 						borderColor: accent,
-						backgroundColor: this.withAlpha(accent, 0.18),
+						backgroundColor: withAlpha(accent, 0.18),
 						fill: true,
 						tension: 0.3,
 						pointRadius: 3,
@@ -669,9 +959,9 @@ export class HabitMetrics extends MarkdownRenderChild {
 
 	/** Shared chart options wired to the theme's text and grid colours. */
 	private baseOptions(suggestedMax?: number) {
-		const text = this.resolveColor("", "var(--text-muted)");
-		const grid = this.withAlpha(
-			this.resolveColor("", "var(--background-modifier-border)"),
+		const text = resolveColor(this.containerEl,"", "var(--text-muted)");
+		const grid = withAlpha(
+			resolveColor(this.containerEl,"", "var(--background-modifier-border)"),
 			0.6,
 		);
 		return {
@@ -715,26 +1005,5 @@ export class HabitMetrics extends MarkdownRenderChild {
 		const wrap = section.createDiv({ cls: "habits-metrics-canvas" });
 		const canvas = wrap.createEl("canvas");
 		this.charts.push(new Chart(canvas, config));
-	}
-
-	/**
-	 * Resolve a CSS colour (including `var(...)` references and the habit's
-	 * own accent) to a concrete rgb value Chart.js can use.
-	 */
-	private resolveColor(preferred: string, fallback: string): string {
-		const probe = this.containerEl.doc.body.createSpan();
-		probe.style.color = preferred || fallback;
-		const resolved = probe.win.getComputedStyle(probe).color;
-		probe.remove();
-		return resolved || "#888888";
-	}
-
-	/** Apply an alpha channel to an `rgb(r, g, b)` colour string. */
-	private withAlpha(color: string, alpha: number): string {
-		const match = /^rgba?\((\d+),\s*(\d+),\s*(\d+)/.exec(color);
-		if (!match) {
-			return color;
-		}
-		return `rgba(${match[1]}, ${match[2]}, ${match[3]}, ${alpha})`;
 	}
 }

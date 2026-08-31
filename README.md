@@ -183,13 +183,30 @@ Every habit note can chart its own history with a `habit-metrics` code block (ne
 ```
 ````
 
-Streak tiles, a 30-day activity chart with target line, and a 12-week completion trend — all in your theme's colours.
+Streak tiles, a 30-day activity chart with target line, and a 12-week completion trend — all in your theme's colours. Daily habits get two extra tabs: **Month** for a calendar-style heatmap of the current month, and **History** for a GitHub-style heatmap spanning the last 6 months — both coloured in the habit's own accent. The chosen tab is saved back onto the block, so it reopens the same way next time.
 
 The block also works in **any note**: name a habit and its metrics render right there — perfect for journal entries, weekly reviews, or project pages. As you type after `habit:`, your habits are suggested automatically.
 
 ````markdown
 ```habit-metrics
 habit: Journal
+```
+````
+
+## 🔥 Whole-vault heatmap
+
+Drop a `habits-heatmap` block on your homepage or daily note for one heatmap of *every* habit's combined completion — a day fades in as more of that day's habits get done, and lands fully opaque the moment it's a perfect day:
+
+````markdown
+```habits-heatmap
+```
+````
+
+Three tabs: **This month** (a calendar-style grid), **Past 6 months** and **This year** (GitHub-style week grids). Paused and not-yet-started habits are excluded the same way they are everywhere else, so a day only ever gets marked down for habits that were actually due. Add `group: <name>` to scope it to one group instead of every habit:
+
+````markdown
+```habits-heatmap
+group: Health
 ```
 ````
 
@@ -243,6 +260,7 @@ Works with **any OpenAI-compatible service**: OpenAI, OpenRouter, Groq, Google A
 | **Insert dashboard** | Insert a `habits` code block at the cursor |
 | **Insert habit metrics** | Insert a `habit-metrics` code block at the cursor |
 | **Insert habits table** | Insert a `habits-table` code block at the cursor |
+| **Insert habits heatmap** | Insert a `habits-heatmap` code block at the cursor |
 | **Open panel** | Open the sidebar quick-log panel |
 | **Move day comments into note bodies** | Convert any comments still held in frontmatter in one pass |
 

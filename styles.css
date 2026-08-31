@@ -1799,6 +1799,36 @@
 	height: 220px;
 }
 
+/* Charts/Heatmap tab bar in a habit-metrics block */
+
+.habits-metrics-tabs {
+	display: flex;
+	gap: 0.25rem;
+	width: fit-content;
+	margin-bottom: 0.75rem;
+	padding: 0.2rem;
+	background: var(--background-primary);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: var(--radius-m);
+}
+
+.habits-metrics-tab {
+	padding: 0.3rem 0.75rem;
+	font-size: var(--font-ui-small);
+	font-weight: var(--font-semibold);
+	color: var(--text-muted);
+	background: transparent;
+	border: none;
+	border-radius: var(--radius-s);
+	cursor: pointer;
+	box-shadow: none;
+}
+
+.habits-metrics-tab.is-active {
+	color: var(--text-normal);
+	background: var(--background-modifier-hover);
+}
+
 /* Paused and stopped habit states */
 
 .habits-card.is-paused {
