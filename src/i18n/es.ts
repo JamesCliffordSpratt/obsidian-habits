@@ -473,6 +473,7 @@ export const es: Record<string, string> = {
 	// Heatmap cell states and tooltips
 	Upcoming: "Próximo",
 	"Not tracked yet": "Aún sin seguimiento",
+	"Not due": "No vence",
 	"Outside this month": "Fuera de este mes",
 	Complete: "Completado",
 	"Over limit": "Por encima del límite",

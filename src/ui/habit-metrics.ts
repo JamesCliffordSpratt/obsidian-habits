@@ -20,6 +20,7 @@ import type { HabitStore } from "../habit-store";
 import type { HabitDefinition, HabitFrequency } from "../types";
 import {
 	currentStreak,
+	isActive,
 	isComplete,
 	isDue,
 	isFlexible,
@@ -39,6 +40,7 @@ const HISTORY_WEEKS = 26;
 type HeatmapState =
 	| "future"
 	| "prestart"
+	| "notdue"
 	| "outside"
 	| "paused"
 	| "complete"
@@ -52,7 +54,7 @@ interface HeatmapPoint extends MatrixDataPoint {
 	state: HeatmapState;
 }
 
-/** Which section of a daily habit's metrics block is on screen. */
+/** Which section of a habit's metrics block is on screen. */
 type MetricsView = "charts" | "month" | "history";
 
 /**
@@ -89,7 +91,7 @@ export class HabitMetrics extends MarkdownRenderChild {
 	/** Path of the habit note currently rendered, for live refresh. */
 	private watchedPath = "";
 	/**
-	 * Which section is on screen for a daily habit. Set once from the block
+	 * Which section is on screen. Set once from the block
 	 * source on load, then mutated in place by the tab clicks so a refresh
 	 * triggered by our own source rewrite (see {@link persistView}) doesn't
 	 * stomp it back to whatever was last saved.
@@ -207,25 +209,21 @@ export class HabitMetrics extends MarkdownRenderChild {
 		}
 
 		this.renderSummary(habit);
-		if (habit.frequency === "daily") {
-			// A heatmap only makes sense against a daily cadence — weekly and
-			// monthly habits keep their due-date charts as the only view.
-			this.renderViewTabs();
-			if (this.view === "month") {
-				this.renderMonthHeatmap(habit);
-			} else if (this.view === "history") {
-				this.renderHistoryHeatmap(habit);
-			} else {
-				this.renderDailyChart(habit);
-				this.renderWeeklyChart(habit);
-			}
+		this.renderViewTabs();
+		if (this.view === "month") {
+			this.renderMonthHeatmap(habit);
+		} else if (this.view === "history") {
+			this.renderHistoryHeatmap(habit);
+		} else if (habit.frequency === "daily") {
+			this.renderDailyChart(habit);
+			this.renderWeeklyChart(habit);
 		} else {
 			this.renderDueActivityChart(habit);
 			this.renderDueRateChart(habit);
 		}
 	}
 
-	/** Charts/Month/History tab bar for daily habits. */
+	/** Charts/Month/History tab bar. */
 	private renderViewTabs(): void {
 		const tabs = this.containerEl.createDiv({ cls: "habits-metrics-tabs" });
 		const makeTab = (view: MetricsView, label: string): void => {
@@ -284,19 +282,29 @@ export class HabitMetrics extends MarkdownRenderChild {
 		});
 	}
 
-	/** A day's colour/tooltip state on either heatmap. */
+	/**
+	 * A day's colour/tooltip state on either heatmap. Days the habit isn't
+	 * due (weekends for a weekday-only habit, most of the month for a
+	 * monthly one) read as `notdue` ahead of every other state — including
+	 * `future` and `paused` — so a day that was never going to happen never
+	 * reads as a miss.
+	 */
 	private heatmapState(
 		habit: HabitDefinition,
 		key: string,
+		date: Date,
 		todayKey: string,
 		startKey: string,
 	): { state: HeatmapState; value: number } {
 		const value = habit.records[key] ?? 0;
-		if (key > todayKey) {
-			return { state: "future", value };
-		}
 		if (key < startKey) {
 			return { state: "prestart", value };
+		}
+		if (!isActive(habit, date)) {
+			return { state: "notdue", value };
+		}
+		if (key > todayKey) {
+			return { state: "future", value };
 		}
 		if (isPausedOn(habit, key)) {
 			return { state: "paused", value };
@@ -324,6 +332,7 @@ export class HabitMetrics extends MarkdownRenderChild {
 				return "transparent";
 			case "outside":
 			case "prestart":
+			case "notdue":
 				return withAlpha(neutral, 0.25);
 			default:
 				return neutral;
@@ -355,6 +364,7 @@ export class HabitMetrics extends MarkdownRenderChild {
 		const stateLabel: Record<HeatmapState, string> = {
 			future: t("Upcoming"),
 			prestart: t("Not tracked yet"),
+			notdue: t("Not due"),
 			outside: t("Outside this month"),
 			paused: t("Paused"),
 			complete: t("Complete"),
@@ -363,7 +373,8 @@ export class HabitMetrics extends MarkdownRenderChild {
 			empty: t("Not logged"),
 		};
 		const lines = [dateLabel, stateLabel[point.state]];
-		if (habit.type !== "binary" && point.state !== "future" && point.state !== "prestart" && point.state !== "outside") {
+		const skipsValue: HeatmapState[] = ["future", "prestart", "notdue", "outside"];
+		if (habit.type !== "binary" && !skipsValue.includes(point.state)) {
 			lines.push(`${point.value}${unit ? ` ${unit}` : ""}`);
 		}
 		return lines;
@@ -382,7 +393,7 @@ export class HabitMetrics extends MarkdownRenderChild {
 
 		const points = pointsFromGrid(grid, (cell) => {
 			const info = cell.inRange
-				? this.heatmapState(habit, cell.key, todayKey, startKey)
+				? this.heatmapState(habit, cell.key, cell.date, todayKey, startKey)
 				: { state: "outside" as HeatmapState, value: 0 };
 			return {
 				v: info.value,
@@ -412,7 +423,7 @@ export class HabitMetrics extends MarkdownRenderChild {
 		const grid = weekGrid(today, HISTORY_WEEKS);
 
 		const points = pointsFromGrid(grid, (cell) => {
-			const info = this.heatmapState(habit, cell.key, todayKey, startKey);
+			const info = this.heatmapState(habit, cell.key, cell.date, todayKey, startKey);
 			return {
 				v: info.value,
 				key: cell.key,

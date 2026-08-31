@@ -468,6 +468,7 @@ export const ja: Record<string, string> = {
 	// Heatmap cell states and tooltips
 	Upcoming: "今後",
 	"Not tracked yet": "まだ記録なし",
+	"Not due": "対象外",
 	"Outside this month": "今月の範囲外",
 	Complete: "達成",
 	"Over limit": "上限超過",

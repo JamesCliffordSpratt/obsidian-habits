@@ -458,6 +458,7 @@ export const zh: Record<string, string> = {
 	// Heatmap cell states and tooltips
 	Upcoming: "未到",
 	"Not tracked yet": "尚未开始记录",
+	"Not due": "不适用",
 	"Outside this month": "不在本月内",
 	Complete: "已完成",
 	"Over limit": "超出限制",

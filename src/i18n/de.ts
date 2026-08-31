@@ -476,6 +476,7 @@ export const de: Record<string, string> = {
 	// Heatmap cell states and tooltips
 	Upcoming: "Bevorstehend",
 	"Not tracked yet": "Noch nicht erfasst",
+	"Not due": "Nicht fällig",
 	"Outside this month": "Außerhalb dieses Monats",
 	Complete: "Abgeschlossen",
 	"Over limit": "Über dem Limit",

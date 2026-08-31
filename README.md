@@ -183,7 +183,7 @@ Every habit note can chart its own history with a `habit-metrics` code block (ne
 ```
 ````
 
-Streak tiles, a 30-day activity chart with target line, and a 12-week completion trend — all in your theme's colours. Daily habits get two extra tabs: **Month** for a calendar-style heatmap of the current month, and **History** for a GitHub-style heatmap spanning the last 6 months — both coloured in the habit's own accent. The chosen tab is saved back onto the block, so it reopens the same way next time.
+Streak tiles, an activity chart with target line, and a completion-rate trend — all in your theme's colours. Two extra tabs sit alongside the charts: **Month** for a calendar-style heatmap of the current month, and **History** for a GitHub-style heatmap spanning the last 6 months — both coloured in the habit's own accent. Days the habit isn't due (weekends for a weekday-only habit, most of the month for a monthly one) show as a faint "not due" cell rather than a false miss. The chosen tab is saved back onto the block, so it reopens the same way next time.
 
 The block also works in **any note**: name a habit and its metrics render right there — perfect for journal entries, weekly reviews, or project pages. As you type after `habit:`, your habits are suggested automatically.
 

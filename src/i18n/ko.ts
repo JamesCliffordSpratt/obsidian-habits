@@ -468,6 +468,7 @@ export const ko: Record<string, string> = {
 	// Heatmap cell states and tooltips
 	Upcoming: "예정",
 	"Not tracked yet": "아직 추적 안 됨",
+	"Not due": "해당 없음",
 	"Outside this month": "이번 달 아님",
 	Complete: "완료",
 	"Over limit": "한도 초과",
