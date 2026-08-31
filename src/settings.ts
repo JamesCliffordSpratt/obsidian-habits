@@ -79,6 +79,9 @@ export interface FrontmatterKeys {
 	noteFilenameFormat: string;
 	templatePath: string;
 	noteCompletionMode: string;
+	noteChecklistRequirement: string;
+	noteChecklistMin: string;
+	noteFailKeyword: string;
 	/** Legacy: day comments, before they moved into the note body. */
 	comments: string;
 }
@@ -110,6 +113,9 @@ export const DEFAULT_FRONTMATTER_KEYS: FrontmatterKeys = {
 	noteFilenameFormat: "noteFilenameFormat",
 	templatePath: "templatePath",
 	noteCompletionMode: "noteCompletionMode",
+	noteChecklistRequirement: "noteChecklistRequirement",
+	noteChecklistMin: "noteChecklistMin",
+	noteFailKeyword: "noteFailKeyword",
 	comments: "comments",
 };
 
@@ -1095,6 +1101,12 @@ const FRONTMATTER_KEY_GROUPS: {
 			["noteFilenameFormat", () => t("Note filename format key")],
 			["templatePath", () => t("Template path key")],
 			["noteCompletionMode", () => t("Note completion mode key")],
+			[
+				"noteChecklistRequirement",
+				() => t("Note checklist requirement key"),
+			],
+			["noteChecklistMin", () => t("Note checklist minimum key")],
+			["noteFailKeyword", () => t("Note fail keyword key")],
 		],
 	},
 	{

@@ -14,6 +14,7 @@ import type {
 	HabitDefinition,
 	HabitFrequency,
 	HabitType,
+	NoteChecklistRequirement,
 	NoteCompletionMode,
 } from "../types";
 import {
@@ -232,6 +233,9 @@ export class HabitModal extends Modal {
 	private noteFilenameFormat = "";
 	private templatePath = "";
 	private noteCompletionMode: NoteCompletionMode = "chars";
+	private noteChecklistRequirement: NoteChecklistRequirement = "all";
+	private noteChecklistMin = 1;
+	private noteFailKeyword = "";
 	/** Group whose saved style is currently loaded, to avoid clobbering
 	 * fresh picks with a reload on every keystroke. */
 	private loadedGroupName: string | null = null;
@@ -290,6 +294,9 @@ export class HabitModal extends Modal {
 			this.noteFilenameFormat = editing.noteFilenameFormat;
 			this.templatePath = editing.templatePath;
 			this.noteCompletionMode = editing.noteCompletionMode;
+			this.noteChecklistRequirement = editing.noteChecklistRequirement;
+			this.noteChecklistMin = editing.noteChecklistMin || 1;
+			this.noteFailKeyword = editing.noteFailKeyword;
 		}
 	}
 
@@ -574,12 +581,18 @@ export class HabitModal extends Modal {
 					.setButtonText(this.editing ? t("Save changes") : t("Create habit"))
 					.setCta()
 					.onClick(async () => {
-						// A checklist habit's target/unit are fixed (a 0–100
-						// checked percentage); a chars habit uses the
-						// character goal the user typed.
+						// A checklist-only habit's target/unit are fixed: a
+						// 0–100 checked percentage under the "all" requirement,
+						// or the required checked count under "count". A chars
+						// (or "both") habit uses the character goal the user
+						// typed — "both" stores its combined value in the same
+						// units, see computeNoteValue in note-habit.ts.
 						const isNote = this.type === "note";
-						const isChecklist =
+						const isChecklistOnly =
 							isNote && this.noteCompletionMode === "checklist";
+						const isChecklistCount =
+							isChecklistOnly &&
+							this.noteChecklistRequirement === "count";
 						const options = {
 							name: this.habitName,
 							type: this.type,
@@ -597,16 +610,20 @@ export class HabitModal extends Modal {
 							times: isFlexibleFrequency(this.frequency)
 								? []
 								: this.times.filter((value) => value !== ""),
-							target: isChecklist
-								? 100
+							target: isChecklistOnly
+								? isChecklistCount
+									? this.noteChecklistMin
+									: 100
 								: isNote
 									? this.target > 0
 										? this.target
 										: 500
 									: this.target,
 							unit: isNote
-								? isChecklist
-									? "%"
+								? isChecklistOnly
+									? isChecklistCount
+										? "tasks"
+										: "%"
 									: "chars"
 								: this.unit,
 							weeklyTarget: this.weeklyTarget,
@@ -627,6 +644,9 @@ export class HabitModal extends Modal {
 							noteFilenameFormat: this.noteFilenameFormat.trim(),
 							templatePath: this.templatePath.trim(),
 							noteCompletionMode: this.noteCompletionMode,
+							noteChecklistRequirement: this.noteChecklistRequirement,
+							noteChecklistMin: this.noteChecklistMin,
+							noteFailKeyword: this.noteFailKeyword.trim(),
 						};
 						const file = this.editing
 							? await this.store.updateHabit(this.editing, options)
@@ -1074,13 +1094,14 @@ export class HabitModal extends Modal {
 			.setName(t("Completed when"))
 			.setDesc(
 				t(
-					"Reach a character count, or check off every task list item in the note.",
+					"Reach a character count, meet a checklist requirement, or require both.",
 				),
 			)
 			.addDropdown((dropdown) =>
 				dropdown
 					.addOption("chars", t("Character count is reached"))
-					.addOption("checklist", t("Every task is checked"))
+					.addOption("checklist", t("Checklist requirement is met"))
+					.addOption("both", t("Both are true"))
 					.setValue(this.noteCompletionMode)
 					.onChange((value) => {
 						this.noteCompletionMode = value as NoteCompletionMode;
@@ -1088,7 +1109,13 @@ export class HabitModal extends Modal {
 					}),
 			);
 
-		if (this.noteCompletionMode === "chars") {
+		const usesChars =
+			this.noteCompletionMode === "chars" || this.noteCompletionMode === "both";
+		const usesChecklist =
+			this.noteCompletionMode === "checklist" ||
+			this.noteCompletionMode === "both";
+
+		if (usesChars) {
 			new Setting(contentEl).setName(t("Character goal")).addText((text) => {
 				applyNumeric(text.inputEl, 1);
 				text
@@ -1103,6 +1130,61 @@ export class HabitModal extends Modal {
 					});
 			});
 		}
+
+		if (usesChecklist) {
+			new Setting(contentEl)
+				.setName(t("Checklist requirement"))
+				.setDesc(
+					t(
+						"Require every task to be checked, or just some — useful for a list of alternatives where doing any one of them counts (e.g. \"Cardio\" / \"Weights\" / \"Rest day\").",
+					),
+				)
+				.addDropdown((dropdown) =>
+					dropdown
+						.addOption("all", t("Every task is checked"))
+						.addOption("count", t("At least this many are checked"))
+						.setValue(this.noteChecklistRequirement)
+						.onChange((value) => {
+							this.noteChecklistRequirement =
+								value as NoteChecklistRequirement;
+							this.build();
+						}),
+				);
+
+			if (this.noteChecklistRequirement === "count") {
+				new Setting(contentEl)
+					.setName(t("Tasks required"))
+					.addText((text) => {
+						applyNumeric(text.inputEl, 1);
+						text
+							.setPlaceholder("1")
+							.setValue(String(this.noteChecklistMin))
+							.onChange((value) => {
+								const parsed = Number(value);
+								this.noteChecklistMin =
+									Number.isFinite(parsed) && parsed > 0
+										? Math.round(parsed)
+										: 1;
+							});
+					});
+			}
+		}
+
+		new Setting(contentEl)
+			.setName(t("Fail keyword"))
+			.setDesc(
+				t(
+					'Optional. Checking a task whose text contains this word forces the day to fail, whatever else is checked — e.g. "Slipped" as one of several checklist options. Leave blank to turn this off.',
+				),
+			)
+			.addText((text) =>
+				text
+					.setPlaceholder(t("e.g. Slipped"))
+					.setValue(this.noteFailKeyword)
+					.onChange((value) => {
+						this.noteFailKeyword = value;
+					}),
+			);
 	}
 
 	/** Collapsible, optional weekly/monthly targets section. */

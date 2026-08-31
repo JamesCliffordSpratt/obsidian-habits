@@ -82,39 +82,123 @@ export function countChars(content: string): number {
 	return stripFrontmatter(content).trim().length;
 }
 
+/** One task-list item: whether it's checked, and its label text. */
+export interface ChecklistItem {
+	checked: boolean;
+	text: string;
+}
+
+/** Every task-list item in a note's body, in document order. */
+export function checklistItems(content: string): ChecklistItem[] {
+	const body = stripFrontmatter(content);
+	const items: ChecklistItem[] = [];
+	for (const match of body.matchAll(/^[ \t]*[-*+] \[(.)\][ \t]?(.*)$/gm)) {
+		items.push({
+			checked: match[1].toLowerCase() === "x",
+			text: match[2].trim(),
+		});
+	}
+	return items;
+}
+
 /** Total task-list items in a note's body, and how many are checked. */
 export function checklistProgress(content: string): {
 	checked: number;
 	total: number;
 } {
-	const body = stripFrontmatter(content);
-	let checked = 0;
-	let total = 0;
-	for (const match of body.matchAll(/^[ \t]*[-*+] \[(.)\]/gm)) {
-		total++;
-		if (match[1].toLowerCase() === "x") {
-			checked++;
-		}
-	}
-	return { checked, total };
+	const items = checklistItems(content);
+	return {
+		total: items.length,
+		checked: items.filter((item) => item.checked).length,
+	};
 }
 
 /**
- * Reduce a day-note's content to the single number stored in `records`: a
- * raw character count in `chars` mode, or a 0–100 checked percentage in
- * `checklist` mode (a fixed scale, since the number of tasks varies day to
- * day). Both keep working with the plugin's existing numeric completion,
- * streak, and stats machinery unchanged.
+ * True when a checked item's label contains the habit's configured fail
+ * keyword (case-insensitive), e.g. a "Slipped" item ticked on a day the
+ * user missed every option on an otherwise flexible checklist. An empty
+ * keyword disables the feature.
+ */
+export function hasFailedChecklistItem(
+	habit: HabitDefinition,
+	content: string,
+): boolean {
+	const keyword = habit.noteFailKeyword.trim().toLowerCase();
+	if (!keyword) {
+		return false;
+	}
+	return checklistItems(content).some(
+		(item) => item.checked && item.text.toLowerCase().includes(keyword),
+	);
+}
+
+/**
+ * Fraction (0–1) of a habit's checklist requirement satisfied by
+ * `checked`/`total` items: every item checked in `all` mode, or at least
+ * `noteChecklistMin` of them (any of them) checked in `count` mode.
+ */
+function checklistFraction(
+	habit: HabitDefinition,
+	checked: number,
+	total: number,
+): number {
+	if (habit.noteChecklistRequirement === "count") {
+		return Math.min(1, checked / Math.max(1, habit.noteChecklistMin));
+	}
+	return total > 0 ? checked / total : 0;
+}
+
+/**
+ * Reduce a day-note's content to the single number stored in `records`,
+ * keeping the plugin's existing numeric completion, streak, and stats
+ * machinery unchanged:
+ *
+ * - `chars`: the raw character count.
+ * - `checklist`, `all` requirement: a 0–100 checked percentage (against a
+ *   fixed `target` of 100), since the number of tasks varies day to day.
+ * - `checklist`, `count` requirement: the raw checked count (against
+ *   `target` = `noteChecklistMin`).
+ * - `both`: the lower of the char and checklist fractions, scaled to
+ *   `target` (the character goal) — `value >= target` then only holds once
+ *   neither is the bottleneck.
+ *
+ * Regardless of mode, a checked item matching `noteFailKeyword` forces the
+ * value to `0`, an automatic fail that overrides everything else.
  */
 export function computeNoteValue(
 	habit: HabitDefinition,
 	content: string,
 ): number {
-	if (habit.noteCompletionMode === "checklist") {
-		const { checked, total } = checklistProgress(content);
-		return total > 0 ? Math.round((checked / total) * 100) : 0;
+	if (hasFailedChecklistItem(habit, content)) {
+		return 0;
 	}
-	return countChars(content);
+
+	if (habit.noteCompletionMode === "chars") {
+		return countChars(content);
+	}
+
+	// Both scaled fractions below use floor rather than round: on a large
+	// enough checklist, rounding a not-quite-1 fraction (e.g. 199/200) can
+	// land exactly on the target and read as complete one tick early.
+	// Flooring can't overshoot the true threshold, and still lands exactly
+	// on it — floor(1 * n) === n — when the requirement is genuinely met.
+	const { checked, total } = checklistProgress(content);
+	if (habit.noteCompletionMode === "checklist") {
+		return habit.noteChecklistRequirement === "count"
+			? checked
+			: Math.floor(checklistFraction(habit, checked, total) * 100);
+	}
+
+	// "both": target doubles as the character goal in this mode (see
+	// habit-modal.ts), so scaling the combined fraction to it is what makes
+	// the generic `value >= target` completion check land at "both met".
+	const charGoal = habit.target > 0 ? habit.target : 1;
+	const charsFraction = Math.min(1, countChars(content) / charGoal);
+	const combined = Math.min(
+		charsFraction,
+		checklistFraction(habit, checked, total),
+	);
+	return Math.floor(combined * charGoal);
 }
 
 /** The subset of the Templater plugin's API this module calls into. */

@@ -11,6 +11,7 @@ import type {
 	HabitPause,
 	HabitType,
 	NewHabitOptions,
+	NoteChecklistRequirement,
 	NoteCompletionMode,
 } from "./types";
 import {
@@ -41,6 +42,11 @@ const HABIT_FREQUENCIES: readonly HabitFrequency[] = [
 const NOTE_COMPLETION_MODES: readonly NoteCompletionMode[] = [
 	"chars",
 	"checklist",
+	"both",
+];
+const NOTE_CHECKLIST_REQUIREMENTS: readonly NoteChecklistRequirement[] = [
+	"all",
+	"count",
 ];
 
 function isHabitType(value: unknown): value is HabitType {
@@ -54,6 +60,15 @@ function isNoteCompletionMode(value: unknown): value is NoteCompletionMode {
 	return (
 		typeof value === "string" &&
 		(NOTE_COMPLETION_MODES as readonly string[]).includes(value)
+	);
+}
+
+function isNoteChecklistRequirement(
+	value: unknown,
+): value is NoteChecklistRequirement {
+	return (
+		typeof value === "string" &&
+		(NOTE_CHECKLIST_REQUIREMENTS as readonly string[]).includes(value)
 	);
 }
 
@@ -278,6 +293,20 @@ export class HabitStore {
 			noteCompletionMode: isNoteCompletionMode(fm[k.noteCompletionMode])
 				? (fm[k.noteCompletionMode] as NoteCompletionMode)
 				: "chars",
+			noteChecklistRequirement: isNoteChecklistRequirement(
+				fm[k.noteChecklistRequirement],
+			)
+				? (fm[k.noteChecklistRequirement] as NoteChecklistRequirement)
+				: "all",
+			noteChecklistMin: this.clampInt(
+				this.readNumber(fm[k.noteChecklistMin], 1),
+				1,
+				999,
+			),
+			noteFailKeyword:
+				typeof fm[k.noteFailKeyword] === "string"
+					? (fm[k.noteFailKeyword] as string)
+					: "",
 		};
 	}
 
@@ -570,6 +599,9 @@ export class HabitStore {
 		delete fm[k.noteFilenameFormat];
 		delete fm[k.templatePath];
 		delete fm[k.noteCompletionMode];
+		delete fm[k.noteChecklistRequirement];
+		delete fm[k.noteChecklistMin];
+		delete fm[k.noteFailKeyword];
 		if (options.type !== "note") {
 			return;
 		}
@@ -582,8 +614,22 @@ export class HabitStore {
 		if (options.templatePath.trim()) {
 			fm[k.templatePath] = options.templatePath.trim();
 		}
-		if (options.noteCompletionMode === "checklist") {
-			fm[k.noteCompletionMode] = "checklist";
+		if (options.noteCompletionMode !== "chars") {
+			fm[k.noteCompletionMode] = options.noteCompletionMode;
+		}
+		const usesChecklist =
+			options.noteCompletionMode === "checklist" ||
+			options.noteCompletionMode === "both";
+		if (usesChecklist && options.noteChecklistRequirement === "count") {
+			fm[k.noteChecklistRequirement] = "count";
+			fm[k.noteChecklistMin] = this.clampInt(
+				options.noteChecklistMin,
+				1,
+				999,
+			);
+		}
+		if (options.noteFailKeyword.trim()) {
+			fm[k.noteFailKeyword] = options.noteFailKeyword.trim();
 		}
 	}
 

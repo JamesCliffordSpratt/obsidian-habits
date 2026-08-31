@@ -18,7 +18,7 @@
 - 📋 **Habits overview table** — a `habits-table` code block lists every active habit with its schedule and completed/due counts for the current week and the last three months
 - 📄 **Printable PDF reports** — pick your metrics, date range, and layout with a live A4 preview
 - 🚭 **Break bad habits** *(experimental)* — track things you're cutting down or quitting by staying under a daily limit, with quiet streaks for every clean day
-- 📝 **Note habits** *(experimental)* — a Write/Open card backed by a per-day note, completed by a character count or checking off every task, with [Templater](https://silentvoid13.github.io/Templater/) support for the note it creates
+- 📝 **Note habits** *(experimental)* — a Write/Open card backed by a per-day note, completed by a character count, a flexible checklist requirement, or both, with a fail keyword to flag a deliberate slip and [Templater](https://silentvoid13.github.io/Templater/) support for the note it creates
 - ✨ **AI summaries** *(experimental)* — on-demand feedback and advice on your stats, on screen and in PDF reports, using your own AI service (including free and fully local options)
 - 📌 **Sidebar quick-log panel** — check off today's habits from anywhere, sized for narrow panes
 - ⏸️ **Pause without penalty** — ill or travelling? Paused days never break streaks or drag down your stats
@@ -236,7 +236,9 @@ Track a habit by writing, not by tapping a button — journals, morning pages, w
 - **Templater**: pick a template note and, if the [Templater](https://silentvoid13.github.io/Templater/) plugin is installed, it's expanded the same way Templater's own "new note from template" command would — dynamic dates, prompts, and all. Without Templater the template is copied as plain text instead.
 - **Completion**, your choice per habit:
   - **Character count** — done once the note (frontmatter aside) reaches a length you set.
-  - **Every task checked** — done once every `- [ ]` task in the note is ticked.
+  - **Checklist requirement** — either every `- [ ]` task ticked, or just *some* of them: set a minimum count so a list of alternatives (e.g. "Cardio" / "Weights" / "Rest day") completes the habit the moment any one of them is checked, without needing the rest.
+  - **Both** — require the character count *and* the checklist requirement together.
+- **Fail keyword**: name a word (e.g. "Slipped") and add it as a checklist item of its own; ticking that box forces the day to fail no matter what else is checked or written — a deliberate "I broke it today" flag on an otherwise flexible checklist.
 - The card's progress updates on its own as you write — no need to reopen the dashboard. Streaks, weekly/monthly targets, the habits table, and PDF export all work the same as any other habit.
 
 ### ✨ AI summaries

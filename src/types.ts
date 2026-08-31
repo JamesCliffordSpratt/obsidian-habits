@@ -5,7 +5,8 @@
  * - `repetition`: a count towards a target (e.g. 8 cups of water).
  * - `timed`: minutes spent towards a target (e.g. 30 minutes of exercise).
  * - `note`: writing in a per-day note, completed by reaching a character
- *   count or checking off every task in it. See the `note*` fields below.
+ *   count, satisfying a checklist requirement, or both. See the `note*`
+ *   fields below.
  */
 export type HabitType = "binary" | "repetition" | "timed" | "note";
 
@@ -14,11 +15,31 @@ export type HabitType = "binary" | "repetition" | "timed" | "note";
  *
  * - `chars`: the note's character count (frontmatter stripped) reaches
  *   `target`.
- * - `checklist`: every task-list item in the note is checked. Stored as a
- *   0–100 percentage in `records` (against a fixed `target` of 100) since
- *   the number of tasks can differ from day to day.
+ * - `checklist`: the checklist requirement in {@link NoteChecklistRequirement}
+ *   is met.
+ * - `both`: both of the above must be true. `records` stores the lower of
+ *   the two fractions, scaled to `target` (the character goal), so the
+ *   plugin's existing `value >= target` completion check only fires once
+ *   neither condition is the bottleneck.
+ *
+ * Regardless of mode, a checked item matching `noteFailKeyword` (if set)
+ * forces the day to `0` — an automatic fail that overrides everything else.
  */
-export type NoteCompletionMode = "chars" | "checklist";
+export type NoteCompletionMode = "chars" | "checklist" | "both";
+
+/**
+ * How a `note` habit's checklist requirement is satisfied.
+ *
+ * - `all`: every task-list item must be checked. Stored as a 0–100
+ *   percentage in `records` (against a fixed `target` of 100), since the
+ *   number of tasks can differ from day to day.
+ * - `count`: at least `noteChecklistMin` items must be checked — any of
+ *   them, not a specific one. Stored as the raw checked count in `records`
+ *   (against `target` = `noteChecklistMin`). Suits a checklist of
+ *   alternatives (e.g. "cardio" / "weights" / "rest day") where doing any
+ *   one of them counts.
+ */
+export type NoteChecklistRequirement = "all" | "count";
 
 /**
  * How often a habit is due.
@@ -229,6 +250,23 @@ export interface HabitDefinition {
 	templatePath: string;
 	/** How a `note` habit's day is marked complete. */
 	noteCompletionMode: NoteCompletionMode;
+	/**
+	 * How a `note` habit's checklist requirement is satisfied. Only
+	 * meaningful when `noteCompletionMode` is `checklist` or `both`.
+	 */
+	noteChecklistRequirement: NoteChecklistRequirement;
+	/**
+	 * Minimum number of checklist items that must be checked when
+	 * `noteChecklistRequirement` is `count`.
+	 */
+	noteChecklistMin: number;
+	/**
+	 * Case-insensitive text a checklist item's label must contain, when
+	 * checked, to force the day to fail regardless of every other
+	 * condition (e.g. a "Slipped" item). Empty disables the feature. Only
+	 * meaningful when `type` is `note`.
+	 */
+	noteFailKeyword: string;
 }
 
 /** Options used when creating a new habit note. */
@@ -256,4 +294,7 @@ export interface NewHabitOptions {
 	noteFilenameFormat: string;
 	templatePath: string;
 	noteCompletionMode: NoteCompletionMode;
+	noteChecklistRequirement: NoteChecklistRequirement;
+	noteChecklistMin: number;
+	noteFailKeyword: string;
 }
