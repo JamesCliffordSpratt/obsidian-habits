@@ -258,6 +258,16 @@ export function intervalAnchor(habit: HabitDefinition): Date | null {
  *   every day for these two frequencies.
  */
 export function isDue(habit: HabitDefinition, date: Date): boolean {
+	const key = toDateKey(date);
+	if (rescheduleTarget(habit, key)) {
+		// This day's instance moved elsewhere; it isn't due here any more.
+		return false;
+	}
+	if (rescheduleSource(habit, key)) {
+		// A moved instance lands here instead, whether or not this day
+		// would otherwise be due on its own.
+		return true;
+	}
 	if (habit.frequency === "flexibleWeekly") {
 		return date.getDay() === 0; // Sunday: the last day of a Monday-start week
 	}
@@ -344,6 +354,12 @@ export function trackingStartKey(
  * day onward (see {@link limitStartKey}).
  */
 export function isComplete(habit: HabitDefinition, dateKey: string): boolean {
+	const target = rescheduleTarget(habit, dateKey);
+	if (target) {
+		// A rescheduled day's completion lives entirely on its new day —
+		// reschedules can't chain, so this never recurses more than once.
+		return isComplete(habit, target);
+	}
 	if (isFlexible(habit)) {
 		const date = fromDateKey(dateKey);
 		return date ? meetsFlexibleTarget(habit, flexiblePeriodTotal(habit, date)) : false;
@@ -368,6 +384,127 @@ export function isPausedOn(habit: HabitDefinition, dateKey: string): boolean {
 			dateKey >= pause.start &&
 			(pause.end === "" || dateKey <= pause.end),
 	);
+}
+
+/**
+ * The date a due day's instance was moved to, if `dateKey` was rescheduled
+ * away. `isDue`/`isComplete` use this to make a moved day stop counting and
+ * its new day count in its place.
+ */
+export function rescheduleTarget(
+	habit: HabitDefinition,
+	dateKey: string,
+): string | null {
+	return habit.reschedules.find((r) => r.from === dateKey)?.to ?? null;
+}
+
+/**
+ * The original due date `dateKey` covers, if it's a reschedule's
+ * destination.
+ */
+export function rescheduleSource(
+	habit: HabitDefinition,
+	dateKey: string,
+): string | null {
+	return habit.reschedules.find((r) => r.to === dateKey)?.from ?? null;
+}
+
+/**
+ * Whether a habit's missed days can be reviewed and rescheduled at all
+ * (experimental): a fixed-schedule (non-flexible), reach-a-target
+ * (non-`max`) habit whose value is logged by hand, not derived from a
+ * note's own content — and, crucially, not due every single day. A daily
+ * habit has no day that isn't already its own due day, so there would
+ * never be anywhere open to move a miss onto; interval habits are always
+ * at least every-other-day (`intervalDays` is clamped to 2+), so they
+ * always have somewhere free.
+ */
+export function isRescheduleEligible(habit: HabitDefinition): boolean {
+	return (
+		!habit.stopped &&
+		habit.type !== "note" &&
+		habit.goalDirection !== "max" &&
+		habit.frequency !== "daily" &&
+		!isFlexible(habit)
+	);
+}
+
+/**
+ * Whether `dateKey` is open to become a reschedule's destination for
+ * `habit`: on or after the habit's tracking start (a day before the habit
+ * existed couldn't have been due there anyway), not already due on its own
+ * (that would collide with its own obligation — the "no double entries"
+ * rule), not paused, and not already claimed by another reschedule as
+ * either its origin or its destination. Chaining a rescheduled day into a
+ * second reschedule isn't supported.
+ */
+export function isRescheduleTargetOpen(
+	habit: HabitDefinition,
+	dateKey: string,
+): boolean {
+	const date = fromDateKey(dateKey);
+	if (!date) {
+		return false;
+	}
+	if (dateKey < trackingStartKey(habit)) {
+		return false;
+	}
+	if (isDue(habit, date) || isPausedOn(habit, dateKey)) {
+		return false;
+	}
+	return !habit.reschedules.some(
+		(r) => r.from === dateKey || r.to === dateKey,
+	);
+}
+
+/** One habit's missed due day, as surfaced by {@link missedInstances}. */
+export interface MissedInstance {
+	habit: HabitDefinition;
+	dateKey: string;
+}
+
+/**
+ * Every open (due, not paused, not complete) past due day across
+ * `habits`, newest first, capped at `limit`. Feeds the "missed habits"
+ * notification and its review modal (experimental) — only habits passing
+ * {@link isRescheduleEligible} are scanned, and `isDue`/`isComplete`
+ * already fold in reschedules, so a day already moved elsewhere is
+ * correctly skipped and a rescheduled-to day that's since also gone
+ * unlogged correctly turns up in its place.
+ */
+export function missedInstances(
+	habits: HabitDefinition[],
+	today: Date,
+	limit = 30,
+): MissedInstance[] {
+	const results: MissedInstance[] = [];
+	// Guard against a pathological scan on a very old, long-gapped habit.
+	const maxScan = 366 * 2;
+	for (const habit of habits) {
+		if (!isRescheduleEligible(habit)) {
+			continue;
+		}
+		const startKey = trackingStartKey(habit, today);
+		let cursor = addDays(today, -1);
+		let scanned = 0;
+		while (scanned < maxScan) {
+			const key = toDateKey(cursor);
+			if (key < startKey) {
+				break;
+			}
+			if (
+				isDue(habit, cursor) &&
+				!isPausedOn(habit, key) &&
+				!isComplete(habit, key)
+			) {
+				results.push({ habit, dateKey: key });
+			}
+			cursor = addDays(cursor, -1);
+			scanned++;
+		}
+	}
+	results.sort((a, b) => (a.dateKey < b.dateKey ? 1 : -1));
+	return results.slice(0, limit);
 }
 
 /**

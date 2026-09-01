@@ -19,10 +19,14 @@ import {
 	isFlexible,
 	isPausedOn,
 	limitOf,
+	missedInstances,
+	rescheduleSource,
 } from "../stats";
 import { createNoteHabitEntry, notePathForDate } from "../note-habit";
 import {
 	formatTimeOfDay,
+	friendlyDateLabel,
+	fromDateKey,
 	groupHabits,
 	habitAccent,
 	registerLongPress,
@@ -33,6 +37,7 @@ import {
 } from "../utils";
 import { t } from "../i18n";
 import { HabitModal } from "./habit-modal";
+import { MissedHabitsModal } from "./missed-habits-modal";
 import { ConfirmModal } from "./confirm-modal";
 import { applyHabitIcon } from "./icon-suggest-modal";
 
@@ -261,6 +266,30 @@ export class HabitsPanelView extends ItemView {
 			setTooltip(count, t("Habits completed today"));
 		}
 
+		if (this.getSettings().experimental.rescheduling) {
+			const missedCount = missedInstances(this.habits, new Date()).length;
+			if (missedCount > 0) {
+				const missed = header.createEl("button", {
+					cls: "habits-icon-button habits-panel-missed",
+					attr: { type: "button", "aria-label": t("Missed habits") },
+				});
+				setIcon(missed, "bell");
+				const badge = missed.createSpan({ cls: "habits-missed-badge" });
+				badge.setText(String(missedCount));
+				setTooltip(
+					missed,
+					missedCount === 1
+						? t("1 missed habit")
+						: t("{count} missed habits", { count: missedCount }),
+				);
+				this.registerDomEvent(missed, "click", () => {
+					new MissedHabitsModal(this.app, this.store, this.habits, () =>
+						this.reload(),
+					).open();
+				});
+			}
+		}
+
 		const add = header.createEl("button", {
 			cls: "habits-icon-button habits-panel-add",
 			attr: { type: "button", "aria-label": t("Add habit") },
@@ -380,6 +409,25 @@ export class HabitsPanelView extends ItemView {
 				cls: "habits-panel-time",
 				text: habit.times.map(formatTimeOfDay).join(", "),
 			});
+		}
+
+		if (this.getSettings().experimental.rescheduling) {
+			const movedFrom = rescheduleSource(habit, toDateKey(new Date()));
+			if (movedFrom) {
+				const badge = main.createSpan({
+					cls: "habits-panel-rescheduled",
+				});
+				setIcon(badge, "calendar");
+				const movedFromDate = fromDateKey(movedFrom);
+				setTooltip(
+					badge,
+					t("Rescheduled from {date}", {
+						date: movedFromDate
+							? friendlyDateLabel(movedFromDate, new Date())
+							: movedFrom,
+					}),
+				);
+			}
 		}
 
 		if (this.isPausedToday(habit)) {

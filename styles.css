@@ -1689,6 +1689,157 @@
 	font-size: var(--font-ui-small);
 }
 
+/* Missed-habits review modal (experimental rescheduling) */
+
+.habits-missed-intro {
+	margin: 0.25rem 0 0.5rem;
+	color: var(--text-muted);
+	font-size: var(--font-ui-small);
+}
+
+.habits-missed-empty {
+	margin: 0.5rem 0 0;
+	color: var(--text-muted);
+}
+
+.habits-missed-error {
+	min-height: 1.2em;
+	margin: 0.25rem 0;
+	color: var(--color-red, var(--text-error));
+	font-size: var(--font-ui-small);
+}
+
+.habits-missed-list {
+	display: flex;
+	flex-direction: column;
+	gap: 0.4rem;
+	max-height: 60vh;
+	overflow-y: auto;
+}
+
+.habits-missed-card {
+	--habits-accent: var(--interactive-accent);
+	display: flex;
+	align-items: center;
+	gap: 0.6rem;
+	padding: 0.5rem 0.6rem;
+	border: 1px solid var(--background-modifier-border);
+	border-left: 3px solid var(--habits-accent);
+	border-radius: var(--radius-m);
+	background: var(--background-primary);
+}
+
+.habits-missed-icon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 1.6rem;
+	height: 1.6rem;
+	flex-shrink: 0;
+	color: var(--habits-accent);
+}
+
+.habits-missed-info {
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+	flex: 1;
+}
+
+.habits-missed-name {
+	font-weight: var(--font-semibold);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.habits-missed-date {
+	color: var(--text-muted);
+	font-size: var(--font-ui-small);
+}
+
+.habits-missed-reschedule {
+	flex-shrink: 0;
+	padding: 0.3rem 0.7rem;
+	font-size: var(--font-ui-small);
+	font-weight: var(--font-semibold);
+}
+
+/* Dashboard/panel: notification button and rescheduled-card indicators */
+
+/* Same size and shape as the other header icon buttons (habits-header-left/
+   -right) — .habits-icon-button already supplies that; this just anchors it
+   to the corner and adds the pulse. */
+.habits-missed-button {
+	position: absolute;
+	right: 0.75rem;
+	bottom: 0.75rem;
+	z-index: 2;
+	animation: habits-missed-pulse 2.2s ease-in-out infinite;
+}
+
+.habits-missed-badge {
+	position: absolute;
+	top: -0.3rem;
+	right: -0.3rem;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 1.1rem;
+	height: 1.1rem;
+	padding: 0 0.25rem;
+	border-radius: 1rem;
+	background: var(--color-red, var(--text-error));
+	color: var(--text-on-accent);
+	font-size: 0.65rem;
+	font-weight: var(--font-semibold);
+	line-height: 1;
+}
+
+@keyframes habits-missed-pulse {
+	0%,
+	100% {
+		box-shadow: 0 0 0 0 rgba(var(--color-red-rgb, 224, 93, 93), 0.4);
+	}
+	50% {
+		box-shadow: 0 0 0 6px rgba(var(--color-red-rgb, 224, 93, 93), 0);
+	}
+}
+
+.habits-panel-missed {
+	position: relative;
+}
+
+.habits-card-rescheduled {
+	display: flex;
+	align-items: center;
+	gap: 0.3rem;
+	margin-top: 0.1rem;
+	color: var(--text-muted);
+	font-size: var(--font-ui-smaller);
+}
+
+.habits-card-rescheduled-icon {
+	display: inline-flex;
+}
+
+.habits-card-rescheduled-icon .svg-icon {
+	width: 0.85em;
+	height: 0.85em;
+}
+
+.habits-panel-rescheduled {
+	display: inline-flex;
+	align-items: center;
+	color: var(--text-muted);
+	flex-shrink: 0;
+}
+
+.habits-panel-rescheduled .svg-icon {
+	width: 0.85em;
+	height: 0.85em;
+}
+
 /* Trim the last setting's bottom border inside the section */
 .habits-targets .setting-item:last-child {
 	border-bottom: none;

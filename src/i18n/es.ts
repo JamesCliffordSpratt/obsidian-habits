@@ -573,4 +573,30 @@ export const es: Record<string, string> = {
 		"Meta: {completed}/{goal} días logrados",
 	"{range} · exported {date}": "{range} · exportado el {date}",
 	"+{n} more": "+{n} más",
+
+	// Back-dating a missed day
+	Back: "Atrás",
+
+	// Rescheduling missed habits (experimental)
+	"1 missed habit": "1 hábito omitido",
+	"Add a notification button to the dashboard and sidebar panel when a habit's been missed, opening a review of missed days you can move onto a different one (never a day that habit is already due, so nothing doubles up).":
+		"Añade un botón de notificación al panel principal y a la barra lateral cuando se ha omitido un hábito, que abre una revisión de los días omitidos para moverlos a otro día (nunca a un día en el que ese hábito ya venza, para que nada se duplique).",
+	"Missed habits": "Hábitos omitidos",
+	"Move this missed day onto a different one": "Mover este día omitido a otro",
+	"Move to": "Mover a",
+	"Nothing missed right now.": "No hay nada omitido por ahora.",
+	"Pick a habit to move it onto a different day.":
+		"Elige un hábito para moverlo a otro día.",
+	Reschedule: "Reprogramar",
+	"Reschedule missed habits": "Reprogramar hábitos omitidos",
+	"Rescheduled \"{name}\" to {date}.": '"{name}" se reprogramó para {date}.',
+	"Rescheduled from {date}": "Reprogramado desde {date}",
+	"Reschedules key": "Clave de reprogramaciones",
+	"Rescheduling \"{name}\" — missed {date}.":
+		'Reprogramando "{name}" — se omitió el {date}.',
+	"That day no longer works — pick another.":
+		"Ese día ya no funciona — elige otro.",
+	"That day won't work — it's either already due for this habit or already claimed by another reschedule.":
+		"Ese día no sirve — o ya vence este hábito ese día, o ya lo ha reclamado otra reprogramación.",
+	"{count} missed habits": "{count} hábitos omitidos",
 };

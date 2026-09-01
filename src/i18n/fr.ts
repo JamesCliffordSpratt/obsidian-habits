@@ -576,4 +576,31 @@ export const fr: Record<string, string> = {
 		"Objectif : {completed}/{goal} jours atteints",
 	"{range} · exported {date}": "{range} · exporté le {date}",
 	"+{n} more": "+{n} de plus",
+
+	// Back-dating a missed day
+	Back: "Retour",
+
+	// Rescheduling missed habits (experimental)
+	"1 missed habit": "1 habitude manquée",
+	"Add a notification button to the dashboard and sidebar panel when a habit's been missed, opening a review of missed days you can move onto a different one (never a day that habit is already due, so nothing doubles up).":
+		"Ajoute un bouton de notification au tableau de bord et au panneau latéral lorsqu'une habitude a été manquée, ouvrant une revue des jours manqués que vous pouvez déplacer vers un autre jour (jamais un jour où cette habitude est déjà due, pour qu'il n'y ait jamais de doublon).",
+	"Missed habits": "Habitudes manquées",
+	"Move this missed day onto a different one":
+		"Déplacer ce jour manqué vers un autre",
+	"Move to": "Déplacer vers",
+	"Nothing missed right now.": "Rien de manqué pour l'instant.",
+	"Pick a habit to move it onto a different day.":
+		"Choisissez une habitude à déplacer vers un autre jour.",
+	Reschedule: "Replanifier",
+	"Reschedule missed habits": "Replanifier les habitudes manquées",
+	"Rescheduled \"{name}\" to {date}.": "« {name} » a été replanifiée au {date}.",
+	"Rescheduled from {date}": "Reporté depuis {date}",
+	"Reschedules key": "Clé des replanifications",
+	"Rescheduling \"{name}\" — missed {date}.":
+		"Replanification de « {name} » — manqué le {date}.",
+	"That day no longer works — pick another.":
+		"Ce jour ne fonctionne plus — choisissez-en un autre.",
+	"That day won't work — it's either already due for this habit or already claimed by another reschedule.":
+		"Ce jour ne convient pas — soit cette habitude y est déjà due, soit un autre déplacement l'a déjà pris.",
+	"{count} missed habits": "{count} habitudes manquées",
 };

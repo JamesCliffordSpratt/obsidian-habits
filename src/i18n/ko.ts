@@ -566,4 +566,29 @@ export const ko: Record<string, string> = {
 		"목표: {completed}/{goal}일 달성",
 	"{range} · exported {date}": "{range} · {date} 내보냄",
 	"+{n} more": "+{n}개 더",
+
+	// Back-dating a missed day
+	Back: "뒤로",
+
+	// Rescheduling missed habits (experimental)
+	"1 missed habit": "놓친 습관 1개",
+	"Add a notification button to the dashboard and sidebar panel when a habit's been missed, opening a review of missed days you can move onto a different one (never a day that habit is already due, so nothing doubles up).":
+		"습관을 놓쳤을 때 대시보드와 사이드바 패널에 알림 버튼을 추가합니다. 놓친 날을 검토하고 다른 날로 옮길 수 있습니다(그 습관이 원래 예정된 날로는 옮길 수 없어 중복 기록이 생기지 않습니다).",
+	"Missed habits": "놓친 습관",
+	"Move this missed day onto a different one": "이 놓친 날을 다른 날로 옮기기",
+	"Move to": "옮길 날짜",
+	"Nothing missed right now.": "지금은 놓친 것이 없습니다.",
+	"Pick a habit to move it onto a different day.": "다른 날로 옮길 습관을 선택하세요.",
+	Reschedule: "일정 변경",
+	"Reschedule missed habits": "놓친 습관 일정 변경",
+	"Rescheduled \"{name}\" to {date}.": '"{name}"의 일정을 {date}(으)로 변경했습니다.',
+	"Rescheduled from {date}": "{date}에서 일정 변경됨",
+	"Reschedules key": "일정 변경 키",
+	"Rescheduling \"{name}\" — missed {date}.":
+		'"{name}" 일정 변경 중 — {date}에 놓쳤습니다.',
+	"That day no longer works — pick another.":
+		"그 날짜는 더 이상 사용할 수 없습니다 — 다른 날짜를 선택하세요.",
+	"That day won't work — it's either already due for this habit or already claimed by another reschedule.":
+		"그 날짜는 안 됩니다 — 이미 그 습관이 그 날짜에 예정되어 있거나, 다른 일정 변경에서 이미 사용 중입니다.",
+	"{count} missed habits": "놓친 습관 {count}개",
 };

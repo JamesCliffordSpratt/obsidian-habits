@@ -20,6 +20,7 @@
 - 🚭 **Break bad habits** *(experimental)* — track things you're cutting down or quitting by staying under a daily limit, with quiet streaks for every clean day
 - 📝 **Note habits** *(experimental)* — a Write/Open card backed by a per-day note, completed by a character count, a flexible checklist requirement, or both, with a fail keyword to flag a deliberate slip and [Templater](https://silentvoid13.github.io/Templater/) support for the note it creates
 - ✨ **AI summaries** *(experimental)* — on-demand feedback and advice on your stats, on screen and in PDF reports, using your own AI service (including free and fully local options)
+- 🔔 **Reschedule missed habits** *(experimental)* — a badged notification button surfaces missed due days so you can move one onto a different day, past or future, without ever risking a double entry
 - 📌 **Sidebar quick-log panel** — check off today's habits from anywhere, sized for narrow panes
 - ⏸️ **Pause without penalty** — ill or travelling? Paused days never break streaks or drag down your stats
 - 💬 **Per-day comments with tags and links** — flip any card over to jot down why a day went the way it did, with `#tag` and `[[note]]` autocomplete; comments live in the note body, so Obsidian indexes them against the day they belong to
@@ -86,7 +87,7 @@ Every habit has a **frequency**, chosen when you create or edit it:
 
 Any daily, weekly, monthly, or every-N-days habit can also carry one or more optional **times of day** (`time: "21:00"` in frontmatter for one, `times: ["13:30", "21:30"]` for several — the modal has a time picker with an add button). They are purely informational — shown on the habit's card next to the schedule (e.g. "Every other day · 9:00 PM", or "1:30 PM, 9:30 PM" for twice-daily medication) — and never affect when a habit is due. Pair several times with a counted habit (`target: 2`) to track a twice-a-day routine as one habit.
 
-Non-daily cards surface only on their due dates in both the dashboard and the sidebar panel (the flexible "any day" frequencies are the exception — they show every day), so your list stays focused on what's actually due. Their **streaks and stats count due periods, not calendar days**: a Sunday-only habit's streak is the number of consecutive weeks you completed it, a Mon/Wed/Fri habit's is consecutive due days, a monthly habit's is consecutive months, and a "twice a week, any day" habit's is consecutive weeks its quota was met. Days a habit isn't due don't count against its completion rate. To log a due date you missed, use the dashboard's date arrows to step back to it.
+Non-daily cards surface only on their due dates in both the dashboard and the sidebar panel (the flexible "any day" frequencies are the exception — they show every day), so your list stays focused on what's actually due. Their **streaks and stats count due periods, not calendar days**: a Sunday-only habit's streak is the number of consecutive weeks you completed it, a Mon/Wed/Fri habit's is consecutive due days, a monthly habit's is consecutive months, and a "twice a week, any day" habit's is consecutive weeks its quota was met. Days a habit isn't due don't count against its completion rate. To log a due date you missed, use the dashboard's date arrows to step back to it — or, with **Reschedule missed habits** turned on, see [Rescheduling missed habits](#-rescheduling-missed-habits) below.
 
 The charts on a non-daily habit's page adapt too: instead of a 30-day grid, the activity chart plots each recent **due date** (labelled with the date it lands on), and a rolling completion-rate line shows the trend across periods. The summary tiles relabel accordingly — "Weeks completed" or "Months completed" rather than "Days completed".
 
@@ -100,7 +101,7 @@ Every card also has a **comment flap** along its bottom edge. Click it and the c
 
 ## 📌 The sidebar panel
 
-Open the panel from the ribbon icon or the **Open panel** command to log today's habits from anywhere: one compact row per habit with tap-to-check toggles, steppers, and slim progress bars, plus a running done/total count for the day.
+Open the panel from the ribbon icon or the **Open panel** command to log today's habits from anywhere: one compact row per habit with tap-to-check toggles, steppers, and slim progress bars, plus a running done/total count for the day. Right-click (or long-press) a row for the same edit/pause options as a dashboard card.
 
 ![Logging habits from the sidebar panel](images/habits-side-panel.gif)
 
@@ -240,6 +241,17 @@ Track a habit by writing, not by tapping a button — journals, morning pages, w
   - **Both** — require the character count *and* the checklist requirement together.
 - **Fail keyword**: name a word (e.g. "Slipped") and add it as a checklist item of its own; ticking that box forces the day to fail no matter what else is checked or written — a deliberate "I broke it today" flag on an otherwise flexible checklist.
 - The card's progress updates on its own as you write — no need to reopen the dashboard. Streaks, weekly/monthly targets, the habits table, and PDF export all work the same as any other habit.
+
+### 🔔 Rescheduling missed habits
+
+Life happens — a bell button appears on the dashboard (bottom-right) and the sidebar panel header whenever a habit has an open, unlogged due day behind it, badged with how many. Click it to review them and move one onto a different day, instead of digging through the date-nav to fix it by hand.
+
+- Pick a missed habit from the review list and choose a new day for it — **past or future**. The picker won't let you land on a day that habit is already due on its own, or one already claimed by another reschedule, so there's no way to create a double entry.
+- The day it moves to takes over that due instance entirely: it counts toward streaks and stats there instead, and shows a small **"Rescheduled from…"** badge on its card so it's clear why it showed up. Its habit page marks the same day too — a ring around the cell on the Month/History heatmaps and a ring around the bar on the charts, both noted in the tooltip.
+- Once moved, the original day quietly stops being due — it doesn't show up as a miss again.
+- Not offered for **limit habits** (silence already means clean, so there's no "miss" to move), **flexible weekly/monthly habits** (already loggable on any day), or **note habits** (their value comes from the note itself, not a manually set one).
+
+Still finding its shape — the frontmatter it writes (a `reschedules` list on the habit note) may change before this graduates out of experimental.
 
 ### ✨ AI summaries
 

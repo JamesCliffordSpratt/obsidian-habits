@@ -16,6 +16,7 @@ import type { HabitStore } from "../habit-store";
 import type { HabitsPluginSettings } from "../settings";
 import type { HabitDefinition } from "../types";
 import { HabitModal } from "./habit-modal";
+import { MissedHabitsModal } from "./missed-habits-modal";
 import { createNoteHabitEntry, notePathForDate } from "../note-habit";
 import { ConfirmModal } from "./confirm-modal";
 import { ExportModal } from "./export-modal";
@@ -28,7 +29,9 @@ import {
 	isFlexible,
 	isPausedOn,
 	limitOf,
+	missedInstances,
 	normalizeCustomRange,
+	rescheduleSource,
 	type DateRange,
 	type StatsPeriod,
 	type StatsRangeMode,
@@ -249,6 +252,7 @@ export class HabitsDashboard
 		}
 
 		this.renderHeader();
+		this.renderMissedButton();
 
 		if (this.habits.length === 0) {
 			this.renderEmptyState();
@@ -265,6 +269,39 @@ export class HabitsDashboard
 		} else {
 			this.renderGrid();
 		}
+	}
+
+	/**
+	 * Floating notification button (experimental): appears bottom-right of
+	 * the dashboard only when at least one habit has a missed, still-open
+	 * due day, and opens a review of them to reschedule.
+	 */
+	private renderMissedButton(): void {
+		if (!this.getSettings().experimental.rescheduling) {
+			return;
+		}
+		const count = missedInstances(this.habits, new Date()).length;
+		if (count === 0) {
+			return;
+		}
+		const button = this.root.createEl("button", {
+			cls: "habits-icon-button habits-missed-button",
+			attr: { type: "button", "aria-label": t("Missed habits") },
+		});
+		setIcon(button, "bell");
+		const badge = button.createSpan({ cls: "habits-missed-badge" });
+		badge.setText(String(count));
+		setTooltip(
+			button,
+			count === 1
+				? t("1 missed habit")
+				: t("{count} missed habits", { count }),
+		);
+		this.registerDomEvent(button, "click", () => {
+			new MissedHabitsModal(this.app, this.store, this.habits, () =>
+				this.reload(),
+			).open();
+		});
 	}
 
 	/** Header shown on the stats view: home, period tabs, export. */
@@ -788,6 +825,25 @@ export class HabitsDashboard
 				cls: "habits-card-frequency",
 				text: frequencyLabel,
 			});
+		}
+
+		if (this.getSettings().experimental.rescheduling) {
+			const movedFrom = rescheduleSource(habit, toDateKey(this.selectedDate));
+			if (movedFrom) {
+				const badge = front.createDiv({ cls: "habits-card-rescheduled" });
+				setIcon(
+					badge.createSpan({ cls: "habits-card-rescheduled-icon" }),
+					"calendar",
+				);
+				const movedFromDate = fromDateKey(movedFrom);
+				badge.createSpan({
+					text: t("Rescheduled from {date}", {
+						date: movedFromDate
+							? friendlyDateLabel(movedFromDate, new Date())
+							: movedFrom,
+					}),
+				});
+			}
 		}
 
 		if (this.isPausedOnSelected(habit)) {

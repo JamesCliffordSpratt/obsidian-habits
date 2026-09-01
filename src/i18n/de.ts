@@ -577,4 +577,31 @@ export const de: Record<string, string> = {
 		"Ziel: {completed}/{goal} Tage erreicht",
 	"{range} · exported {date}": "{range} · exportiert am {date}",
 	"+{n} more": "+{n} weitere",
+
+	// Back-dating a missed day
+	Back: "Zurück",
+
+	// Rescheduling missed habits (experimental)
+	"1 missed habit": "1 verpasste Gewohnheit",
+	"Add a notification button to the dashboard and sidebar panel when a habit's been missed, opening a review of missed days you can move onto a different one (never a day that habit is already due, so nothing doubles up).":
+		"Fügt dem Dashboard und dem Seitenpanel eine Benachrichtigungsschaltfläche hinzu, sobald eine Gewohnheit verpasst wurde. Sie öffnet eine Übersicht der verpassten Tage, die du auf einen anderen Tag verschieben kannst (nie auf einen Tag, an dem die Gewohnheit ohnehin schon fällig ist, damit nichts doppelt gezählt wird).",
+	"Missed habits": "Verpasste Gewohnheiten",
+	"Move this missed day onto a different one":
+		"Diesen verpassten Tag auf einen anderen verschieben",
+	"Move to": "Verschieben auf",
+	"Nothing missed right now.": "Gerade nichts verpasst.",
+	"Pick a habit to move it onto a different day.":
+		"Wähle eine Gewohnheit, um sie auf einen anderen Tag zu verschieben.",
+	Reschedule: "Verschieben",
+	"Reschedule missed habits": "Verpasste Gewohnheiten verschieben",
+	"Rescheduled \"{name}\" to {date}.": '„{name}" wurde auf {date} verschoben.',
+	"Rescheduled from {date}": "Verschoben von {date}",
+	"Reschedules key": "Schlüssel für Verschiebungen",
+	"Rescheduling \"{name}\" — missed {date}.":
+		'„{name}" verschieben — verpasst am {date}.',
+	"That day no longer works — pick another.":
+		"Dieser Tag funktioniert nicht mehr — wähle einen anderen.",
+	"That day won't work — it's either already due for this habit or already claimed by another reschedule.":
+		"Dieser Tag geht nicht — entweder ist die Gewohnheit an diesem Tag bereits fällig, oder er ist schon durch eine andere Verschiebung belegt.",
+	"{count} missed habits": "{count} verpasste Gewohnheiten",
 };

@@ -9,6 +9,7 @@ import type {
 	HabitDefinition,
 	HabitFrequency,
 	HabitPause,
+	HabitReschedule,
 	HabitType,
 	NewHabitOptions,
 	NoteChecklistRequirement,
@@ -269,6 +270,7 @@ export class HabitStore {
 			startDate: this.readDateString(fm[k.startDate]),
 			paused: pauses.some((pause) => pause.end === ""),
 			pauses,
+			reschedules: this.readReschedules(fm[k.reschedules]),
 			stopped: fm[k.stopped] === true,
 			stopDate: this.readDateString(fm[k.stopDate]),
 			records: this.readRecords(fm[k.records]),
@@ -519,6 +521,33 @@ export class HabitStore {
 				? { start: pause.start }
 				: { start: pause.start, end: pause.end },
 		);
+	}
+
+	/** Parse the frontmatter `reschedules` array, dropping malformed entries. */
+	private readReschedules(raw: unknown): HabitReschedule[] {
+		if (!Array.isArray(raw)) {
+			return [];
+		}
+		const reschedules: HabitReschedule[] = [];
+		for (const item of raw) {
+			if (!item || typeof item !== "object") {
+				continue;
+			}
+			const entry = item as Record<string, unknown>;
+			const from = this.readDateString(entry.from);
+			const to = this.readDateString(entry.to);
+			if (from === "" || to === "") {
+				continue;
+			}
+			reschedules.push({ from, to });
+		}
+		return reschedules;
+	}
+
+	private serializeReschedules(
+		reschedules: HabitReschedule[],
+	): { from: string; to: string }[] {
+		return reschedules.map((r) => ({ from: r.from, to: r.to }));
 	}
 
 	/**
@@ -910,6 +939,66 @@ export class HabitStore {
 			}
 		});
 		new Notice(t('Resumed "{name}".', { name: habit.name }));
+	}
+
+	/**
+	 * Move a missed due day onto a different one (experimental). Upserts by
+	 * `from`, so calling this again for the same missed day replaces where
+	 * it was previously moved to rather than adding a second entry. Callers
+	 * are expected to have already checked {@link isRescheduleTargetOpen}
+	 * for `to` — this only guards against the note going missing mid-edit.
+	 */
+	async rescheduleHabit(
+		habit: HabitDefinition,
+		from: string,
+		to: string,
+	): Promise<void> {
+		const file = this.fileForHabit(habit);
+		if (!file) {
+			new Notice(
+				t('Could not find the note for "{name}".', {
+					name: habit.name,
+				}),
+			);
+			return;
+		}
+		const k = this.keys();
+		await this.app.fileManager.processFrontMatter(file, (frontmatter) => {
+			const fm = frontmatter as Record<string, unknown>;
+			const reschedules = this.readReschedules(fm[k.reschedules]).filter(
+				(r) => r.from !== from,
+			);
+			reschedules.push({ from, to });
+			fm[k.reschedules] = this.serializeReschedules(reschedules);
+		});
+		new Notice(
+			t('Rescheduled "{name}" to {date}.', { name: habit.name, date: to }),
+		);
+	}
+
+	/** Undo a reschedule: the original day goes back to being due. */
+	async cancelReschedule(habit: HabitDefinition, from: string): Promise<void> {
+		const file = this.fileForHabit(habit);
+		if (!file) {
+			new Notice(
+				t('Could not find the note for "{name}".', {
+					name: habit.name,
+				}),
+			);
+			return;
+		}
+		const k = this.keys();
+		await this.app.fileManager.processFrontMatter(file, (frontmatter) => {
+			const fm = frontmatter as Record<string, unknown>;
+			const reschedules = this.readReschedules(fm[k.reschedules]).filter(
+				(r) => r.from !== from,
+			);
+			if (reschedules.length > 0) {
+				fm[k.reschedules] = this.serializeReschedules(reschedules);
+			} else {
+				delete fm[k.reschedules];
+			}
+		});
 	}
 
 	/** Stop tracking a habit. The note and every record are kept. */

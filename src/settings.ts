@@ -28,12 +28,18 @@ export interface ExperimentalFlags {
 	 * from a Templater template.
 	 */
 	noteHabits: boolean;
+	/**
+	 * Reviewing and rescheduling missed habits onto a different day, from a
+	 * notification button on the dashboard and sidebar panel.
+	 */
+	rescheduling: boolean;
 }
 
 export const DEFAULT_EXPERIMENTAL: ExperimentalFlags = {
 	limitHabits: false,
 	aiSummaries: false,
 	noteHabits: false,
+	rescheduling: false,
 };
 
 /**
@@ -69,6 +75,7 @@ export interface FrontmatterKeys {
 	monthlyPerfect: string;
 	startDate: string;
 	pauses: string;
+	reschedules: string;
 	stopped: string;
 	stopDate: string;
 	icon: string;
@@ -103,6 +110,7 @@ export const DEFAULT_FRONTMATTER_KEYS: FrontmatterKeys = {
 	monthlyPerfect: "monthlyPerfect",
 	startDate: "startDate",
 	pauses: "pauses",
+	reschedules: "reschedules",
 	stopped: "stopped",
 	stopDate: "stopDate",
 	icon: "icon",
@@ -952,6 +960,22 @@ export class HabitsSettingTab extends PluginSettingTab {
 			);
 
 		new Setting(containerEl)
+			.setName(t("Reschedule missed habits"))
+			.setDesc(
+				t(
+					"Add a notification button to the dashboard and sidebar panel when a habit's been missed, opening a review of missed days you can move onto a different one (never a day that habit is already due, so nothing doubles up).",
+				),
+			)
+			.addToggle((toggle) =>
+				toggle
+					.setValue(this.plugin.settings.experimental.rescheduling)
+					.onChange(async (value) => {
+						this.plugin.settings.experimental.rescheduling = value;
+						await this.plugin.saveSettings();
+					}),
+			);
+
+		new Setting(containerEl)
 			.setName(t("AI summaries"))
 			.setDesc(
 				t(
@@ -1081,6 +1105,7 @@ const FRONTMATTER_KEY_GROUPS: {
 		fields: [
 			["startDate", () => t("Start date key")],
 			["pauses", () => t("Pauses key")],
+			["reschedules", () => t("Reschedules key")],
 			["stopped", () => t("Stopped key")],
 			["stopDate", () => t("Stop date key")],
 		],

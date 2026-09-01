@@ -118,6 +118,20 @@ export interface HabitPause {
 }
 
 /**
+ * A missed due day moved onto a different day (experimental). `from` stops
+ * counting as due; `to` — which must not already be due on its own —
+ * becomes due in its place and inherits its completion. Each date may
+ * appear in at most one reschedule, on one side only: chaining a
+ * rescheduled day into a second reschedule isn't supported.
+ */
+export interface HabitReschedule {
+	/** The original due date, `YYYY-MM-DD`, this instance was moved from. */
+	from: string;
+	/** The date, `YYYY-MM-DD`, it was moved to. */
+	to: string;
+}
+
+/**
  * A single habit, parsed from a note in the habits folder.
  *
  * The note's frontmatter holds the definition, and a `records` map holds the
@@ -217,6 +231,11 @@ export interface HabitDefinition {
 	paused: boolean;
 	/** Every pause period recorded for the habit, including any open one. */
 	pauses: HabitPause[];
+	/**
+	 * Missed due days moved onto a different day (experimental —
+	 * `experimental.rescheduling`). See {@link HabitReschedule}.
+	 */
+	reschedules: HabitReschedule[];
 	/** True when the habit is no longer tracked but keeps its history. */
 	stopped: boolean;
 	/** Date tracking stopped, as `YYYY-MM-DD` (empty when tracking). */

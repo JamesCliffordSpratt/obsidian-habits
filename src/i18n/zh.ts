@@ -556,4 +556,27 @@ export const zh: Record<string, string> = {
 		"目标：已达成 {completed}/{goal} 天",
 	"{range} · exported {date}": "{range} · 导出于 {date}",
 	"+{n} more": "还有 {n} 条",
+
+	// Back-dating a missed day
+	Back: "返回",
+
+	// Rescheduling missed habits (experimental)
+	"1 missed habit": "1 个错过的习惯",
+	"Add a notification button to the dashboard and sidebar panel when a habit's been missed, opening a review of missed days you can move onto a different one (never a day that habit is already due, so nothing doubles up).":
+		"当习惯被错过时，在仪表盘和侧边栏面板上添加一个通知按钮，点击可查看错过的日子，并将其移到另一天（绝不会是该习惯本来就到期的日子，避免重复记录）。",
+	"Missed habits": "错过的习惯",
+	"Move this missed day onto a different one": "将这个错过的日子移到另一天",
+	"Move to": "移到",
+	"Nothing missed right now.": "目前没有错过任何内容。",
+	"Pick a habit to move it onto a different day.": "选择一个习惯，将其移到另一天。",
+	Reschedule: "改期",
+	"Reschedule missed habits": "重新安排错过的习惯",
+	"Rescheduled \"{name}\" to {date}.": '已将"{name}"改期到 {date}。',
+	"Rescheduled from {date}": "从 {date} 改期而来",
+	"Reschedules key": "改期记录键",
+	"Rescheduling \"{name}\" — missed {date}.": '正在为"{name}"改期——错过了 {date}。',
+	"That day no longer works — pick another.": "那一天已经不可用了——请选择另一天。",
+	"That day won't work — it's either already due for this habit or already claimed by another reschedule.":
+		"那一天不行——要么这个习惯当天本来就到期，要么已经被另一次改期占用。",
+	"{count} missed habits": "{count} 个错过的习惯",
 };

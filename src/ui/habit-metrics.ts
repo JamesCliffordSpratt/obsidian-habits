@@ -14,7 +14,7 @@ import {
 	type ChartDataset,
 } from "chart.js";
 import type { MatrixDataPoint } from "chartjs-chart-matrix";
-import { resolveColor, withAlpha } from "./color-utils";
+import { contrastColor, resolveColor, withAlpha } from "./color-utils";
 import { monthGrid, mountHeatmapChart, pointsFromGrid, weekGrid } from "./heatmap";
 import type { HabitStore } from "../habit-store";
 import type { HabitDefinition, HabitFrequency } from "../types";
@@ -26,6 +26,7 @@ import {
 	isFlexible,
 	isPausedOn,
 	limitOf,
+	rescheduleSource,
 	trackingStartKey,
 	longestStreak,
 } from "../stats";
@@ -52,6 +53,8 @@ interface HeatmapPoint extends MatrixDataPoint {
 	key: string;
 	value: number;
 	state: HeatmapState;
+	/** The original due date, if this cell is a reschedule's destination. */
+	rescheduledFrom: string | null;
 }
 
 /** Which section of a habit's metrics block is on screen. */
@@ -339,13 +342,26 @@ export class HabitMetrics extends MarkdownRenderChild {
 		}
 	}
 
-	/** Cell border for a heatmap state; only paused/future days get one. */
+	/**
+	 * Cell border for a heatmap state; paused/future days get one, and a
+	 * rescheduled-to day gets a ring computed to contrast against both
+	 * that cell's own fill and the page behind the gaps between cells
+	 * (see {@link contrastColor}) — a fixed ring colour reads clearly
+	 * against some fills and disappears against others, so it has to be
+	 * chosen per cell.
+	 */
 	private heatmapBorder(
 		state: HeatmapState,
+		rescheduled: boolean,
+		fill: string,
 		neutral: string,
+		background: string,
 	): { color: string; width: number } {
 		if (state === "paused" || state === "future") {
 			return { color: withAlpha(neutral, 0.8), width: 1 };
+		}
+		if (rescheduled) {
+			return { color: contrastColor(fill, background), width: 4 };
 		}
 		return { color: "transparent", width: 0 };
 	}
@@ -377,6 +393,19 @@ export class HabitMetrics extends MarkdownRenderChild {
 		if (habit.type !== "binary" && !skipsValue.includes(point.state)) {
 			lines.push(`${point.value}${unit ? ` ${unit}` : ""}`);
 		}
+		if (point.rescheduledFrom) {
+			const fromDate = fromDateKey(point.rescheduledFrom);
+			lines.push(
+				t("Rescheduled from {date}", {
+					date: fromDate
+						? fromDate.toLocaleDateString(undefined, {
+								day: "numeric",
+								month: "short",
+							})
+						: point.rescheduledFrom,
+				}),
+			);
+		}
 		return lines;
 	}
 
@@ -400,6 +429,9 @@ export class HabitMetrics extends MarkdownRenderChild {
 				key: cell.key,
 				value: info.value,
 				state: info.state,
+				rescheduledFrom: cell.inRange
+					? rescheduleSource(habit, cell.key)
+					: null,
 			};
 		});
 
@@ -429,6 +461,7 @@ export class HabitMetrics extends MarkdownRenderChild {
 				key: cell.key,
 				value: info.value,
 				state: info.state,
+				rescheduledFrom: rescheduleSource(habit, cell.key),
 			};
 		});
 
@@ -464,6 +497,24 @@ export class HabitMetrics extends MarkdownRenderChild {
 			"var(--background-modifier-border)",
 		);
 		const text = resolveColor(this.containerEl, "", "var(--text-muted)");
+		const pageBg = resolveColor(
+			this.containerEl,
+			"",
+			"var(--background-primary)",
+		);
+
+		const backgrounds = points.map((p) =>
+			this.heatmapFill(p.state, accent, red, neutral),
+		);
+		const borders = points.map((p, i) =>
+			this.heatmapBorder(
+				p.state,
+				!!p.rescheduledFrom,
+				backgrounds[i],
+				neutral,
+				pageBg,
+			),
+		);
 
 		mountHeatmapChart(
 			this.containerEl,
@@ -473,15 +524,9 @@ export class HabitMetrics extends MarkdownRenderChild {
 			xLabels,
 			yLabels,
 			{
-				background: points.map((p) =>
-					this.heatmapFill(p.state, accent, red, neutral),
-				),
-				border: points.map(
-					(p) => this.heatmapBorder(p.state, neutral).color,
-				),
-				borderWidth: points.map(
-					(p) => this.heatmapBorder(p.state, neutral).width,
-				),
+				background: backgrounds,
+				border: borders.map((b) => b.color),
+				borderWidth: borders.map((b) => b.width),
 			},
 			(point) => this.heatmapTooltip(point, habit),
 			text,
@@ -637,11 +682,19 @@ export class HabitMetrics extends MarkdownRenderChild {
 			"var(--color-green, var(--text-success))",
 		);
 		const red = resolveColor(this.containerEl,"", "var(--color-red, #e05d5d)");
+		const pageBg = resolveColor(
+			this.containerEl,
+			"",
+			"var(--background-primary)",
+		);
 		const isMax = habit.goalDirection === "max";
 
 		const labels: string[] = [];
 		const values: number[] = [];
 		const colors: string[] = [];
+		const borderColors: string[] = [];
+		const borderWidths: number[] = [];
+		const rescheduledFrom: (string | null)[] = [];
 		for (let i = DAILY_DAYS - 1; i >= 0; i--) {
 			const day = addDays(today, -i);
 			const key = toDateKey(day);
@@ -655,13 +708,19 @@ export class HabitMetrics extends MarkdownRenderChild {
 			values.push(value);
 			// Over-limit days show red; other incomplete days (including
 			// days before a limit habit started) stay dim and neutral.
-			colors.push(
+			const fill =
 				isMax && value > limitOf(habit)
 					? withAlpha(red, 0.8)
 					: isComplete(habit, key)
 						? green
-						: withAlpha(accent, 0.45),
-			);
+						: withAlpha(accent, 0.45);
+			colors.push(fill);
+			// A rescheduled-to day gets a ring computed to contrast against
+			// its own bar's fill, the same treatment as the heatmaps.
+			const from = rescheduleSource(habit, key);
+			rescheduledFrom.push(from);
+			borderColors.push(from ? contrastColor(fill, pageBg) : "transparent");
+			borderWidths.push(from ? 4 : 0);
 		}
 
 		const datasets: ChartDataset<"bar" | "line", number[]>[] = [
@@ -670,6 +729,8 @@ export class HabitMetrics extends MarkdownRenderChild {
 				label: habit.unit || t("Logged"),
 				data: values,
 				backgroundColor: colors,
+				borderColor: borderColors,
+				borderWidth: borderWidths,
 				borderRadius: 3,
 			},
 		];
@@ -687,10 +748,13 @@ export class HabitMetrics extends MarkdownRenderChild {
 			});
 		}
 
+		const options = this.baseOptions(habit.type === "binary" ? 1 : undefined);
+		this.applyRescheduleTooltip(options, rescheduledFrom);
+
 		this.createChart(t("Last 30 days"), {
 			type: "bar",
 			data: { labels, datasets },
-			options: this.baseOptions(habit.type === "binary" ? 1 : undefined),
+			options,
 		});
 	}
 
@@ -833,10 +897,18 @@ export class HabitMetrics extends MarkdownRenderChild {
 			"",
 			"var(--color-green, var(--text-success))",
 		);
+		const pageBg = resolveColor(
+			this.containerEl,
+			"",
+			"var(--background-primary)",
+		);
 
 		const labels: string[] = [];
 		const values: number[] = [];
 		const colors: string[] = [];
+		const borderColors: string[] = [];
+		const borderWidths: number[] = [];
+		const rescheduledFrom: (string | null)[] = [];
 		for (const date of dates) {
 			const key = toDateKey(date);
 			labels.push(
@@ -846,11 +918,12 @@ export class HabitMetrics extends MarkdownRenderChild {
 				}),
 			);
 			values.push(habit.records[key] ?? 0);
-			colors.push(
-				isComplete(habit, key)
-					? green
-					: withAlpha(accent, 0.45),
-			);
+			const fill = isComplete(habit, key) ? green : withAlpha(accent, 0.45);
+			colors.push(fill);
+			const from = rescheduleSource(habit, key);
+			rescheduledFrom.push(from);
+			borderColors.push(from ? contrastColor(fill, pageBg) : "transparent");
+			borderWidths.push(from ? 4 : 0);
 		}
 
 		const datasets: ChartDataset<"bar" | "line", number[]>[] = [
@@ -859,6 +932,8 @@ export class HabitMetrics extends MarkdownRenderChild {
 				label: habit.unit || t("Logged"),
 				data: values,
 				backgroundColor: colors,
+				borderColor: borderColors,
+				borderWidth: borderWidths,
 				borderRadius: 3,
 			},
 		];
@@ -880,10 +955,12 @@ export class HabitMetrics extends MarkdownRenderChild {
 				: habit.frequency === "interval"
 					? t("Activity on due days")
 					: t("Monthly activity");
+		const options = this.baseOptions(habit.type === "binary" ? 1 : undefined);
+		this.applyRescheduleTooltip(options, rescheduledFrom);
 		this.createChart(title, {
 			type: "bar",
 			data: { labels, datasets },
-			options: this.baseOptions(habit.type === "binary" ? 1 : undefined),
+			options,
 		});
 	}
 
@@ -966,6 +1043,46 @@ export class HabitMetrics extends MarkdownRenderChild {
 			},
 			options,
 		});
+	}
+
+	/**
+	 * Add a "Rescheduled from {date}" tooltip line to a bar chart's hovered
+	 * bars, keyed by the same per-bar index as the dataset's own data —
+	 * mutates the options object returned by {@link baseOptions}, the same
+	 * "call baseOptions then adjust" pattern used elsewhere for the
+	 * y-axis's percent-formatting tick callback.
+	 */
+	private applyRescheduleTooltip(
+		options: ReturnType<HabitMetrics["baseOptions"]>,
+		rescheduledFrom: (string | null)[],
+	): void {
+		(
+			options.plugins as {
+				tooltip?: {
+					callbacks?: {
+						afterLabel?: (ctx: { dataIndex: number }) => string;
+					};
+				};
+			}
+		).tooltip = {
+			callbacks: {
+				afterLabel: (ctx) => {
+					const from = rescheduledFrom[ctx.dataIndex];
+					if (!from) {
+						return "";
+					}
+					const date = fromDateKey(from);
+					return t("Rescheduled from {date}", {
+						date: date
+							? date.toLocaleDateString(undefined, {
+									day: "numeric",
+									month: "short",
+								})
+							: from,
+					});
+				},
+			},
+		};
 	}
 
 	/** Shared chart options wired to the theme's text and grid colours. */

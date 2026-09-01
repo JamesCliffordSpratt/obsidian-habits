@@ -566,4 +566,28 @@ export const ja: Record<string, string> = {
 		"目標：{completed}/{goal} 日達成",
 	"{range} · exported {date}": "{range} · {date} にエクスポート",
 	"+{n} more": "他 {n} 件",
+
+	// Back-dating a missed day
+	Back: "戻る",
+
+	// Rescheduling missed habits (experimental)
+	"1 missed habit": "見逃した習慣が1件",
+	"Add a notification button to the dashboard and sidebar panel when a habit's been missed, opening a review of missed days you can move onto a different one (never a day that habit is already due, so nothing doubles up).":
+		"習慣を見逃したときに、ダッシュボードとサイドパネルに通知ボタンを追加します。見逃した日を確認し、別の日に移動できます（その習慣がもともと予定されている日には移動できないため、二重記録にはなりません）。",
+	"Missed habits": "見逃した習慣",
+	"Move this missed day onto a different one": "この見逃した日を別の日に移動",
+	"Move to": "移動先",
+	"Nothing missed right now.": "現在、見逃したものはありません。",
+	"Pick a habit to move it onto a different day.": "別の日に移動する習慣を選んでください。",
+	Reschedule: "リスケジュール",
+	"Reschedule missed habits": "見逃した習慣をリスケジュール",
+	"Rescheduled \"{name}\" to {date}.": "「{name}」を{date}にリスケジュールしました。",
+	"Rescheduled from {date}": "{date}からリスケジュール",
+	"Reschedules key": "リスケジュールキー",
+	"Rescheduling \"{name}\" — missed {date}.":
+		"「{name}」をリスケジュール中 — {date}に見逃しました。",
+	"That day no longer works — pick another.": "その日はもう使えません — 別の日を選んでください。",
+	"That day won't work — it's either already due for this habit or already claimed by another reschedule.":
+		"その日は使えません — その習慣がもともとその日に予定されているか、すでに別のリスケジュールで使われています。",
+	"{count} missed habits": "見逃した習慣が{count}件",
 };
