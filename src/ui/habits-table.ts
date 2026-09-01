@@ -1,9 +1,11 @@
 import {
 	App,
 	MarkdownRenderChild,
+	TFile,
 	debounce,
 	normalizePath,
 	setIcon,
+	setTooltip,
 	type Events,
 } from "obsidian";
 import { t } from "../i18n";
@@ -18,10 +20,14 @@ import {
 	isFlexible,
 	isPausedOn,
 	limitOf,
+	rescheduleSource,
 	type DateRange,
 } from "../stats";
+import { createNoteHabitEntry, notePathForDate } from "../note-habit";
 import {
 	formatTimeOfDay,
+	friendlyDateLabel,
+	fromDateKey,
 	groupHabits,
 	habitScheduleLabel,
 	sectionLabel,
@@ -182,6 +188,24 @@ export class HabitsTable extends MarkdownRenderChild {
 			});
 			setIcon(badge, "pause");
 		}
+		if (this.getSettings().experimental.rescheduling) {
+			const movedFrom = rescheduleSource(habit, toDateKey(today));
+			if (movedFrom) {
+				const badge = nameCell.createSpan({
+					cls: "habits-table-rescheduled",
+				});
+				setIcon(badge, "calendar");
+				const movedFromDate = fromDateKey(movedFrom);
+				setTooltip(
+					badge,
+					t("Rescheduled from {date}", {
+						date: movedFromDate
+							? friendlyDateLabel(movedFromDate, today)
+							: movedFrom,
+					}),
+				);
+			}
+		}
 
 		row.createEl("td", {
 			cls: "habits-table-schedule",
@@ -207,10 +231,12 @@ export class HabitsTable extends MarkdownRenderChild {
 	 * The interactive Today column, sitting between the schedule and the
 	 * period counts: log today's value without leaving the table.
 	 * Binary habits get the Done/Not done pill, limit habits the
-	 * slip toggle, counted and timed habits a compact stepper. Habits not
-	 * due today show a dash; paused habits a pause glyph. The cell redraws
-	 * itself optimistically on click — the count columns catch up when the
-	 * note change comes back through the metadata cache.
+	 * slip toggle, counted and timed habits a compact stepper, and note
+	 * habits a button to open (or create) today's note — their completion
+	 * comes from the note's own content, never a manually-set value. Habits
+	 * not due today show a dash; paused habits a pause glyph. The cell
+	 * redraws itself optimistically on click — the count columns catch up
+	 * when the note change comes back through the metadata cache.
 	 */
 	private renderTodayCell(
 		cell: HTMLElement,
@@ -230,6 +256,11 @@ export class HabitsTable extends MarkdownRenderChild {
 		}
 		if (!isActive(habit, today)) {
 			cell.createSpan({ cls: "habits-table-notdue", text: "–" });
+			return;
+		}
+
+		if (habit.type === "note") {
+			this.renderNoteCell(cell, habit, dateKey);
 			return;
 		}
 
@@ -339,6 +370,41 @@ export class HabitsTable extends MarkdownRenderChild {
 		setIcon(plus, "plus");
 		this.registerDomEvent(plus, "click", () => {
 			void commit(value + step);
+		});
+	}
+
+	/**
+	 * Note habits are completed by the note's own content (chars, checklist,
+	 * or both — see `noteCompletionMode`), never by a manually-set value, so
+	 * the Today cell offers only a button to open or create that day's note
+	 * rather than the +/- stepper the other types get.
+	 */
+	private renderNoteCell(
+		cell: HTMLElement,
+		habit: HabitDefinition,
+		dateKey: string,
+	): void {
+		const notePath = notePathForDate(habit, dateKey);
+		const exists =
+			this.app.vault.getAbstractFileByPath(notePath) instanceof TFile;
+		const button = cell.createEl("button", {
+			cls: "habits-icon-button habits-table-mini",
+			attr: { type: "button" },
+		});
+		setIcon(button, exists ? "file-text" : "square-pen");
+		setTooltip(
+			button,
+			exists ? t("Open this day's note") : t("Write this day's note"),
+		);
+		this.registerDomEvent(button, "click", async () => {
+			if (exists) {
+				void this.app.workspace.openLinkText(notePath, "", false);
+				return;
+			}
+			const file = await createNoteHabitEntry(this.app, habit, dateKey);
+			if (file) {
+				void this.app.workspace.openLinkText(file.path, "", false);
+			}
 		});
 	}
 

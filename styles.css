@@ -2816,6 +2816,18 @@ table.habits-table .habits-table-paused .svg-icon {
 	height: 0.85em;
 }
 
+table.habits-table .habits-table-rescheduled {
+	display: inline-flex;
+	vertical-align: middle;
+	margin-left: 0.4em;
+	color: var(--text-muted);
+}
+
+table.habits-table .habits-table-rescheduled .svg-icon {
+	width: 0.85em;
+	height: 0.85em;
+}
+
 table.habits-table td.habits-table-schedule {
 	color: var(--text-muted);
 }
