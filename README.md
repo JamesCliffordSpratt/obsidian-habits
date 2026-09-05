@@ -4,6 +4,7 @@
 
 ![GitHub release](https://img.shields.io/github/v/release/JamesCliffordSpratt/obsidian-habits)
 ![GitHub license](https://img.shields.io/github/license/JamesCliffordSpratt/obsidian-habits)
+![Downloads](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fobsidianmd%2Fobsidian-releases%2Fmaster%2Fcommunity-plugin-stats.json&query=%24.habits.downloads&label=downloads&color=483699)
 ![Obsidian min version](https://img.shields.io/badge/Obsidian-1.7.2%2B-483699)
 
 ![Recording habits on the dashboard](images/habits-renderer.gif)
