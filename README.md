@@ -224,7 +224,9 @@ Some features ship behind opt-in toggles under **Settings → Habits → Experim
 
 ### 🚭 Break bad habits
 
-Track habits you want to reduce or avoid by staying **under a daily limit** instead of reaching a target — at most 2 hours of gaming, no more than one coffee, or no smoking at all (a limit of 0).
+Track habits you want to reduce or avoid by staying **within a limit** instead of reaching a target — at most 2 hours of gaming, no more than one coffee, or no smoking at all (a limit of 0).
+
+Limit habits have the same **Frequency** options as target habits. Daily, weekly on selected weekdays, monthly on a selected date, and every N days apply the limit separately on each due day. **Weekly (any day)** and **Monthly (any day)** apply the limit to the cumulative total across the calendar week (Monday–Sunday) or month. For example, a timed habit with a weekly limit of 120 allows at most 120 minutes across the week. You can keep logging after exceeding the limit; edit or subtract records on the day they occurred to correct them. Binary limits always allow zero slips, including in cumulative modes. A total equal to the limit is still within it; an unlogged due day or period is clean. Existing habits remain daily unless you change their frequency.
 
 - **Done/not-done limit habits** get two buttons: **Clean** and **Slipped**. An unlogged day already counts as clean — silence is success.
 - **Counted and timed limit habits** log consumption against the limit; the progress bar fills toward the limit and turns red past it.

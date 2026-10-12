@@ -315,6 +315,14 @@ export const zh: Record<string, string> = {
 	"Binary means avoiding it entirely. Repetition counts against a daily limit. Timed tracks minutes against a daily limit.":
 		"二元表示完全避免。重复按每日限额计数。计时按每日限额记录分钟数。",
 	"Daily limit": "每日限额",
+	"Weekly limit": "每周限额",
+	"Weekly total limit · any day": "每周累计限额 · 任意日期",
+	"Monthly total limit · any day": "每月累计限额 · 任意日期",
+	"Monthly limit": "每月限额",
+	"Limit per due day": "每个计划日的限额",
+	"Limit in minutes. 0 means none at all.": "限额以分钟计，0 表示完全不允许。",
+	"Choose the days this limit applies, or a weekly/monthly total limit that can be logged on any day.": "选择限制适用的日期，或选择可在任意日期记录的每周／每月累计限额。",
+	"Binary means avoiding it entirely. Repetition counts against a limit. Timed tracks minutes against a limit. Frequency determines when the limit applies.": "二元类型表示完全避免；计数和计时类型分别按次数和分钟判断是否超限。频率决定限制适用的日期或周期。",
 	"Daily limit (minutes)": "每日限额（分钟）",
 	"0 means none at all.": "0 表示完全不做。",
 	"Set an optional weekly or monthly goal for how many days you stay within your limit. Turn on a perfect toggle to aim for every day of the period automatically, whatever its length.":
