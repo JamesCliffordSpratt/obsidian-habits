@@ -2937,3 +2937,67 @@ table.habits-table .habits-table-notdue {
 	width: 0.85em;
 	height: 0.85em;
 }
+
+/* Compact embedded logger: one coloured row per habit. */
+.habits-compact {
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 10px;
+	padding: 8px;
+	background: var(--background-primary);
+}
+.habits-compact-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+	margin-bottom: 8px;
+}
+.habits-compact-nav, .habits-compact-controls {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+.habits-compact-date {
+	font-weight: var(--font-semibold);
+	background: transparent;
+	box-shadow: none;
+	padding: 4px;
+}
+.habits-compact-list { display: flex; flex-direction: column; gap: 12px; }
+.habits-compact-row {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	min-height: 62px;
+	padding: 10px 14px;
+	border: 1px solid var(--background-modifier-border);
+	border-left: 3px solid var(--habits-accent);
+	border-radius: 14px;
+	background: var(--background-secondary);
+	background: color-mix(in srgb, var(--habits-accent) 8%, var(--background-primary));
+}
+.habits-compact-name {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	min-width: 0;
+	color: var(--text-normal);
+	font-weight: var(--font-semibold);
+	text-decoration: none;
+}
+.habits-compact-name > span:last-child { overflow-wrap: anywhere; }
+.habits-compact-icon { display: inline-flex; color: var(--habits-accent); flex-shrink: 0; }
+.habits-compact-controls { flex-shrink: 0; color: var(--text-muted); }
+.habits-compact-value { font-variant-numeric: tabular-nums; }
+.habits-compact-current { color: var(--habits-accent); font-weight: var(--font-semibold); }
+.habits-compact .habits-compact-button { width: 38px; height: 38px; padding: 6px; }
+.habits-compact .habits-compact-toggle { border-radius: 50%; }
+.habits-compact-row.is-done .habits-compact-toggle { color: var(--habits-accent); }
+.habits-compact-group { color: var(--text-muted); font-weight: var(--font-semibold); }
+.habits-compact-empty { padding: 16px; color: var(--text-muted); text-align: center; }
+@media (max-width: 480px) {
+	.habits-compact-row { flex-wrap: wrap; gap: 8px; padding: 10px; }
+	.habits-compact-controls { margin-left: auto; }
+	.habits-compact-value { font-size: var(--font-small); }
+}
