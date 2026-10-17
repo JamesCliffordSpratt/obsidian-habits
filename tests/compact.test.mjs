@@ -31,13 +31,13 @@ const result = await build({
       export const setTooltip = () => {};
       export const moment = {};
     ` }));
-    build.onLoad({ filter: /i18n\/index\.ts$/ }, () => ({ contents: 'export const t = (s, vars = {}) => s.replace(/\\{(.*?)\\}/g, (_, k) => vars[k]);' }));
-    build.onLoad({ filter: /ui\/habit-modal\.ts$/ }, () => ({ contents: 'export class HabitModal { constructor(...args) { this.args = args; } open() { globalThis.lastHabitModal = this; } }' }));
-    build.onLoad({ filter: /ui\/confirm-modal\.ts$/ }, () => ({ contents: 'export class ConfirmModal { constructor(app, options) { this.options = options; } open() { globalThis.lastConfirmation = this.options; } }' }));
-    build.onLoad({ filter: /ui\/dashboard\.ts$/ }, () => ({ contents: 'import { MarkdownRenderChild } from "obsidian"; export class HabitsDashboard extends MarkdownRenderChild { constructor(a, s, g, e, p, root) { super(root); } onload() { this.containerEl.createSpan({ text: "Card dashboard" }); } }' }));
-    build.onLoad({ filter: /ui\/icon-suggest-modal\.ts$/ }, () => ({ contents: 'export const applyHabitIcon = (el, icon) => { el.icon = icon; };' }));
-    build.onLoad({ filter: /ui\/stats-view\.ts$/ }, () => ({ contents: 'export const renderStatsView = () => {};' }));
-    build.onLoad({ filter: /\/note-habit\.ts$/ }, () => ({ contents: 'export const notePathForDate = (h, k) => `${h.noteFolder}/${k}.md`; export const createNoteHabitEntry = async () => null;' }));
+    build.onLoad({ filter: /i18n[\\/]index\.ts$/ }, () => ({ contents: 'export const t = (s, vars = {}) => s.replace(/\\{(.*?)\\}/g, (_, k) => vars[k]);' }));
+    build.onLoad({ filter: /ui[\\/]habit-modal\.ts$/ }, () => ({ contents: 'export class HabitModal { constructor(...args) { this.args = args; } open() { globalThis.lastHabitModal = this; } }' }));
+    build.onLoad({ filter: /ui[\\/]confirm-modal\.ts$/ }, () => ({ contents: 'export class ConfirmModal { constructor(app, options) { this.options = options; } open() { globalThis.lastConfirmation = this.options; } }' }));
+    build.onLoad({ filter: /ui[\\/]dashboard\.ts$/ }, () => ({ contents: 'import { MarkdownRenderChild } from "obsidian"; export class HabitsDashboard extends MarkdownRenderChild { constructor(a, s, g, e, p, root) { super(root); } onload() { this.containerEl.createSpan({ text: "Card dashboard" }); } }' }));
+    build.onLoad({ filter: /ui[\\/]icon-suggest-modal\.ts$/ }, () => ({ contents: 'export const applyHabitIcon = (el, icon) => { el.icon = icon; };' }));
+    build.onLoad({ filter: /ui[\\/]stats-view\.ts$/ }, () => ({ contents: 'export const renderStatsView = () => {};' }));
+    build.onLoad({ filter: /[\\/]note-habit\.ts$/ }, () => ({ contents: 'export const notePathForDate = (h, k) => `${h.noteFolder}/${k}.md`; export const createNoteHabitEntry = async () => null;' }));
   } }],
 });
 const { HabitsCompact, HabitsBlock } = await import(`data:text/javascript;base64,${Buffer.from(result.outputFiles[0].text).toString('base64')}`);
@@ -54,19 +54,71 @@ class Element {
   empty() { this.children = []; }
   all() { return [this, ...this.children.flatMap(el => el.all())]; }
 }
-function fixture(overrides = {}, write = async () => {}) {
+function fixture(overrides = {}, write = async () => {}, extra = {}) {
   const habit = { path: 'Habits/Test.md', name: 'Test', type: 'repetition', frequency: 'daily', target: 5, unit: 'cups', goalDirection: 'min', startDate: '2020-01-01', records: {}, pauses: [], reschedules: [], times: [], group: '', ...overrides };
   const events = {};
   const app = { metadataCache: { on: (name, fn) => { events[name] = fn; } }, vault: { on() {}, getAbstractFileByPath() {} }, workspace: { openLinkText() {} } };
-  const store = { getHabits: () => [structuredClone(habit)], setRecord: write };
-  const settings = { habitsFolder: 'Habits', sortMode: 'name', manualOrder: [], groups: {}, groupOrder: [], experimental: {} };
+  const store = { getHabits: () => structuredClone([habit, ...(extra.habits ?? [])]), setRecord: write };
+  const settings = { habitsFolder: 'Habits', sortMode: 'name', manualOrder: [], groups: {}, groupOrder: [], experimental: {}, statusOrdering: true, ...extra.settings };
   const root = new Element();
   const view = new HabitsCompact(app, store, () => settings, { on() {} }, 'Dashboard.md', root);
   view.selectedDate = new Date(2026, 9, 12); view.onload();
   const button = label => root.all().find(el => el.attrs['aria-label'] === label);
   const text = () => root.all().map(el => el.text).join('');
-  return { view, root, habit, events, button, text, app, store };
+  return { view, root, habit, events, button, text, app, store, settings };
 }
+
+const rowNames = root => root.all().filter(el => el.className === 'habits-compact-row').map(row => row.children.find(el => el.className === 'habits-compact-name').children.at(-1).text);
+
+test('completed rows move down after saving and return when undone', async () => {
+  const second = { path: 'Habits/Zebra.md', name: 'Zebra', type: 'binary', frequency: 'daily', target: 1, goalDirection: 'min', startDate: '2020-01-01', records: {}, pauses: [], reschedules: [], times: [], group: '' };
+  const f = fixture({ name: 'Alpha', type: 'binary', target: 1 }, async () => {}, { habits: [second] });
+  assert.deepEqual(rowNames(f.root), ['Alpha', 'Zebra']);
+  f.button('Mark as done').handlers.click(); await new Promise(setImmediate);
+  assert.deepEqual(rowNames(f.root), ['Zebra', 'Alpha']);
+  f.button('Mark as not done').handlers.click(); await new Promise(setImmediate);
+  assert.deepEqual(rowNames(f.root), ['Alpha', 'Zebra']);
+});
+
+test('status order respects settings, selected date and paused rows', () => {
+  const base = { type: 'binary', frequency: 'daily', target: 1, goalDirection: 'min', startDate: '2020-01-01', pauses: [], reschedules: [], times: [], group: '' };
+  const f = fixture({ ...base, name: 'Alpha', records: { '2026-10-12': 1 } }, async () => {}, { habits: [
+    { ...base, path: 'Habits/Beta.md', name: 'Beta', records: {} },
+    { ...base, path: 'Habits/Gamma.md', name: 'Gamma', records: {}, pauses: [{ start: '2026-10-01', end: '' }] },
+  ] });
+  assert.deepEqual(rowNames(f.root), ['Beta', 'Alpha', 'Gamma']);
+  f.button('Next day').handlers.click();
+  assert.deepEqual(rowNames(f.root), ['Alpha', 'Beta', 'Gamma']);
+  f.button('Previous day').handlers.click();
+  f.settings.statusOrdering = false; f.events.changed({ path: 'other.md' });
+  assert.deepEqual(rowNames(f.root), ['Alpha', 'Beta', 'Gamma']);
+});
+
+test('completed rows stay within their group', () => {
+  const base = { type: 'binary', frequency: 'daily', target: 1, goalDirection: 'min', startDate: '2020-01-01', pauses: [], reschedules: [], times: [] };
+  const f = fixture({ ...base, name: 'Alpha', group: 'First', records: { '2026-10-12': 1 } }, async () => {}, {
+    habits: [
+      { ...base, path: 'Habits/Beta.md', name: 'Beta', group: 'First', records: {} },
+      { ...base, path: 'Habits/Gamma.md', name: 'Gamma', group: 'Second', records: {} },
+    ],
+    settings: { groupsEnabled: true, sortMode: 'group', groupOrder: ['First', 'Second'] },
+  });
+  assert.deepEqual(rowNames(f.root), ['Beta', 'Alpha', 'Gamma']);
+});
+
+test('date label opens the picker and a selected date changes the logged day', async () => {
+  const writes = [];
+  const f = fixture({}, async (...args) => writes.push(args));
+  const input = f.root.all().find(el => el.className === 'habits-compact-date-input');
+  let opened = false;
+  input.showPicker = () => { opened = true; };
+  f.button('Choose a date').handlers.click();
+  assert.equal(opened, true);
+  assert.equal(input.value, '2026-10-12');
+  input.value = '2026-09-05'; input.handlers.change();
+  f.button('Increase by 1').handlers.click(); await new Promise(setImmediate);
+  assert.equal(writes[0][1], '2026-09-05');
+});
 
 test('successful writes bridge stale metadata, then accept external changes', async () => {
   const writes = [];
