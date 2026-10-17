@@ -4,7 +4,7 @@ import type { HabitsPluginSettings } from "../settings";
 import type { HabitDefinition } from "../types";
 import { t } from "../i18n";
 import { flexiblePeriodTotal, isActive, isComplete, isFlexible, isPausedOn, limitOf } from "../stats";
-import { addDays, friendlyDateLabel, groupHabits, habitAccent, parseNoteDate, registerLongPress, sectionLabel, sortHabits, toDateKey } from "../utils";
+import { addDays, friendlyDateLabel, fromDateKey, groupHabits, habitAccent, parseNoteDate, registerLongPress, sectionLabel, sortHabits, toDateKey } from "../utils";
 import { createNoteHabitEntry, notePathForDate } from "../note-habit";
 import { HabitModal } from "./habit-modal";
 import { applyHabitIcon } from "./icon-suggest-modal";
@@ -95,8 +95,19 @@ export class HabitsCompact extends MarkdownRenderChild {
 		stats.setAttribute("aria-pressed", String(this.stats));
 		const nav = header.createDiv({ cls: "habits-compact-nav" });
 		this.button(nav, "chevron-left", t("Previous day"), () => { this.selectedDate = addDays(this.selectedDate, -1); this.render(); });
-		const today = nav.createEl("button", { cls: "habits-compact-date", text: friendlyDateLabel(this.selectedDate, new Date()), attr: { type: "button", "aria-label": t("Today") } });
-		this.renderEvents.registerDomEvent(today, "click", () => { this.selectedDate = new Date(); this.render(); });
+		const dateDisplay = nav.createSpan({ cls: "habits-date-display" });
+		const dateButton = dateDisplay.createEl("button", { cls: "habits-compact-date", text: friendlyDateLabel(this.selectedDate, new Date()), attr: { type: "button", "aria-label": t("Choose a date") } });
+		const dateInput = dateDisplay.createEl("input", { cls: "habits-compact-date-input", attr: { type: "date", tabindex: "-1", "aria-hidden": "true" } });
+		dateInput.value = toDateKey(this.selectedDate);
+		this.renderEvents.registerDomEvent(dateInput, "change", () => {
+			const parsed = fromDateKey(dateInput.value);
+			if (parsed) { this.selectedDate = parsed; this.render(); }
+		});
+		this.renderEvents.registerDomEvent(dateButton, "click", () => {
+			dateInput.value = toDateKey(this.selectedDate);
+			if (typeof dateInput.showPicker === "function") dateInput.showPicker();
+			else dateInput.click();
+		});
 		this.button(nav, "chevron-right", t("Next day"), () => { this.selectedDate = addDays(this.selectedDate, 1); this.render(); });
 		this.button(header, "plus", t("Add habit"), () => {
 			new HabitModal(this.app, this.store, () => this.render(), null, settings.experimental.limitHabits, settings.experimental.noteHabits).open();
@@ -112,10 +123,19 @@ export class HabitsCompact extends MarkdownRenderChild {
 		}
 		const list = root.createDiv({ cls: "habits-compact-list" });
 		const grouped = settings.groupsEnabled && settings.sortMode === "group";
+		const key = toDateKey(this.selectedDate);
 		for (const section of groupHabits(due, grouped, settings.groupOrder)) {
 			if (grouped) list.createDiv({ cls: "habits-compact-group", text: sectionLabel(section.key) });
-			// Keep rows in their chosen order while logging, so controls never jump under the pointer.
-			for (const habit of section.habits) this.renderRow(list, habit);
+			let ordered = section.habits;
+			if (settings.statusOrdering) {
+				const active = ordered.filter(habit => !isPausedOn(habit, key));
+				ordered = [
+					...active.filter(habit => !isComplete(habit, key)),
+					...active.filter(habit => isComplete(habit, key)),
+					...ordered.filter(habit => isPausedOn(habit, key)),
+				];
+			}
+			for (const habit of ordered) this.renderRow(list, habit);
 		}
 	}
 
