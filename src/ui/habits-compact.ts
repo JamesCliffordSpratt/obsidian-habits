@@ -96,7 +96,9 @@ export class HabitsCompact extends MarkdownRenderChild {
 		const nav = header.createDiv({ cls: "habits-compact-nav" });
 		this.button(nav, "chevron-left", t("Previous day"), () => { this.selectedDate = addDays(this.selectedDate, -1); this.render(); });
 		const dateButton = nav.createEl("button", { cls: "habits-compact-date", text: friendlyDateLabel(this.selectedDate, new Date()), attr: { type: "button", "aria-label": t("Choose a date") } });
-		const dateInput = nav.createEl("input", { cls: "habits-compact-date-input", attr: { type: "date", tabindex: "-1", "aria-hidden": "true" } });
+		// Keep the native picker outside the flex navigation so theme styles on
+		// date inputs cannot introduce a phantom gap between the buttons.
+		const dateInput = root.createEl("input", { cls: "habits-compact-date-input", attr: { type: "date", tabindex: "-1", "aria-hidden": "true" } });
 		dateInput.value = toDateKey(this.selectedDate);
 		this.renderEvents.registerDomEvent(dateInput, "change", () => {
 			const parsed = fromDateKey(dateInput.value);
