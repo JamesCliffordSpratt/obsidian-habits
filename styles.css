@@ -2957,7 +2957,18 @@ table.habits-table .habits-table-notdue {
 	align-items: center;
 	gap: 8px;
 }
+.habits-compact-nav {
+	position: relative;
+	justify-content: center;
+	flex: 0 0 auto;
+}
+.habits-compact-nav > button {
+	flex: 0 0 auto;
+}
 .habits-compact-date {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
 	font-weight: var(--font-semibold);
 	background: transparent;
 	box-shadow: none;
@@ -2965,10 +2976,14 @@ table.habits-table .habits-table-notdue {
 }
 .habits-compact-date-input {
 	position: absolute;
-	left: 0;
+	left: 50%;
 	bottom: 0;
 	width: 1px;
 	height: 1px;
+	min-width: 0;
+	min-height: 0;
+	max-width: 1px;
+	max-height: 1px;
 	margin: 0;
 	padding: 0;
 	border: 0;
@@ -2988,6 +3003,16 @@ table.habits-table .habits-table-notdue {
 	border-radius: 12px;
 	background: var(--background-secondary);
 	background: color-mix(in srgb, var(--habits-accent) 8%, var(--background-primary));
+}
+/* Match the compact-card reference: completed habits recede but remain usable. */
+.habits-compact-row.is-done {
+	opacity: 0.58;
+	filter: saturate(0.45);
+	border-left-color: var(--background-modifier-border);
+}
+.habits-compact-row.is-done:hover,
+.habits-compact-row.is-done:focus-within {
+	opacity: 0.78;
 }
 .habits-compact-name {
 	display: flex;

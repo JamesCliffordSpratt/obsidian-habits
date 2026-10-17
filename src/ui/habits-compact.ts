@@ -95,9 +95,8 @@ export class HabitsCompact extends MarkdownRenderChild {
 		stats.setAttribute("aria-pressed", String(this.stats));
 		const nav = header.createDiv({ cls: "habits-compact-nav" });
 		this.button(nav, "chevron-left", t("Previous day"), () => { this.selectedDate = addDays(this.selectedDate, -1); this.render(); });
-		const dateDisplay = nav.createSpan({ cls: "habits-date-display" });
-		const dateButton = dateDisplay.createEl("button", { cls: "habits-compact-date", text: friendlyDateLabel(this.selectedDate, new Date()), attr: { type: "button", "aria-label": t("Choose a date") } });
-		const dateInput = dateDisplay.createEl("input", { cls: "habits-compact-date-input", attr: { type: "date", tabindex: "-1", "aria-hidden": "true" } });
+		const dateButton = nav.createEl("button", { cls: "habits-compact-date", text: friendlyDateLabel(this.selectedDate, new Date()), attr: { type: "button", "aria-label": t("Choose a date") } });
+		const dateInput = nav.createEl("input", { cls: "habits-compact-date-input", attr: { type: "date", tabindex: "-1", "aria-hidden": "true" } });
 		dateInput.value = toDateKey(this.selectedDate);
 		this.renderEvents.registerDomEvent(dateInput, "change", () => {
 			const parsed = fromDateKey(dateInput.value);
