@@ -146,6 +146,19 @@ From there, the download button opens the **PDF export** dialog:
 
 ![Building a PDF report](images/habits-report.gif)
 
+## Compact habit logger
+
+Choose **Settings → Habits → Dashboard layout → Compact list** for a full-width list with one coloured row per habit. Existing `habits` blocks switch immediately; the default carousel layout is unchanged. Add a dashboard using **Insert dashboard** or an empty block:
+
+```habits
+```
+
+The header offers statistics, previous/next day navigation, and habit creation. Click the date label to return to today. Habit names open their backing notes. Binary habits have a round toggle; counted habits use −/+ steps of 1 and timed habits use steps of 5 minutes. Values include the habit's unit. Flexible weekly/monthly habits show the cumulative total through the selected day, while the buttons change only that day's record. A decrement cannot remove records from other days.
+
+Right-click a habit row (or long-press on mobile) to open its note, edit it, pause/resume tracking, stop tracking, or remove it. Stopping and removing a habit require the same confirmation as the card dashboard.
+
+The view follows the dashboard's sort and group settings, keeps rows in place while logging, and respects schedules, start dates, pauses, limit goals, and the daily-note date setting. Note habits offer an open/create note button rather than manual counters. Changes from other panes and sync refresh the view automatically.
+
 ## 📋 The habits table
 
 Drop a `habits-table` code block into any note (there's an **Insert habits table** command) for a compact overview of every active habit:

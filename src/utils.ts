@@ -52,6 +52,7 @@ export function registerLongPress(
 	});
 	component.registerDomEvent(el, "touchend", clear);
 	component.registerDomEvent(el, "touchcancel", clear);
+	component.register(clear);
 }
 
 /**

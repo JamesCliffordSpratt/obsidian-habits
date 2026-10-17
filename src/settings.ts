@@ -172,7 +172,7 @@ export const DEFAULT_REMINDERS: ReminderSettings = {
 };
 
 /** How the dashboard presents its habit cards. */
-export type DashboardLayout = "carousel" | "grid" | "vertical";
+export type DashboardLayout = "carousel" | "grid" | "vertical" | "compact";
 
 /** User-configurable settings for the plugin. */
 export interface HabitsPluginSettings {
@@ -180,7 +180,8 @@ export interface HabitsPluginSettings {
 	habitsFolder: string;
 	/**
 	 * How the dashboard shows its cards: a paged carousel, a grid that
-	 * wraps onto new rows, or a fixed-height vertically scrolling grid.
+	 * wraps onto new rows, a fixed-height vertically scrolling grid,
+	 * or a compact list with one row per habit.
 	 */
 	dashboardLayout: DashboardLayout;
 	/** How many cards are visible at once in the carousel on wide screens. */
@@ -628,7 +629,7 @@ export class HabitsSettingTab extends PluginSettingTab {
 			.setName(t("Dashboard layout"))
 			.setDesc(
 				t(
-					"How to move through your habit cards: a paged carousel with arrows, a grid that wraps onto new rows, or a fixed-height grid that scrolls vertically. The stats page follows the same choice.",
+					"Choose a carousel, grid, vertical scroll, or compact list for your habits dashboard.",
 				),
 			)
 			.addDropdown((dropdown) =>
@@ -636,10 +637,11 @@ export class HabitsSettingTab extends PluginSettingTab {
 					.addOption("carousel", t("Carousel"))
 					.addOption("grid", t("Grid"))
 					.addOption("vertical", t("Vertical scroll"))
+					.addOption("compact", t("Compact list"))
 					.setValue(this.plugin.settings.dashboardLayout)
 					.onChange(async (value) => {
 						this.plugin.settings.dashboardLayout =
-							value === "grid" || value === "vertical"
+							value === "grid" || value === "vertical" || value === "compact"
 								? value
 								: "carousel";
 						await this.plugin.saveSettings();
