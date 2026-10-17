@@ -2963,17 +2963,17 @@ table.habits-table .habits-table-notdue {
 	box-shadow: none;
 	padding: 4px;
 }
-.habits-compact-list { display: flex; flex-direction: column; gap: 12px; }
+.habits-compact-list { display: flex; flex-direction: column; gap: 8px; }
 .habits-compact-row {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	gap: 12px;
-	min-height: 62px;
-	padding: 10px 14px;
+	gap: 8px;
+	min-height: 52px;
+	padding: 8px 10px;
 	border: 1px solid var(--background-modifier-border);
 	border-left: 3px solid var(--habits-accent);
-	border-radius: 14px;
+	border-radius: 12px;
 	background: var(--background-secondary);
 	background: color-mix(in srgb, var(--habits-accent) 8%, var(--background-primary));
 }
@@ -2991,13 +2991,13 @@ table.habits-table .habits-table-notdue {
 .habits-compact-controls { flex-shrink: 0; color: var(--text-muted); }
 .habits-compact-value { font-variant-numeric: tabular-nums; }
 .habits-compact-current { color: var(--habits-accent); font-weight: var(--font-semibold); }
-.habits-compact .habits-compact-button { width: 38px; height: 38px; padding: 6px; }
+.habits-compact .habits-compact-button { width: 34px; height: 34px; padding: 5px; }
 .habits-compact .habits-compact-toggle { border-radius: 50%; }
 .habits-compact-row.is-done .habits-compact-toggle { color: var(--habits-accent); }
 .habits-compact-group { color: var(--text-muted); font-weight: var(--font-semibold); }
 .habits-compact-empty { padding: 16px; color: var(--text-muted); text-align: center; }
 @media (max-width: 480px) {
-	.habits-compact-row { flex-wrap: wrap; gap: 8px; padding: 10px; }
+	.habits-compact-row { flex-wrap: wrap; gap: 6px; padding: 8px; }
 	.habits-compact-controls { margin-left: auto; }
 	.habits-compact-value { font-size: var(--font-small); }
 }
