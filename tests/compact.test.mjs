@@ -115,7 +115,8 @@ test('date label opens the picker and a selected date changes the logged day', a
   const f = fixture({}, async (...args) => writes.push(args));
   const input = f.root.all().find(el => el.className === 'habits-compact-date-input');
   const nav = f.root.all().find(el => el.className === 'habits-compact-nav');
-  assert.deepEqual(nav.children.map(el => el.attrs['aria-label'] ?? el.className), ['Previous day', 'Choose a date', 'habits-compact-date-input', 'Next day']);
+  assert.deepEqual(nav.children.map(el => el.attrs['aria-label']), ['Previous day', 'Choose a date', 'Next day']);
+  assert.ok(f.root.children.includes(input), 'date picker must not occupy navigation space');
   let opened = false;
   input.showPicker = () => { opened = true; };
   f.button('Choose a date').handlers.click();
