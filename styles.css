@@ -2940,6 +2940,7 @@ table.habits-table .habits-table-notdue {
 
 /* Compact embedded logger: one coloured row per habit. */
 .habits-compact {
+	position: relative;
 	border: 1px solid var(--background-modifier-border);
 	border-radius: 10px;
 	padding: 8px;
@@ -2975,9 +2976,9 @@ table.habits-table .habits-table-notdue {
 	padding: 4px;
 }
 .habits-compact-date-input {
-	position: absolute;
+	position: absolute !important;
 	left: 50%;
-	bottom: 0;
+	top: 24px;
 	width: 1px;
 	height: 1px;
 	min-width: 0;
