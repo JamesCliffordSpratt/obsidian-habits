@@ -76,8 +76,12 @@ test('completed rows move down after saving and return when undone', async () =>
   assert.deepEqual(rowNames(f.root), ['Alpha', 'Zebra']);
   f.button('Mark as done').handlers.click(); await new Promise(setImmediate);
   assert.deepEqual(rowNames(f.root), ['Zebra', 'Alpha']);
+  const completed = f.root.all().find(el => el.className === 'habits-compact-row' && el.classes.has('is-done'));
+  assert.ok(completed, 'completed row exposes its visual state');
+  assert.ok(completed.all().some(el => el.attrs['aria-label'] === 'Mark as not done'), 'completed row remains interactive');
   f.button('Mark as not done').handlers.click(); await new Promise(setImmediate);
   assert.deepEqual(rowNames(f.root), ['Alpha', 'Zebra']);
+  assert.equal(f.root.all().some(el => el.className === 'habits-compact-row' && el.classes.has('is-done')), false);
 });
 
 test('status order respects settings, selected date and paused rows', () => {
@@ -110,6 +114,8 @@ test('date label opens the picker and a selected date changes the logged day', a
   const writes = [];
   const f = fixture({}, async (...args) => writes.push(args));
   const input = f.root.all().find(el => el.className === 'habits-compact-date-input');
+  const nav = f.root.all().find(el => el.className === 'habits-compact-nav');
+  assert.deepEqual(nav.children.map(el => el.attrs['aria-label'] ?? el.className), ['Previous day', 'Choose a date', 'habits-compact-date-input', 'Next day']);
   let opened = false;
   input.showPicker = () => { opened = true; };
   f.button('Choose a date').handlers.click();
