@@ -195,7 +195,16 @@ export default class HabitsPlugin extends Plugin {
 			id: "insert-habit-metrics",
 			name: t("Insert habit metrics"),
 			editorCallback: (editor: Editor) => {
-				editor.replaceSelection("```habit-metrics\n```\n");
+				// Every field is written out so it's clear what can be set:
+				// `habits:` names one habit, or several (comma-separated) to
+				// compare them; left empty, the block shows its own note's
+				// habit. `view:` picks the opening tab (charts/month/history);
+				// `range:` is the timeframe when comparing several habits.
+				const start = editor.getCursor("from");
+				editor.replaceSelection(
+					"```habit-metrics\nhabits: \nview: charts\nrange: 12w\n```\n",
+				);
+				editor.setCursor({ line: start.line + 1, ch: "habits: ".length });
 			},
 		});
 

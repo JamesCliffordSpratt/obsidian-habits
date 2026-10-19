@@ -37,6 +37,37 @@ const WEEKLY_WEEKS = 12;
 /** Width, in weeks, of the multi-month history heatmap (~6 months). */
 const HISTORY_WEEKS = 26;
 
+/** Preset timeframes for the comparison view, as whole Monday-start weeks. */
+const COMPARE_PRESETS = {
+	"4w": { weeks: 4, label: "4 weeks" },
+	"12w": { weeks: 12, label: "12 weeks" },
+	"6m": { weeks: 26, label: "6 months" },
+	"1y": { weeks: 52, label: "1 year" },
+} as const;
+type ComparePreset = keyof typeof COMPARE_PRESETS;
+const DEFAULT_COMPARE_PRESET: ComparePreset = "12w";
+
+/** The comparison view's timeframe: a preset, or custom inclusive dates. */
+type CompareRange =
+	| { preset: ComparePreset }
+	| { preset: "custom"; start: string; end: string };
+
+/** Longest timeframe whose day-by-day grid shows single days, not weeks. */
+const COMPARE_MAX_DAILY_DAYS = 92;
+/** Longest timeframe whose trend lines are weekly rather than monthly. */
+const COMPARE_MAX_WEEKLY_DAYS = 366;
+/** Theme colours handed out to compared habits that have no accent of their own. */
+const COMPARE_PALETTE = [
+	"--color-blue",
+	"--color-orange",
+	"--color-purple",
+	"--color-green",
+	"--color-red",
+	"--color-cyan",
+	"--color-pink",
+	"--color-yellow",
+];
+
 /** A day's state on the activity heatmaps, driving both colour and tooltip. */
 type HeatmapState =
 	| "future"
@@ -91,15 +122,17 @@ const ROLLING_WINDOW: Record<HabitFrequency, number> = {
  */
 export class HabitMetrics extends MarkdownRenderChild {
 	private charts: Chart[] = [];
-	/** Path of the habit note currently rendered, for live refresh. */
-	private watchedPath = "";
+	/** Paths of the habit notes currently rendered, for live refresh. */
+	private watchedPaths = new Set<string>();
 	/**
 	 * Which section is on screen. Set once from the block
 	 * source on load, then mutated in place by the tab clicks so a refresh
-	 * triggered by our own source rewrite (see {@link persistView}) doesn't
+	 * triggered by our own source rewrite (see {@link persistField}) doesn't
 	 * stomp it back to whatever was last saved.
 	 */
 	private view: MetricsView = "charts";
+	/** The comparison view's timeframe; read and kept the same way as {@link view}. */
+	private range: CompareRange = { preset: DEFAULT_COMPARE_PRESET };
 
 	constructor(
 		private app: App,
@@ -115,15 +148,13 @@ export class HabitMetrics extends MarkdownRenderChild {
 	onload(): void {
 		this.containerEl.addClass("habits-metrics");
 		this.view = this.requestedView();
-		// Refresh when the rendered habit's note changes, so blocks that
-		// live outside the habit note (via `habit: <name>`) stay current.
+		this.range = this.requestedRange();
+		// Refresh when a rendered habit's note changes, so blocks that live
+		// outside the habit note (via `habits: <name>`) stay current.
 		const requestRender = debounce(() => this.render(), 250, true);
 		this.registerEvent(
 			this.app.metadataCache.on("changed", (file) => {
-				if (
-					this.watchedPath !== "" &&
-					file.path === this.watchedPath
-				) {
+				if (this.watchedPaths.has(file.path)) {
 					requestRender();
 				}
 			}),
@@ -131,29 +162,119 @@ export class HabitMetrics extends MarkdownRenderChild {
 		this.render();
 	}
 
-	/** The habit named in the block source (`habit: <name>`), if any. */
-	private requestedName(): string {
-		const match = /^\s*habit\s*:\s*(.+?)\s*$/im.exec(this.source);
-		if (!match) {
-			return "";
+	/**
+	 * A `key: value` line from the block source, or "" when it's absent or
+	 * empty. Whitespace is matched within the line only, so an empty field
+	 * never swallows the line below it.
+	 */
+	private field(key: string): string {
+		const match = new RegExp(`^[ \\t]*${key}[ \\t]*:[ \\t]*(.*?)[ \\t]*$`, "im").exec(
+			this.source,
+		);
+		return match?.[1] ?? "";
+	}
+
+	/**
+	 * Habit names from `habits:` (a comma-separated list) and the older
+	 * single-habit `habit:` field, in order and without duplicates. Quotes
+	 * and `[[wikilink]]` brackets around a name are ignored.
+	 */
+	private requestedNames(): string[] {
+		const names: string[] = [];
+		const seen = new Set<string>();
+		for (const raw of `${this.field("habit")},${this.field("habits")}`.split(",")) {
+			const name = raw
+				.trim()
+				.replace(/^\[\[(.*)\]\]$/, "$1")
+				.replace(/^["']|["']$/g, "")
+				.trim();
+			if (name && !seen.has(name.toLowerCase())) {
+				seen.add(name.toLowerCase());
+				names.push(name);
+			}
 		}
-		return match[1].replace(/^["']|["']$/g, "");
+		return names;
 	}
 
 	/** The view named in the block source (`view: month`/`view: history`), if any. */
 	private requestedView(): MetricsView {
-		const match = /^\s*view\s*:\s*(.+?)\s*$/im.exec(this.source);
-		const value = match?.[1].toLowerCase();
+		const value = this.field("view").toLowerCase();
 		return value === "month" || value === "history" ? value : "charts";
+	}
+
+	/**
+	 * The comparison timeframe from `range:` — a preset (`4w`, `12w`, `6m`,
+	 * `1y`) or custom dates (`2026-01-01 to 2026-03-31`; the end defaults to
+	 * today). Anything else falls back to the default preset.
+	 */
+	private requestedRange(): CompareRange {
+		const value = this.field("range").toLowerCase();
+		if (value in COMPARE_PRESETS) {
+			return { preset: value as ComparePreset };
+		}
+		const custom =
+			/^(\d{4}-\d{2}-\d{2})(?:\s+to\s+|\s*\.\.\s*|\s+[-–]\s+)?(\d{4}-\d{2}-\d{2})?$/.exec(
+				value,
+			);
+		if (custom && fromDateKey(custom[1]) && (!custom[2] || fromDateKey(custom[2]))) {
+			return {
+				preset: "custom",
+				start: custom[1],
+				end: custom[2] ?? toDateKey(new Date()),
+			};
+		}
+		return { preset: DEFAULT_COMPARE_PRESET };
+	}
+
+	/** The `range:` text for a timeframe, as written back onto the block. */
+	private rangeField(range: CompareRange): string {
+		return range.preset === "custom"
+			? `${range.start} to ${range.end}`
+			: range.preset;
+	}
+
+	/** Inclusive start and end dates of a timeframe, earliest first. */
+	private rangeDates(range: CompareRange, today: Date): { start: Date; end: Date } {
+		const base = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+		if (range.preset === "custom") {
+			const a = fromDateKey(range.start) ?? base;
+			const b = fromDateKey(range.end) ?? base;
+			return a.getTime() <= b.getTime() ? { start: a, end: b } : { start: b, end: a };
+		}
+		const thisMonday = addDays(base, -((base.getDay() + 6) % 7));
+		return {
+			start: addDays(thisMonday, -7 * (COMPARE_PRESETS[range.preset].weeks - 1)),
+			end: base,
+		};
 	}
 
 	private render(): void {
 		this.destroyCharts();
 		const root = this.containerEl;
 		root.empty();
+		this.watchedPaths.clear();
 
 		const habits = this.store.getHabits();
-		const requested = this.requestedName();
+		const names = this.requestedNames();
+		if (names.length > 1) {
+			const found: HabitDefinition[] = [];
+			const missing: string[] = [];
+			for (const name of names) {
+				const match = habits.find(
+					(entry) => entry.name.toLowerCase() === name.toLowerCase(),
+				);
+				if (match) {
+					found.push(match);
+					this.watchedPaths.add(match.path);
+				} else {
+					missing.push(name);
+				}
+			}
+			this.renderComparison(found, missing);
+			return;
+		}
+
+		const requested = names[0] ?? "";
 		const habit = requested
 			? habits.find(
 					(entry) =>
@@ -167,7 +288,10 @@ export class HabitMetrics extends MarkdownRenderChild {
 		// (turning a plain note into one) would go undetected, and the
 		// block would keep showing its "not a habit note" message until
 		// the note is reopened.
-		this.watchedPath = requested ? (habit?.path ?? "") : this.sourcePath;
+		const watched = requested ? habit?.path : this.sourcePath;
+		if (watched) {
+			this.watchedPaths.add(watched);
+		}
 
 		if (!habit) {
 			root.createEl("p", {
@@ -241,7 +365,7 @@ export class HabitMetrics extends MarkdownRenderChild {
 					return;
 				}
 				this.view = view;
-				void this.persistView(view);
+				void this.persistField("view", view, view === "charts");
 				this.render();
 			});
 		};
@@ -251,12 +375,19 @@ export class HabitMetrics extends MarkdownRenderChild {
 	}
 
 	/**
-	 * Save the chosen view onto the block's own `view:` source line, so it
-	 * reopens on the same tab next time. Best-effort: if the section can't
-	 * be located (e.g. the block is mid-edit), the in-memory tab selection
-	 * still stands, it just won't survive a reload.
+	 * Save a choice (the tab, the comparison timeframe) onto the block's own
+	 * `key: value` source line, so it reopens the same way next time. An
+	 * existing line is updated in place, keeping it visible even at its
+	 * default; a missing one is only added when the value isn't the default.
+	 * Best-effort: if the section can't be located (e.g. the block is
+	 * mid-edit), the in-memory choice still stands, it just won't survive a
+	 * reload.
 	 */
-	private async persistView(view: MetricsView): Promise<void> {
+	private async persistField(
+		key: string,
+		value: string,
+		isDefault: boolean,
+	): Promise<void> {
 		const file = this.app.vault.getAbstractFileByPath(this.sourcePath);
 		if (!(file instanceof TFile)) {
 			return;
@@ -271,11 +402,16 @@ export class HabitMetrics extends MarkdownRenderChild {
 			if (lines[lineStart] === undefined || lines[lineEnd] === undefined) {
 				return content;
 			}
-			const inner = lines
-				.slice(lineStart + 1, lineEnd)
-				.filter((line) => !/^\s*view\s*:/i.test(line));
-			if (view !== "charts") {
-				inner.push(`view: ${view}`);
+			const pattern = new RegExp(`^\\s*${key}\\s*:`, "i");
+			const existing = lines.slice(lineStart + 1, lineEnd);
+			const first = existing.findIndex((line) => pattern.test(line));
+			const inner = existing.filter(
+				(line, i) => i === first || !pattern.test(line),
+			);
+			if (first !== -1) {
+				inner[first] = `${key}: ${value}`;
+			} else if (!isDefault) {
+				inner.push(`${key}: ${value}`);
 			}
 			return [
 				...lines.slice(0, lineStart + 1),
@@ -601,32 +737,6 @@ export class HabitMetrics extends MarkdownRenderChild {
 			}).length;
 		}
 
-		// Rate is measured over the habit's recent due dates, so a weekly or
-		// monthly habit isn't penalised for the days it isn't due.
-		const recentDates = this.recentDueDates(
-			habit,
-			RECENT_POINTS[habit.frequency],
-			today,
-		);
-		// Habits only start scoring on their start day; including earlier
-		// dates would count days before the habit existed as misses.
-		const startKey = trackingStartKey(habit, today);
-		let recentDue = 0;
-		let recentHits = 0;
-		for (const date of recentDates) {
-			const key = toDateKey(date);
-			if (isPausedOn(habit, key)) {
-				continue;
-			}
-			if (key < startKey) {
-				continue;
-			}
-			recentDue++;
-			if (isComplete(habit, key)) {
-				recentHits++;
-			}
-		}
-
 		const completedLabel =
 			habit.goalDirection === "max"
 				? t("Days within limit")
@@ -651,13 +761,7 @@ export class HabitMetrics extends MarkdownRenderChild {
 				label: t("Best streak"),
 			},
 			{ value: String(completedDays), label: completedLabel },
-			{
-				value:
-					recentDue > 0
-						? `${Math.round((recentHits / recentDue) * 100)}%`
-						: "–",
-				label: rateLabel,
-			},
+			{ value: this.formatRate(this.recentRate(habit, today)), label: rateLabel },
 		];
 
 		const wrap = this.containerEl.createDiv({
@@ -667,6 +771,514 @@ export class HabitMetrics extends MarkdownRenderChild {
 			const el = wrap.createDiv({ cls: "habits-stat-tile" });
 			el.createDiv({ cls: "habits-stat-value", text: tile.value });
 			el.createDiv({ cls: "habits-stat-label", text: tile.label });
+		}
+	}
+
+	/**
+	 * Completion rate (0–100) over the habit's recent due dates, so a weekly
+	 * or monthly habit isn't penalised for the days it isn't due; `null`
+	 * when none of them count yet.
+	 */
+	private recentRate(habit: HabitDefinition, today: Date): number | null {
+		const recentDates = this.recentDueDates(
+			habit,
+			RECENT_POINTS[habit.frequency],
+			today,
+		);
+		// Habits only start scoring on their start day; including earlier
+		// dates would count days before the habit existed as misses.
+		const startKey = trackingStartKey(habit, today);
+		let due = 0;
+		let hits = 0;
+		for (const date of recentDates) {
+			const key = toDateKey(date);
+			if (isPausedOn(habit, key) || key < startKey) {
+				continue;
+			}
+			due++;
+			if (isComplete(habit, key)) {
+				hits++;
+			}
+		}
+		return due > 0 ? Math.round((hits / due) * 100) : null;
+	}
+
+	private formatRate(rate: number | null): string {
+		return rate === null ? "–" : `${rate}%`;
+	}
+
+	/**
+	 * Completion rate (0–100) between two dates (inclusive), counting only
+	 * the days that have elapsed by `today`; `null` when nothing in it
+	 * counts (not due, paused, before the habit started, or still to come),
+	 * so trend lines skip the gap instead of dropping to zero.
+	 */
+	private periodRate(
+		habit: HabitDefinition,
+		from: Date,
+		to: Date,
+		today: Date,
+	): number | null {
+		const base = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+		const through = to.getTime() > base.getTime() ? base : to;
+		const startKey = trackingStartKey(habit, today);
+		let counted = 0;
+		let completed = 0;
+		for (
+			let day = new Date(from.getFullYear(), from.getMonth(), from.getDate());
+			day.getTime() <= through.getTime();
+			day = addDays(day, 1)
+		) {
+			const key = toDateKey(day);
+			if (key < startKey) {
+				continue;
+			}
+			if (isFlexible(habit)) {
+				// A per-day ratio would inflate the rate for any period
+				// satisfied early (isComplete stays true for the rest of it),
+				// so each of the habit's own weeks or months counts once, as
+				// of its last day inside this stretch.
+				const periodEnd =
+					habit.frequency === "flexibleWeekly"
+						? day.getDay() === 0
+						: addDays(day, 1).getDate() === 1;
+				if (!periodEnd && day.getTime() !== through.getTime()) {
+					continue;
+				}
+			} else if (isPausedOn(habit, key) || !isActive(habit, day)) {
+				continue;
+			}
+			counted++;
+			if (isComplete(habit, key)) {
+				completed++;
+			}
+		}
+		return counted > 0 ? Math.round((completed / counted) * 100) : null;
+	}
+
+	/**
+	 * A timeframe split into Monday-start weeks or calendar months, with the
+	 * first and last clipped to the timeframe itself.
+	 */
+	private rangeBuckets(
+		start: Date,
+		end: Date,
+		unit: "week" | "month",
+	): { start: Date; end: Date }[] {
+		const buckets: { start: Date; end: Date }[] = [];
+		let cursor = start;
+		while (cursor.getTime() <= end.getTime()) {
+			const next =
+				unit === "week"
+					? addDays(cursor, 7 - ((cursor.getDay() + 6) % 7))
+					: new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1);
+			const last = addDays(next, -1);
+			buckets.push({
+				start: cursor,
+				end: last.getTime() > end.getTime() ? end : last,
+			});
+			cursor = next;
+		}
+		return buckets;
+	}
+
+	/** Inclusive length of a timeframe in days. */
+	private rangeDays(start: Date, end: Date): number {
+		return Math.round((end.getTime() - start.getTime()) / 86400000) + 1;
+	}
+
+	private formatDate(date: Date, withYear = false): string {
+		return date.toLocaleDateString(undefined, {
+			day: "numeric",
+			month: "short",
+			...(withYear ? { year: "numeric" } : {}),
+		});
+	}
+
+	/**
+	 * Side-by-side view for a block listing several habits: a timeframe
+	 * picker, a summary table, one completion-rate line per habit, and a
+	 * grid with a row per habit, so it's easy to see how the habits move
+	 * together over the chosen dates.
+	 */
+	private renderComparison(habits: HabitDefinition[], missing: string[]): void {
+		const today = new Date();
+		const { start, end } = this.rangeDates(this.range, today);
+		this.renderRangePicker(start, end);
+		for (const name of missing) {
+			this.containerEl.createEl("p", {
+				cls: "habits-metrics-empty",
+				text: t('No habit called "{name}" was found.', { name }),
+			});
+		}
+		if (habits.length === 0) {
+			return;
+		}
+		const colors = this.comparisonColors(habits);
+		this.renderComparisonTable(habits, colors, today, start, end);
+		this.renderComparisonTrend(habits, colors, today, start, end);
+		this.renderComparisonGrid(habits, colors, today, start, end);
+	}
+
+	/**
+	 * Preset timeframe tabs plus a Custom tab with from/to date pickers. A
+	 * choice is saved onto the block's `range:` line, like the view tabs.
+	 */
+	private renderRangePicker(start: Date, end: Date): void {
+		const bar = this.containerEl.createDiv({ cls: "habits-metrics-range" });
+		const tabs = bar.createDiv({ cls: "habits-metrics-tabs" });
+		const choose = (range: CompareRange): void => {
+			this.range = range;
+			void this.persistField(
+				"range",
+				this.rangeField(range),
+				range.preset === DEFAULT_COMPARE_PRESET,
+			);
+			this.render();
+		};
+		const makeTab = (
+			active: boolean,
+			label: string,
+			onClick: () => void,
+		): void => {
+			const button = tabs.createEl("button", {
+				cls: "habits-metrics-tab",
+				text: label,
+				attr: { type: "button", "aria-pressed": String(active) },
+			});
+			button.toggleClass("is-active", active);
+			this.registerDomEvent(button, "click", () => {
+				if (!active) {
+					onClick();
+				}
+			});
+		};
+		for (const preset of Object.keys(COMPARE_PRESETS) as ComparePreset[]) {
+			makeTab(this.range.preset === preset, t(COMPARE_PRESETS[preset].label), () =>
+				choose({ preset }),
+			);
+		}
+		// Custom starts from whatever dates are on screen, so switching to it
+		// never jumps the charts somewhere unexpected.
+		makeTab(this.range.preset === "custom", t("Custom"), () =>
+			choose({ preset: "custom", start: toDateKey(start), end: toDateKey(end) }),
+		);
+
+		if (this.range.preset !== "custom") {
+			bar.createSpan({
+				cls: "habits-metrics-range-label",
+				text: `${this.formatDate(start, true)} – ${this.formatDate(end, true)}`,
+			});
+			return;
+		}
+		const wrap = bar.createDiv({ cls: "habits-custom-range" });
+		const makeInput = (
+			value: Date,
+			label: string,
+			onPick: (key: string) => void,
+		): void => {
+			const input = wrap.createEl("input", {
+				cls: "habits-custom-date",
+				attr: { type: "date", "aria-label": label },
+			});
+			input.value = toDateKey(value);
+			this.registerDomEvent(input, "change", () => {
+				if (fromDateKey(input.value)) {
+					onPick(input.value);
+				}
+			});
+		};
+		makeInput(start, t("Start date"), (key) =>
+			choose({ preset: "custom", start: key, end: toDateKey(end) }),
+		);
+		wrap.createSpan({ cls: "habits-custom-range-sep", text: "–" });
+		makeInput(end, t("End date"), (key) =>
+			choose({ preset: "custom", start: toDateKey(start), end: key }),
+		);
+	}
+
+	/**
+	 * One distinct colour per habit: its own accent where set and not
+	 * already taken, otherwise the next unused theme colour, so two habits
+	 * never share a line.
+	 */
+	private comparisonColors(habits: HabitDefinition[]): string[] {
+		const palette = COMPARE_PALETTE.map((name) =>
+			resolveColor(this.containerEl, "", `var(${name})`),
+		);
+		const used = new Set<string>();
+		return habits.map((habit) => {
+			const own = habit.color
+				? resolveColor(this.containerEl, habit.color, "")
+				: "";
+			const color =
+				own && !used.has(own)
+					? own
+					: (palette.find((entry) => !used.has(entry)) ??
+						palette[used.size % palette.length]);
+			used.add(color);
+			return color;
+		});
+	}
+
+	/**
+	 * Per-habit streaks (as of today) and the completion rate over the
+	 * chosen timeframe, one row each.
+	 */
+	private renderComparisonTable(
+		habits: HabitDefinition[],
+		colors: string[],
+		today: Date,
+		start: Date,
+		end: Date,
+	): void {
+		const table = this.containerEl
+			.createDiv({ cls: "habits-metrics-compare" })
+			.createEl("table", { cls: "habits-metrics-compare-table" });
+		const head = table.createEl("thead").createEl("tr");
+		for (const label of [
+			t("Habit"),
+			t("Current streak"),
+			t("Best streak"),
+			t("Completion rate"),
+		]) {
+			head.createEl("th", { text: label });
+		}
+		const body = table.createEl("tbody");
+		habits.forEach((habit, i) => {
+			const row = body.createEl("tr");
+			const nameCell = row.createEl("td");
+			const swatch = nameCell.createSpan({ cls: "habits-metrics-compare-swatch" });
+			swatch.setCssProps({ "--habits-compare-color": colors[i] });
+			const link = nameCell.createEl("a", {
+				cls: "internal-link",
+				text: habit.name,
+				href: habit.path,
+			});
+			this.registerDomEvent(link, "click", (evt) => {
+				evt.preventDefault();
+				void this.app.workspace.openLinkText(habit.path, this.sourcePath, false);
+			});
+			if (habit.stopped || habit.paused) {
+				nameCell.createSpan({
+					cls: "habits-metrics-compare-badge",
+					text: habit.stopped ? t("Stopped") : t("Paused"),
+				});
+			}
+			row.createEl("td", { text: String(currentStreak(habit, today)) });
+			row.createEl("td", { text: String(longestStreak(habit, today)) });
+			row.createEl("td", {
+				text: this.formatRate(this.periodRate(habit, start, end, today)),
+			});
+		});
+	}
+
+	/**
+	 * One completion-rate line per habit across the timeframe: a point per
+	 * week, or per month once the timeframe runs past a year.
+	 */
+	private renderComparisonTrend(
+		habits: HabitDefinition[],
+		colors: string[],
+		today: Date,
+		start: Date,
+		end: Date,
+	): void {
+		const unit =
+			this.rangeDays(start, end) <= COMPARE_MAX_WEEKLY_DAYS ? "week" : "month";
+		const buckets = this.rangeBuckets(start, end, unit);
+		const labels = buckets.map((bucket) =>
+			unit === "week"
+				? this.formatDate(bucket.start)
+				: bucket.start.toLocaleDateString(undefined, {
+						month: "short",
+						year: "2-digit",
+					}),
+		);
+		const datasets = habits.map((habit, i) => ({
+			type: "line" as const,
+			label: habit.name,
+			data: buckets.map((bucket) =>
+				this.periodRate(habit, bucket.start, bucket.end, today),
+			),
+			borderColor: colors[i],
+			backgroundColor: colors[i],
+			tension: 0.3,
+			pointRadius: buckets.length > 30 ? 2 : 3,
+			spanGaps: true,
+		}));
+
+		const options = this.baseOptions(100);
+		const yTicks = options.scales?.y?.ticks;
+		if (yTicks) {
+			(yTicks as { callback?: (value: unknown) => string }).callback = (
+				value: unknown,
+			) => `${String(value)}%`;
+		}
+		const text = resolveColor(this.containerEl, "", "var(--text-muted)");
+		(options.plugins as Record<string, unknown>).legend = {
+			display: true,
+			position: "bottom",
+			labels: { color: text, boxWidth: 12, boxHeight: 12 },
+		};
+		(options.plugins as Record<string, unknown>).tooltip = {
+			mode: "index",
+			intersect: false,
+			callbacks: {
+				label: (ctx: { dataset: { label?: string }; parsed: { y: number | null } }) =>
+					ctx.parsed.y === null
+						? ""
+						: `${ctx.dataset.label ?? ""}: ${ctx.parsed.y}%`,
+			},
+		};
+
+		this.createChart(
+			unit === "week" ? t("Weekly completion rate") : t("Monthly completion rate"),
+			{
+				type: "line",
+				data: {
+					labels,
+					datasets: datasets as unknown as ChartDataset<"line", number[]>[],
+				},
+				options,
+			},
+		);
+	}
+
+	/**
+	 * The timeframe as a grid with one row per habit, so days (or weeks)
+	 * where habits were done or missed together line up in the same column.
+	 * Short timeframes show single days, coloured like the single-habit
+	 * heatmaps; longer ones show weeks, shaded by that week's rate.
+	 */
+	private renderComparisonGrid(
+		habits: HabitDefinition[],
+		colors: string[],
+		today: Date,
+		start: Date,
+		end: Date,
+	): void {
+		const daily = this.rangeDays(start, end) <= COMPARE_MAX_DAILY_DAYS;
+		const columns = daily
+			? this.rangeBuckets(start, end, "week").flatMap((week) => {
+					const days: { start: Date; end: Date }[] = [];
+					for (
+						let day = week.start;
+						day.getTime() <= week.end.getTime();
+						day = addDays(day, 1)
+					) {
+						days.push({ start: day, end: day });
+					}
+					return days;
+				})
+			: this.rangeBuckets(start, end, "week");
+		const xLabels = columns.map((column) => toDateKey(column.start));
+		// Daily grids label each Monday; weekly ones each change of month.
+		let lastMonth = -1;
+		const xTickLabels = columns.map((column, i) => {
+			if (daily) {
+				return column.start.getDay() === 1 || i === 0
+					? this.formatDate(column.start)
+					: "";
+			}
+			const month = column.start.getMonth();
+			const tick =
+				month !== lastMonth
+					? column.start.toLocaleDateString(undefined, { month: "short" })
+					: "";
+			lastMonth = month;
+			return tick;
+		});
+		// Category labels must be unique; names already are, as note names.
+		const yLabels = habits.map((habit) => habit.name);
+
+		const red = resolveColor(this.containerEl, "", "var(--color-red, #e05d5d)");
+		const neutral = resolveColor(
+			this.containerEl,
+			"",
+			"var(--background-modifier-border)",
+		);
+		const text = resolveColor(this.containerEl, "", "var(--text-muted)");
+		const pageBg = resolveColor(this.containerEl, "", "var(--background-primary)");
+		const todayKey = toDateKey(today);
+
+		const points: { x: string; y: string; v: number; tip: string[] }[] = [];
+		const background: string[] = [];
+		const border: string[] = [];
+		const borderWidth: number[] = [];
+		habits.forEach((habit, h) => {
+			const startKey = trackingStartKey(habit, today);
+			columns.forEach((column, c) => {
+				const key = xLabels[c];
+				if (daily) {
+					const info = this.heatmapState(habit, key, column.start, todayKey, startKey);
+					const from = rescheduleSource(habit, key);
+					const point: HeatmapPoint = {
+						x: key,
+						y: habit.name,
+						v: info.value,
+						key,
+						value: info.value,
+						state: info.state,
+						rescheduledFrom: from,
+					};
+					points.push({
+						x: key,
+						y: habit.name,
+						v: info.value,
+						tip: [habit.name, ...this.heatmapTooltip(point, habit)],
+					});
+					const fill = this.heatmapFill(info.state, colors[h], red, neutral);
+					background.push(fill);
+					const ring = this.heatmapBorder(info.state, !!from, fill, neutral, pageBg);
+					border.push(ring.color);
+					borderWidth.push(ring.width);
+					return;
+				}
+				const rate = this.periodRate(habit, column.start, column.end, today);
+				points.push({
+					x: key,
+					y: habit.name,
+					v: rate ?? 0,
+					tip: [
+						habit.name,
+						t("Week of {date}", { date: this.formatDate(column.start, true) }),
+						rate === null ? t("Not due") : `${rate}%`,
+					],
+				});
+				background.push(
+					rate === null
+						? withAlpha(neutral, 0.25)
+						: rate === 0
+							? neutral
+							: withAlpha(colors[h], 0.25 + 0.75 * (rate / 100)),
+				);
+				border.push("transparent");
+				borderWidth.push(0);
+			});
+		});
+
+		mountHeatmapChart(
+			this.containerEl,
+			this.charts,
+			daily ? t("Daily activity") : t("Weekly activity"),
+			points,
+			xLabels,
+			yLabels,
+			{ background, border, borderWidth },
+			(point) => point.tip,
+			text,
+			xTickLabels,
+		);
+		// Give each habit row a comfortable height rather than squeezing
+		// them all into the default chart height.
+		const canvas = this.containerEl.lastElementChild?.querySelector(
+			".habits-metrics-canvas",
+		);
+		if (canvas instanceof HTMLElement) {
+			canvas.setCssProps({
+				"--habits-metrics-height": `${Math.max(120, habits.length * 34 + 40)}px`,
+			});
 		}
 	}
 

@@ -1947,7 +1947,86 @@
 
 .habits-metrics-canvas {
 	position: relative;
-	height: 220px;
+	height: var(--habits-metrics-height, 220px);
+}
+
+/* Comparison view: a habit-metrics block listing several habits */
+
+.habits-metrics-range {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.5rem 0.75rem;
+}
+
+.habits-metrics-range .habits-metrics-tabs {
+	flex-wrap: wrap;
+	margin-bottom: 0;
+}
+
+.habits-metrics-range-label {
+	color: var(--text-muted);
+	font-size: var(--font-ui-small);
+}
+
+.habits-metrics input.habits-custom-date {
+	font-size: var(--font-ui-small);
+	padding: 0.15rem 0.45rem;
+	background: var(--background-primary);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: var(--radius-s);
+	color: var(--text-normal);
+}
+
+.habits-metrics-compare {
+	overflow-x: auto;
+}
+
+.habits-metrics-compare-table {
+	width: 100%;
+	border-collapse: collapse;
+	font-size: var(--font-ui-small);
+}
+
+.habits-metrics-compare-table th,
+.habits-metrics-compare-table td {
+	padding: 0.35rem 0.5rem;
+	text-align: right;
+	border-bottom: 1px solid var(--background-modifier-border);
+	font-variant-numeric: tabular-nums;
+}
+
+.habits-metrics-compare-table th {
+	color: var(--text-muted);
+	font-weight: var(--font-semibold);
+}
+
+.habits-metrics-compare-table th:first-child,
+.habits-metrics-compare-table td:first-child {
+	text-align: left;
+}
+
+.habits-metrics-compare-table tr:last-child td {
+	border-bottom: none;
+}
+
+.habits-metrics-compare-swatch {
+	display: inline-block;
+	width: 0.7rem;
+	height: 0.7rem;
+	margin-right: 0.45rem;
+	border-radius: 50%;
+	background: var(--habits-compare-color);
+	vertical-align: middle;
+}
+
+.habits-metrics-compare-badge {
+	margin-left: 0.45rem;
+	padding: 0 0.35rem;
+	border-radius: var(--radius-s);
+	background: var(--background-modifier-hover);
+	color: var(--text-muted);
+	font-size: var(--font-ui-smaller);
 }
 
 /* Charts/Heatmap tab bar in a habit-metrics block */

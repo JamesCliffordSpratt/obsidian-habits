@@ -187,13 +187,39 @@ Every habit note can chart its own history with a `habit-metrics` code block (ne
 
 Streak tiles, an activity chart with target line, and a completion-rate trend — all in your theme's colours. Two extra tabs sit alongside the charts: **Month** for a calendar-style heatmap of the current month, and **History** for a GitHub-style heatmap spanning the last 6 months — both coloured in the habit's own accent. Days the habit isn't due (weekends for a weekday-only habit, most of the month for a monthly one) show as a faint "not due" cell rather than a false miss. The chosen tab is saved back onto the block, so it reopens the same way next time.
 
-The block also works in **any note**: name a habit and its metrics render right there — perfect for journal entries, weekly reviews, or project pages. As you type after `habit:`, your habits are suggested automatically.
+The block also works in **any note**: name a habit and its metrics render right there — perfect for journal entries, weekly reviews, or project pages. As you type after `habits:`, your habits are suggested automatically. The **Insert habit metrics** command writes out every field for you:
 
 ````markdown
 ```habit-metrics
-habit: Journal
+habits: Journal
+view: charts
+range: 12w
 ```
 ````
+
+| Field | What it does |
+| --- | --- |
+| `habits:` | The habit to show, or several separated by commas to compare them. Leave it empty inside a habit note to show that note's own habit. (`habit:` still works too.) |
+| `view:` | The tab a single habit opens on: `charts`, `month` or `history`. Saved automatically when you switch tabs. |
+| `range:` | The timeframe when comparing habits: `4w`, `12w` (the default), `6m`, `1y`, or your own dates such as `2026-01-01 to 2026-03-31`. Saved automatically when you pick one. |
+
+### Comparing habits
+
+List several habits, separated by commas, to see how they develop together:
+
+````markdown
+```habit-metrics
+habits: Exercise, Meditate, Journal
+```
+````
+
+At the top, choose the timeframe: **4 weeks**, **12 weeks**, **6 months**, **1 year**, or **Custom** to pick your own start and end dates. Everything below follows it:
+
+- **Table**: each habit's current streak, best streak, and completion rate over the timeframe.
+- **Completion rate chart**: one line per habit, so you can see whether habits rise and fall together. It plots a point per week, or per month for timeframes longer than a year. Weeks where a habit wasn't due, was paused or hadn't started yet are skipped rather than counted as 0%.
+- **Activity grid**: one row per habit. Days where habits were done (or missed) together line up in the same column. Timeframes longer than about 3 months show a cell per week instead, shaded by that week's completion rate.
+
+Each habit keeps its own colour; habits without one, or sharing one, get a distinct theme colour. Suggestions work for every name in the list, and habits already listed aren't suggested again. `view:` only applies to a single habit, and `range:` only to comparisons.
 
 ## 🔥 Whole-vault heatmap
 
