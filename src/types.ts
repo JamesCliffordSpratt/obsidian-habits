@@ -51,7 +51,9 @@ export type NoteChecklistRequirement = "all" | "count";
  *   (e.g. every 2 days for an alternate-day schedule).
  * - `flexibleWeekly`: due a set number of times each week, on any day the
  *   user chooses (e.g. kayaking once a week, whichever day is free).
+ *   For `max` habits this is a cumulative weekly limit instead.
  * - `flexibleMonthly`: the same idea, scored over a calendar month.
+ *   For `max` habits this is a cumulative monthly limit.
  *
  * `target` holds the "how many times" for the two flexible frequencies —
  * see {@link HabitDefinition.target}.

@@ -359,10 +359,6 @@ export class HabitModal extends Modal {
 						.setValue(this.goalDirection)
 						.onChange((value) => {
 							this.goalDirection = value as GoalDirection;
-							if (this.goalDirection === "max") {
-								// Limit habits are daily-only for now.
-								this.frequency = "daily";
-							}
 							this.randomizeExample();
 							this.build();
 						}),
@@ -377,7 +373,7 @@ export class HabitModal extends Modal {
 			.setDesc(
 				isMax
 					? t(
-							"Binary means avoiding it entirely. Repetition counts against a daily limit. Timed tracks minutes against a daily limit.",
+							"Binary means avoiding it entirely. Repetition counts against a limit. Timed tracks minutes against a limit. Frequency determines when the limit applies.",
 						)
 					: allowNote
 						? t(
@@ -411,21 +407,22 @@ export class HabitModal extends Modal {
 			});
 
 		const isFlexible = isFlexibleFrequency(this.frequency);
-		if ((this.type !== "binary" && this.type !== "note") || isFlexible) {
-			const targetName = isFlexible
+		if ((this.type !== "binary" && this.type !== "note") || (isFlexible && !isMax)) {
+			const targetName = isMax
+				? isFlexible
+					? this.frequency === "flexibleWeekly" ? t("Weekly limit") : t("Monthly limit")
+					: this.frequency === "daily" ? t("Daily limit") : t("Limit per due day")
+				: isFlexible
 				? this.frequency === "flexibleWeekly"
 					? t("Times per week")
 					: t("Times per month")
-				: isMax
-					? this.type === "timed"
-						? t("Daily limit (minutes)")
-						: t("Daily limit")
-					: this.type === "timed"
+				: this.type === "timed"
 						? t("Daily target (minutes)")
 						: t("Daily target");
 			const setting = new Setting(contentEl).setName(targetName);
 			if (isMax) {
 				setting.setDesc(t("0 means none at all."));
+				if (this.type === "timed") setting.setDesc(t("Limit in minutes. 0 means none at all."));
 			} else if (isFlexible) {
 				setting.setDesc(
 					t(
@@ -500,12 +497,7 @@ export class HabitModal extends Modal {
 			}
 		}
 
-		// Limit habits are daily-only for now, so the frequency picker is
-		// hidden for them (this.frequency is forced back to "daily" when
-		// the goal switches to a limit).
-		if (!isMax) {
-			this.renderFrequency(contentEl);
-		}
+		this.renderFrequency(contentEl);
 
 		// A planned time of day doesn't fit "sometime this week/month" —
 		// skip it for flexible frequencies.
@@ -633,10 +625,7 @@ export class HabitModal extends Modal {
 							name: this.habitName,
 							type: this.type,
 							goalDirection: this.goalDirection,
-							frequency:
-								this.goalDirection === "max"
-									? ("daily" as HabitFrequency)
-									: this.frequency,
+							frequency: this.frequency,
 							weekdays: [...this.weekdays],
 							monthDay: this.monthDay,
 							intervalDays: this.intervalDays,
@@ -896,7 +885,7 @@ export class HabitModal extends Modal {
 		new Setting(contentEl)
 			.setName(t("Frequency"))
 			.setDesc(
-				t(
+				this.goalDirection === "max" ? t("Choose the days this limit applies, or a weekly/monthly total limit that can be logged on any day.") : t(
 					"How often this habit is due. Weekly and monthly habits only appear on their due date; the \"any day\" options appear every day until their quota is met.",
 				),
 			)

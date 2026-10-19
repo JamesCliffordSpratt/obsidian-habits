@@ -288,7 +288,8 @@ export function renderClosedHabits(
 	dateKey: string,
 	open: boolean,
 	onToggle: (open: boolean) => void,
-	onChange: () => void,
+	/** Called after an Undo, with the habit put back on the list. */
+	onChange: (habit: HabitDefinition) => void,
 ): void {
 	if (closed.length === 0) {
 		return;
@@ -333,7 +334,7 @@ export function renderClosedHabits(
 		component.registerDomEvent(undo, "click", async () => {
 			undo.disabled = true;
 			await reopenDay(habit, dateKey, status, store);
-			onChange();
+			onChange(habit);
 		});
 	}
 }

@@ -1734,7 +1734,8 @@ export class HabitsDashboard
 		const timed = habit.type === "timed";
 		const step = stepOf(habit);
 		const unit = habit.unit || (timed ? "min" : "");
-		const goalValue = habit.target > 0 ? habit.target : 1;
+		const isMax = habit.goalDirection === "max";
+		const goalValue = isMax ? limitOf(habit) : habit.target > 0 ? habit.target : 1;
 		const periodTotal = flexiblePeriodTotal(habit, this.selectedDate);
 		const periodWord =
 			habit.frequency === "flexibleWeekly" ? t("this week") : t("this month");
@@ -1753,9 +1754,11 @@ export class HabitsDashboard
 
 		const progress = body.createDiv({ cls: "habits-progress" });
 		const fill = progress.createDiv({ cls: "habits-progress-fill" });
-		const pct = Math.min(100, Math.round((periodTotal / goalValue) * 100));
+		const pct = goalValue > 0 ? Math.min(100, Math.round((periodTotal / goalValue) * 100)) : periodTotal > 0 ? 100 : 0;
 		fill.setCssProps({ "--habits-progress": `${pct}%` });
-		if (periodTotal >= goalValue) {
+		if (isMax) {
+			progress.toggleClass("is-over", periodTotal > goalValue);
+		} else if (periodTotal >= goalValue) {
 			progress.addClass("is-complete");
 		}
 
@@ -1777,8 +1780,10 @@ export class HabitsDashboard
 
 		const addValue = async (amount: number): Promise<void> => {
 			const wasComplete = this.isComplete(habit);
+			const wasPerfect = this.isPerfectDay();
 			await this.commit(habit, value + amount);
-			await this.finishChange(card, habit, wasComplete);
+			if (isMax) await this.finishLimitChange(!wasPerfect);
+			else await this.finishChange(card, habit, wasComplete);
 		};
 
 		if (timed) {

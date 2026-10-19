@@ -145,6 +145,7 @@ export function flexiblePeriodTotal(
 
 /** Whether a period total reaches a flexible habit's "times per period" goal. */
 function meetsFlexibleTarget(habit: HabitDefinition, total: number): boolean {
+	if (habit.goalDirection === "max") return total <= limitOf(habit);
 	return habit.target > 0 ? total >= habit.target : total > 0;
 }
 
@@ -361,6 +362,7 @@ export function isComplete(habit: HabitDefinition, dateKey: string): boolean {
 		return isComplete(habit, target);
 	}
 	if (isFlexible(habit)) {
+		if (habit.goalDirection === "max" && dateKey < trackingStartKey(habit)) return false;
 		const date = fromDateKey(dateKey);
 		return date ? meetsFlexibleTarget(habit, flexiblePeriodTotal(habit, date)) : false;
 	}
@@ -552,6 +554,10 @@ function flexibleCurrentStreak(habit: HabitDefinition, today: Date): number {
 	let streak = 0;
 
 	if (toDateKey(range.end) !== toDateKey(startOfDay(today))) {
+		// An exceeded limit has no grace while the current period is open.
+		if (habit.goalDirection === "max" && habitStart && today >= habitStart &&
+			!periodFullyPaused(habit, range) &&
+			!meetsFlexibleTarget(habit, periodTotalThrough(habit, range, today))) return 0;
 		if (
 			habitStart &&
 			range.end.getTime() >= habitStart.getTime() &&

@@ -360,7 +360,7 @@ export class HabitsTable extends MarkdownRenderChild {
 			// Still logs today's own value via `commit`; only the readout
 			// shows the whole period's running total instead of today's.
 			const step = habit.type === "timed" ? 5 : stepOf(habit);
-			const goal = habit.target > 0 ? habit.target : 1;
+			const goal = habit.goalDirection === "max" ? limitOf(habit) : habit.target > 0 ? habit.target : 1;
 			const periodTotal = flexiblePeriodTotal(habit, today);
 			const stepper = cell.createDiv({ cls: "habits-table-stepper" });
 			const minus = stepper.createEl("button", {

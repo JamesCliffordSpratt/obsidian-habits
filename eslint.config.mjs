@@ -9,6 +9,8 @@ export default defineConfig([
 		"esbuild.config.mjs",
 		"version-bump.mjs",
 		"eslint.config.mjs",
+		// Node-only test harness; Obsidian/mobile rules apply to plugin code.
+		"tests/**/*.mjs",
 		// package.json is skipped: the recommended config applies type-aware
 		// rules globally, which cannot run on JSON files.
 		"package.json",

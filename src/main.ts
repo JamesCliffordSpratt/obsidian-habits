@@ -22,7 +22,7 @@ import {
 	HabitsSettingTab,
 	type HabitsPluginSettings,
 } from "./settings";
-import { HabitsDashboard } from "./ui/dashboard";
+import { HabitsBlock } from "./ui/habits-block";
 import { HabitMetrics } from "./ui/habit-metrics";
 import { HabitsHeatmap } from "./ui/habits-heatmap";
 import { HabitsTable } from "./ui/habits-table";
@@ -58,7 +58,7 @@ export default class HabitsPlugin extends Plugin {
 		});
 
 		this.registerMarkdownCodeBlockProcessor("habits", (_source, el, ctx) => {
-			const dashboard = new HabitsDashboard(
+			const dashboard = new HabitsBlock(
 				this.app,
 				this.store,
 				() => this.settings,

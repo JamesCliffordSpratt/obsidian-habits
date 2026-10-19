@@ -98,10 +98,12 @@ The charts on a non-daily habit's page adapt too: instead of a 30-day grid, the 
 Every habit except note habits has a **Goal**, chosen when you create or edit it:
 
 - **At least (reach a target)**: the default, for habits you're building. Drink at least 1.5 litres of water, read 20 pages, exercise for 30 minutes.
-- **At most (stay within a limit)**: for habits you're cutting down or quitting. At most 2 hours of gaming, no more than 2 coffees, or no smoking at all (a limit of 0). Reaching the limit exactly still counts as within it. Limit habits are daily.
+- **At most (stay within a limit)**: for habits you're cutting down or quitting. At most 2 hours of gaming, no more than 2 coffees, or no smoking at all (a limit of 0). Reaching the limit exactly still counts as within it, and an unlogged due day or period is clean.
   - **Done/not-done limit habits** get two buttons: **Clean** and **Slipped**. An unlogged day already counts as clean — silence is success.
   - **Counted and timed limit habits** log consumption against the limit; the progress bar fills toward the limit and turns red past it.
   - Streaks count consecutive days within the limit, and only from the habit's start date — the years before you started quitting don't inflate anything.
+
+Limit habits have the same **Frequency** options as target habits. Daily, weekly on selected weekdays, monthly on a selected date, and every N days apply the limit separately on each due day. **Weekly (any day)** and **Monthly (any day)** apply the limit to the cumulative total across the calendar week (Monday–Sunday) or month. For example, a timed habit with a weekly limit of 120 allows at most 120 minutes across the week. You can keep logging after exceeding the limit; edit or subtract records on the day they occurred to correct them. Binary limits always allow zero slips, including in cumulative modes. Existing habits remain daily unless you change their frequency.
 
 ### Decimal amounts
 
@@ -169,6 +171,19 @@ From there, the download button opens the **PDF export** dialog:
 - **Live preview** — a to-scale A4 preview updates as you tweak; click it to inspect at full size. What you see is exactly what prints.
 
 ![Building a PDF report](images/habits-report.gif)
+
+## Compact habit logger
+
+Choose **Settings → Habits → Dashboard layout → Compact list** for a full-width list with one coloured row per habit. Existing `habits` blocks switch immediately; the default carousel layout is unchanged. Add a dashboard using **Insert dashboard** or an empty block:
+
+```habits
+```
+
+The header offers statistics, previous/next day navigation, and habit creation. Click the date label to return to today. Habit names open their backing notes. Binary habits have a round toggle; counted habits use −/+ steps of their **Step size** (1 by default, or a decimal such as 0.25) and timed habits use steps of 5 minutes. Values include the habit's unit. Flexible weekly/monthly habits show the cumulative total through the selected day, while the buttons change only that day's record. A decrement cannot remove records from other days.
+
+Right-click a habit row (or long-press on mobile) to [fail, skip or snooze it for the day](#-fail-skip-or-snooze-for-the-day), open its note, edit it, pause/resume tracking, stop tracking, or remove it. Habits you fail, skip or snooze leave the list and appear under a "hidden for today" link with an Undo button, just like the card dashboard. Stopping and removing a habit require the same confirmation as the card dashboard.
+
+The view follows the dashboard's sort and group settings, keeps rows in place while logging, and respects schedules, start dates, pauses, limit goals, and the daily-note date setting. Note habits offer an open/create note button rather than manual counters. Changes from other panes and sync refresh the view automatically.
 
 ## 📋 The habits table
 
@@ -276,7 +291,7 @@ Sometimes you know in the morning that a habit isn't happening today: the weathe
 - **Skip for today**: the day is set aside like a one-day pause, so it never counts for or against the habit and your streak survives. Unlike **Pause**, it ends on its own.
 - **Snooze…**: hide the habit for 30 minutes, 1 hour, 3 hours, or until a time you pick. It comes back by itself, and snoozing never affects your stats. Handy when you don't know yet whether you'll run in the morning or the evening.
 
-The habit leaves today's dashboard and sidebar panel. Underneath the list, a small **"2 hidden for today"** link expands to show what you closed, each with an **Undo** button. In the habits table the row stays, because its weekly and monthly counts are still useful, and the **Today** cell shows "Failed", "Skipped" or "Snoozed until…" instead. Click it to undo, or right-click the Today cell for the same Fail, Skip and Snooze options.
+The habit leaves today's dashboard (card or compact layout) and sidebar panel. Underneath the list, a small **"2 hidden for today"** link expands to show what you closed, each with an **Undo** button. In the habits table the row stays, because its weekly and monthly counts are still useful, and the **Today** cell shows "Failed", "Skipped" or "Snoozed until…" instead. Click it to undo, or right-click the Today cell for the same Fail, Skip and Snooze options.
 
 You can also fail or skip a different day: step the dashboard back (or forward) to it and use the same menu. Snooze is for today only.
 

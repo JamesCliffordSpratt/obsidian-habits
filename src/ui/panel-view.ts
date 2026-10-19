@@ -655,7 +655,7 @@ export class HabitsPanelView extends ItemView {
 		const value = this.valueOf(habit);
 		const timed = habit.type === "timed";
 		const step = stepOf(habit);
-		const goalValue = habit.target > 0 ? habit.target : 1;
+		const goalValue = habit.goalDirection === "max" ? limitOf(habit) : habit.target > 0 ? habit.target : 1;
 		const periodTotal = flexiblePeriodTotal(habit, new Date());
 		main.createSpan({
 			cls: "habits-panel-value habits-panel-readout-value",
@@ -704,9 +704,11 @@ export class HabitsPanelView extends ItemView {
 
 		const progress = row.createDiv({ cls: "habits-panel-progress" });
 		const fill = progress.createDiv({ cls: "habits-panel-progress-fill" });
-		const pct = Math.min(100, Math.round((periodTotal / goalValue) * 100));
+		const pct = goalValue > 0 ? Math.min(100, Math.round((periodTotal / goalValue) * 100)) : periodTotal > 0 ? 100 : 0;
 		fill.setCssProps({ "--habits-progress": `${pct}%` });
-		if (periodTotal >= goalValue) {
+		if (habit.goalDirection === "max") {
+			progress.toggleClass("is-over", periodTotal > goalValue);
+		} else if (periodTotal >= goalValue) {
 			progress.addClass("is-complete");
 		}
 	}

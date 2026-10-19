@@ -52,6 +52,7 @@ export function registerLongPress(
 	});
 	component.registerDomEvent(el, "touchend", clear);
 	component.registerDomEvent(el, "touchcancel", clear);
+	component.register(clear);
 }
 
 /**
@@ -107,9 +108,11 @@ export function habitScheduleLabel(habit: HabitDefinition): string {
 			: t("Every {n} days", { n: habit.intervalDays });
 	}
 	if (habit.frequency === "flexibleWeekly") {
+		if (habit.goalDirection === "max") return t("Weekly total limit · any day");
 		return t("{n}× a week · any day", { n: Math.max(1, habit.target) });
 	}
 	if (habit.frequency === "flexibleMonthly") {
+		if (habit.goalDirection === "max") return t("Monthly total limit · any day");
 		return t("{n}× a month · any day", { n: Math.max(1, habit.target) });
 	}
 	return "";
