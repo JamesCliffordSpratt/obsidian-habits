@@ -3120,6 +3120,7 @@ table.habits-table .habits-table-toggle.habits-table-closed {
 
 table.habits-table .habits-table-toggle.habits-table-closed.is-failed {
 	color: var(--color-red, var(--text-error));
+}
 
 /* Compact embedded logger: one coloured row per habit. */
 .habits-compact {
