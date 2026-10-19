@@ -194,6 +194,12 @@ export interface HabitDefinition {
 	/** Optional unit label shown next to the value (e.g. "cups"). */
 	unit: string;
 	/**
+	 * How much one +/− press adds or removes for a `repetition` habit
+	 * (e.g. 0.25 for litres). `1` by default; ignored for other types. See
+	 * {@link stepOf}.
+	 */
+	step: number;
+	/**
 	 * Optional weekly goal: the number of days the daily goal should be met.
 	 * `0` means no target. Ignored when `weeklyPerfect` is true.
 	 */
@@ -300,6 +306,7 @@ export interface NewHabitOptions {
 	times: string[];
 	target: number;
 	unit: string;
+	step: number;
 	weeklyTarget: number;
 	monthlyTarget: number;
 	weeklyPerfect: boolean;

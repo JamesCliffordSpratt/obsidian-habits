@@ -11,7 +11,7 @@ import {
 	type StatsPeriod,
 	type StatsRangeMode,
 } from "./stats";
-import { toDateKey } from "./utils";
+import { formatValue, toDateKey } from "./utils";
 
 /**
  * Most habits ever included in a digest. Keeps the prompt (and its cost)
@@ -94,12 +94,12 @@ export function buildStatsDigest(
 			parts.push(
 				habit.type === "binary"
 					? "avoiding entirely"
-					: `limit of ${habit.target}${habit.unit ? ` ${habit.unit}` : ""} per day`,
+					: `limit of ${formatValue(habit.target)}${habit.unit ? ` ${habit.unit}` : ""} per day`,
 			);
 			parts.push(`${s.completed}/${s.days} days within limit`);
 			if (habit.type !== "binary") {
 				parts.push(
-					`${s.total}${habit.unit ? ` ${habit.unit}` : ""} consumed in period`,
+					`${formatValue(s.total)}${habit.unit ? ` ${habit.unit}` : ""} consumed in period`,
 				);
 			}
 		} else {
@@ -111,7 +111,7 @@ export function buildStatsDigest(
 						: "per day";
 			if (habit.type === "repetition") {
 				parts.push(
-					`target ${habit.target}${habit.unit ? ` ${habit.unit}` : ""} ${period}`,
+					`target ${formatValue(habit.target)}${habit.unit ? ` ${habit.unit}` : ""} ${period}`,
 				);
 			} else if (habit.type === "timed") {
 				parts.push(`target ${habit.target} min ${period}`);
@@ -123,7 +123,7 @@ export function buildStatsDigest(
 			parts.push(`${s.completed}/${s.days} due days completed`);
 			if (habit.type !== "binary") {
 				parts.push(
-					`${s.total}${habit.unit ? ` ${habit.unit}` : habit.type === "timed" ? " min" : ""} total`,
+					`${formatValue(s.total)}${habit.unit ? ` ${habit.unit}` : habit.type === "timed" ? " min" : ""} total`,
 				);
 			}
 		}

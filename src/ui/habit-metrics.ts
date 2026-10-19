@@ -30,7 +30,7 @@ import {
 	trackingStartKey,
 	longestStreak,
 } from "../stats";
-import { addDays, fromDateKey, toDateKey } from "../utils";
+import { addDays, formatValue, fromDateKey, toDateKey } from "../utils";
 
 const DAILY_DAYS = 30;
 const WEEKLY_WEEKS = 12;
@@ -527,7 +527,7 @@ export class HabitMetrics extends MarkdownRenderChild {
 		const lines = [dateLabel, stateLabel[point.state]];
 		const skipsValue: HeatmapState[] = ["future", "prestart", "notdue", "outside"];
 		if (habit.type !== "binary" && !skipsValue.includes(point.state)) {
-			lines.push(`${point.value}${unit ? ` ${unit}` : ""}`);
+			lines.push(`${formatValue(point.value)}${unit ? ` ${unit}` : ""}`);
 		}
 		if (point.rescheduledFrom) {
 			const fromDate = fromDateKey(point.rescheduledFrom);

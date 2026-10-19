@@ -41,6 +41,9 @@ import { CommentSuggest } from "./comment-suggest";
 import { renderComment } from "../comment-text";
 import {
 	addDays,
+	allowsDecimals,
+	cleanValue,
+	formatValue,
 	formatTimeOfDay,
 	friendlyDateLabel,
 	fromDateKey,
@@ -49,8 +52,10 @@ import {
 	habitAccent,
 	parseNoteDate,
 	registerLongPress,
+	roundValue,
 	sectionLabel,
 	sortHabits,
+	stepOf,
 	toDateKey,
 	type HabitSection,
 } from "../utils";
@@ -1372,7 +1377,7 @@ export class HabitsDashboard
 	}
 
 	private async commit(habit: HabitDefinition, value: number): Promise<void> {
-		const clamped = Math.max(0, value);
+		const clamped = roundValue(Math.max(0, value));
 		const dateKey = toDateKey(this.selectedDate);
 		if (clamped > 0) {
 			habit.records[dateKey] = clamped;
@@ -1395,12 +1400,12 @@ export class HabitsDashboard
 			attr: {
 				type: "number",
 				min: "0",
-				step: "1",
-				inputmode: "numeric",
+				step: allowsDecimals(habit) ? "any" : "1",
+				inputmode: allowsDecimals(habit) ? "decimal" : "numeric",
 				"aria-label": t("Value"),
 			},
 		});
-		input.value = String(this.currentValue(habit));
+		input.value = formatValue(this.currentValue(habit));
 		readout.createSpan({ cls: "habits-target", text: targetText });
 		input.focus();
 		input.select();
@@ -1416,7 +1421,7 @@ export class HabitsDashboard
 			if (save) {
 				const parsed = Number(input.value);
 				if (Number.isFinite(parsed)) {
-					await this.commit(habit, Math.max(0, Math.round(parsed)));
+					await this.commit(habit, cleanValue(habit, parsed));
 				}
 			}
 			if (habit.goalDirection === "max") {
@@ -1536,18 +1541,19 @@ export class HabitsDashboard
 	): void {
 		const value = this.currentValue(habit);
 		const timed = habit.type === "timed";
+		const step = stepOf(habit);
 		const unit = habit.unit || (timed ? "min" : "");
 		const isMax = habit.goalDirection === "max";
 		const goalValue = isMax ? limitOf(habit) : habit.target;
 
 		const targetText = unit
-			? `/ ${goalValue} ${unit}`
-			: `/ ${goalValue}`;
+			? `/ ${formatValue(goalValue)} ${unit}`
+			: `/ ${formatValue(goalValue)}`;
 
 		const readout = body.createDiv({ cls: "habits-readout" });
 		const valueEl = readout.createEl("button", {
 			cls: "habits-value",
-			text: String(value),
+			text: formatValue(value),
 			attr: {
 				type: "button",
 				"aria-label": t("Edit value"),
@@ -1590,7 +1596,10 @@ export class HabitsDashboard
 
 		const minus = buttons.createEl("button", {
 			cls: "habits-icon-button",
-			attr: { type: "button", "aria-label": t("Decrease by 1") },
+			attr: {
+				type: "button",
+				"aria-label": t("Decrease by {n}", { n: formatValue(step) }),
+			},
 		});
 		setIcon(minus, "minus");
 		this.registerDomEvent(minus, "click", async () => {
@@ -1598,10 +1607,10 @@ export class HabitsDashboard
 				// Correcting a value back under the limit may complete a
 				// perfect day; celebrate the transition.
 				const wasPerfect = this.isPerfectDay();
-				await this.commit(habit, value - 1);
+				await this.commit(habit, value - step);
 				await this.finishLimitChange(!wasPerfect);
 			} else {
-				await this.commit(habit, value - 1);
+				await this.commit(habit, value - step);
 				this.render();
 			}
 		});
@@ -1636,11 +1645,14 @@ export class HabitsDashboard
 		} else {
 			const plus = buttons.createEl("button", {
 				cls: "habits-icon-button",
-				attr: { type: "button", "aria-label": t("Increase by 1") },
+				attr: {
+					type: "button",
+					"aria-label": t("Increase by {n}", { n: formatValue(step) }),
+				},
 			});
 			setIcon(plus, "plus");
 			this.registerDomEvent(plus, "click", () => {
-				void addValue(1);
+				void addValue(step);
 			});
 		}
 	}
@@ -1662,6 +1674,7 @@ export class HabitsDashboard
 	): void {
 		const value = this.currentValue(habit);
 		const timed = habit.type === "timed";
+		const step = stepOf(habit);
 		const unit = habit.unit || (timed ? "min" : "");
 		const goalValue = habit.target > 0 ? habit.target : 1;
 		const periodTotal = flexiblePeriodTotal(habit, this.selectedDate);
@@ -1671,13 +1684,13 @@ export class HabitsDashboard
 		const readout = body.createDiv({ cls: "habits-readout" });
 		readout.createSpan({
 			cls: "habits-readout-value",
-			text: String(periodTotal),
+			text: formatValue(periodTotal),
 		});
 		readout.createSpan({
 			cls: "habits-target",
 			text: unit
-				? `/ ${goalValue} ${unit} ${periodWord}`
-				: `/ ${goalValue} ${periodWord}`,
+				? `/ ${formatValue(goalValue)} ${unit} ${periodWord}`
+				: `/ ${formatValue(goalValue)} ${periodWord}`,
 		});
 
 		const progress = body.createDiv({ cls: "habits-progress" });
@@ -1693,11 +1706,14 @@ export class HabitsDashboard
 
 		const minus = buttons.createEl("button", {
 			cls: "habits-icon-button",
-			attr: { type: "button", "aria-label": t("Decrease by 1") },
+			attr: {
+				type: "button",
+				"aria-label": t("Decrease by {n}", { n: formatValue(step) }),
+			},
 		});
 		setIcon(minus, "minus");
 		this.registerDomEvent(minus, "click", async () => {
-			await this.commit(habit, value - 1);
+			await this.commit(habit, value - step);
 			this.render();
 		});
 
@@ -1724,11 +1740,14 @@ export class HabitsDashboard
 		} else {
 			const plus = buttons.createEl("button", {
 				cls: "habits-icon-button",
-				attr: { type: "button", "aria-label": t("Increase by 1") },
+				attr: {
+					type: "button",
+					"aria-label": t("Increase by {n}", { n: formatValue(step) }),
+				},
 			});
 			setIcon(plus, "plus");
 			this.registerDomEvent(plus, "click", () => {
-				void addValue(1);
+				void addValue(step);
 			});
 		}
 	}
@@ -1820,7 +1839,6 @@ export class HabitsDashboard
 						this.store,
 						() => this.reload(),
 						habit,
-						this.getSettings().experimental.limitHabits,
 						this.getSettings().experimental.noteHabits,
 					).open();
 				}),
@@ -1911,7 +1929,6 @@ export class HabitsDashboard
 				this.reload();
 			},
 			null,
-			this.getSettings().experimental.limitHabits,
 			this.getSettings().experimental.noteHabits,
 		).open();
 	}

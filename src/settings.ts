@@ -18,8 +18,6 @@ import { FolderSuggest } from "./ui/vault-suggest";
  * fully-fledged means deleting its flag here and removing the UI guards.
  */
 export interface ExperimentalFlags {
-	/** Limit ("break") habits: goals that mean staying under a maximum. */
-	limitHabits: boolean;
 	/** AI-generated summaries on the weekly and monthly stats tabs. */
 	aiSummaries: boolean;
 	/**
@@ -36,7 +34,6 @@ export interface ExperimentalFlags {
 }
 
 export const DEFAULT_EXPERIMENTAL: ExperimentalFlags = {
-	limitHabits: false,
 	aiSummaries: false,
 	noteHabits: false,
 	rescheduling: false,
@@ -69,6 +66,7 @@ export interface FrontmatterKeys {
 	goalDirection: string;
 	target: string;
 	unit: string;
+	step: string;
 	weeklyTarget: string;
 	monthlyTarget: string;
 	weeklyPerfect: string;
@@ -104,6 +102,7 @@ export const DEFAULT_FRONTMATTER_KEYS: FrontmatterKeys = {
 	goalDirection: "goalDirection",
 	target: "target",
 	unit: "unit",
+	step: "step",
 	weeklyTarget: "weeklyTarget",
 	monthlyTarget: "monthlyTarget",
 	weeklyPerfect: "weeklyPerfect",
@@ -928,22 +927,6 @@ export class HabitsSettingTab extends PluginSettingTab {
 		});
 
 		new Setting(containerEl)
-			.setName(t("Break bad habits"))
-			.setDesc(
-				t(
-					"Track habits you want to reduce or avoid by staying under a daily limit — for example at most 2 hours of gaming, or no smoking at all.",
-				),
-			)
-			.addToggle((toggle) =>
-				toggle
-					.setValue(this.plugin.settings.experimental.limitHabits)
-					.onChange(async (value) => {
-						this.plugin.settings.experimental.limitHabits = value;
-						await this.plugin.saveSettings();
-					}),
-			);
-
-		new Setting(containerEl)
 			.setName(t("Note habits"))
 			.setDesc(
 				t(
@@ -1094,6 +1077,7 @@ const FRONTMATTER_KEY_GROUPS: {
 			["goalDirection", () => t("Goal direction key")],
 			["target", () => t("Target key")],
 			["unit", () => t("Unit key")],
+			["step", () => t("Step size key")],
 			["weeklyTarget", () => t("Weekly target key")],
 			["monthlyTarget", () => t("Monthly target key")],
 			["weeklyPerfect", () => t("Weekly perfect key")],

@@ -2,7 +2,7 @@ import { Notice, setIcon } from "obsidian";
 import { t } from "../i18n";
 import type { AiSummarySettings } from "../settings";
 import type { GroupStyle, HabitDefinition } from "../types";
-import { addDays, habitAccent, toDateKey } from "../utils";
+import { addDays, formatValue, habitAccent, toDateKey } from "../utils";
 import { applyHabitIcon } from "./icon-suggest-modal";
 import {
 	buildStatsDigest,
@@ -302,7 +302,7 @@ export function renderStatsView(
 						days: stats.days,
 					})
 				: t("{total} total", {
-						total: `${stats.total}${unit ? ` ${unit}` : ""}`,
+						total: `${formatValue(stats.total)}${unit ? ` ${unit}` : ""}`,
 					});
 		const meta = row.createDiv({ cls: "habits-stats-meta" });
 		meta.createSpan({

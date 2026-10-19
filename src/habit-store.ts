@@ -18,6 +18,7 @@ import type {
 import {
 	addDays,
 	isFlexibleFrequency,
+	roundValue,
 	sanitizeFileName,
 	toDateKey,
 } from "./utils";
@@ -256,6 +257,7 @@ export class HabitStore {
 			times: this.readTimes(fm[`${k.time}s`], fm[k.time]),
 			target: this.readNumber(fm[k.target], 1),
 			unit: typeof fm[k.unit] === "string" ? (fm[k.unit] as string) : "",
+			step: this.readStep(fm[k.step]),
 			weeklyTarget: this.readNumber(fm[k.weeklyTarget], 0),
 			monthlyTarget: this.readNumber(fm[k.monthlyTarget], 0),
 			weeklyPerfect: fm[k.weeklyPerfect] === true,
@@ -349,6 +351,12 @@ export class HabitStore {
 			}
 		}
 		return fallback;
+	}
+
+	/** A counted habit's +/− step size; anything missing or not above 0 is 1. */
+	private readStep(value: unknown): number {
+		const step = roundValue(this.readNumber(value, 1));
+		return step > 0 ? step : 1;
 	}
 
 	/** Round to a whole number and constrain it to an inclusive range. */
@@ -701,6 +709,8 @@ export class HabitStore {
 		const useDateList =
 			habit.type === "binary" &&
 			k.records !== DEFAULT_FRONTMATTER_KEYS.records;
+		// Repeated +0.1 presses would otherwise store 0.30000000000000004.
+		value = roundValue(value);
 		await this.app.fileManager.processFrontMatter(file, (frontmatter) => {
 			const fm = frontmatter as Record<string, unknown>;
 			const records = this.readRecords(fm[k.records]);
@@ -1112,6 +1122,10 @@ export class HabitStore {
 			if (options.unit) {
 				fm[k.unit] = options.unit;
 			}
+			// Only written when it differs from the default of 1.
+			if (options.type === "repetition" && options.step !== 1) {
+				fm[k.step] = options.step;
+			}
 			if (options.weeklyPerfect) {
 				fm[k.weeklyPerfect] = true;
 			} else if (options.weeklyTarget > 0) {
@@ -1208,6 +1222,11 @@ export class HabitStore {
 				fm[k.unit] = options.unit;
 			} else {
 				delete fm[k.unit];
+			}
+			if (options.type === "repetition" && options.step !== 1) {
+				fm[k.step] = options.step;
+			} else {
+				delete fm[k.step];
 			}
 			if (options.weeklyPerfect) {
 				fm[k.weeklyPerfect] = true;

@@ -26,7 +26,12 @@ import {
 import { EmojiSuggestModal } from "./emoji-suggest-modal";
 import { FolderSuggest, MarkdownFileSuggest } from "./vault-suggest";
 import { DEFAULT_NOTE_FILENAME_FORMAT } from "../note-habit";
-import { isFlexibleFrequency } from "../utils";
+import {
+	allowsDecimals,
+	cleanValue,
+	isFlexibleFrequency,
+	roundValue,
+} from "../utils";
 import { t } from "../i18n";
 
 /**
@@ -189,19 +194,23 @@ const LIMIT_EXAMPLES: Record<HabitType, HabitExample[]> = {
 	note: EXAMPLES.note,
 };
 
-/** Constrain a text input to whole numbers within an optional range. */
+/**
+ * Constrain a text input to numbers within an optional range: whole numbers
+ * by default, or any decimal when `decimals` is set.
+ */
 function applyNumeric(
 	input: HTMLInputElement,
 	min: number,
 	max?: number,
+	decimals = false,
 ): void {
 	input.type = "number";
-	input.inputMode = "numeric";
+	input.inputMode = decimals ? "decimal" : "numeric";
 	input.min = String(min);
 	if (max !== undefined) {
 		input.max = String(max);
 	}
-	input.step = "1";
+	input.step = decimals ? "any" : "1";
 }
 
 /** Modal that collects the details needed to create a new habit. */
@@ -216,6 +225,7 @@ export class HabitModal extends Modal {
 	private times: string[] = [];
 	private target = 1;
 	private unit = "";
+	private step = 1;
 	private weeklyTarget = 0;
 	private monthlyTarget = 0;
 	private weeklyPerfect = false;
@@ -256,7 +266,6 @@ export class HabitModal extends Modal {
 		private store: HabitStore,
 		private onCreated: () => void,
 		editing: HabitDefinition | null = null,
-		private allowLimitHabits = false,
 		private allowNoteHabits = false,
 	) {
 		super(app);
@@ -281,6 +290,7 @@ export class HabitModal extends Modal {
 					? Math.max(0, editing.target)
 					: editing.target || 1;
 			this.unit = editing.unit;
+			this.step = editing.step > 0 ? editing.step : 1;
 			this.weeklyTarget = editing.weeklyTarget || 0;
 			this.monthlyTarget = editing.monthlyTarget || 0;
 			this.weeklyPerfect = editing.weeklyPerfect;
@@ -332,25 +342,20 @@ export class HabitModal extends Modal {
 				}),
 		);
 
-		// The goal picker is the experimental feature's only entry point:
-		// it appears when the flag is on, or when editing a habit that is
-		// already a limit habit (so such habits stay editable even after
-		// the flag is switched off). Note habits have no limit variant.
-		if (
-			this.type !== "note" &&
-			(this.allowLimitHabits || this.editing?.goalDirection === "max")
-		) {
+		// At least (reach a target) or at most (stay within a limit). Note
+		// habits have no limit variant.
+		if (this.type !== "note") {
 			new Setting(contentEl)
 				.setName(t("Goal"))
 				.setDesc(
 					t(
-						"Reach a target for habits you are building. Stay under a limit for habits you are cutting down or giving up.",
+						"At least: reach a target for habits you are building, like drinking 1.5 litres of water. At most: stay within a limit for habits you are cutting down, like no more than 2 coffees.",
 					),
 				)
 				.addDropdown((dropdown) =>
 					dropdown
-						.addOption("min", t("Reach a target"))
-						.addOption("max", t("Stay under a limit"))
+						.addOption("min", t("At least (reach a target)"))
+						.addOption("max", t("At most (stay within a limit)"))
 						.setValue(this.goalDirection)
 						.onChange((value) => {
 							this.goalDirection = value as GoalDirection;
@@ -428,10 +433,14 @@ export class HabitModal extends Modal {
 					),
 				);
 			}
+			// Counted habits take decimal amounts (1.5 litres); timed habits
+			// are whole minutes, and binary "times per period" whole times.
+			const decimals = allowsDecimals({ type: this.type });
 			setting.addText((text) => {
 				// A limit of 0 is meaningful ("none at all"); a target of 0
-				// is not, so build habits keep their minimum of 1.
-				applyNumeric(text.inputEl, isMax ? 0 : 1);
+				// is not, so build habits keep their minimum of 1 — or, for
+				// decimal amounts, anything above 0.
+				applyNumeric(text.inputEl, isMax || decimals ? 0 : 1, undefined, decimals);
 				text
 					.setPlaceholder(
 						String(
@@ -443,9 +452,18 @@ export class HabitModal extends Modal {
 					.onChange((value) => {
 						const parsed = Number(value);
 						const fallback = isMax ? 0 : 1;
-						this.target = Number.isFinite(parsed)
-							? Math.max(isMax ? 0 : 1, Math.round(parsed))
-							: fallback;
+						if (!Number.isFinite(parsed)) {
+							this.target = fallback;
+						} else if (decimals) {
+							const amount = roundValue(parsed);
+							this.target = isMax
+								? Math.max(0, amount)
+								: amount > 0
+									? amount
+									: fallback;
+						} else {
+							this.target = Math.max(fallback, Math.round(parsed));
+						}
 					});
 			});
 
@@ -461,6 +479,24 @@ export class HabitModal extends Modal {
 								this.unit = value;
 							}),
 					);
+				new Setting(contentEl)
+					.setName(t("Step size"))
+					.setDesc(
+						t(
+							"How much each + and − press adds or removes. Use a decimal such as 0.25 for amounts like litres.",
+						),
+					)
+					.addText((text) => {
+						applyNumeric(text.inputEl, 0, undefined, true);
+						text
+							.setPlaceholder("1")
+							.setValue(String(this.step))
+							.onChange((value) => {
+								const parsed = roundValue(Number(value));
+								this.step =
+									Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
+							});
+					});
 			}
 		}
 
@@ -618,7 +654,10 @@ export class HabitModal extends Modal {
 									? this.target > 0
 										? this.target
 										: 500
-									: this.target,
+									: // A decimal typed for a counted habit
+										// can't stay if the type changed since.
+										cleanValue({ type: this.type }, this.target),
+							step: allowsDecimals({ type: this.type }) ? this.step : 1,
 							unit: isNote
 								? isChecklistOnly
 									? isChecklistCount

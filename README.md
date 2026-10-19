@@ -12,13 +12,13 @@
 ## ✨ Features at a glance
 
 - 🎠 **Carousel dashboard** — log your habits from any note with a `habits` code block, with satisfying completion animations
-- ✅ **Four habit types** — done/not-done, counted (8 cups of water), timed (30 minutes of exercise, with +1/+5/+10 quick buttons), and note (write in a per-day note)
+- ✅ **Four habit types** — done/not-done, counted (8 cups of water, or 1.5 litres in 0.25 steps), timed (30 minutes of exercise, with +1/+5/+10 quick buttons), and note (write in a per-day note)
 - 🗓️ **Flexible schedules** — daily, weekly on one or several weekdays (Mon/Wed/Fri), monthly, or every N days (alternate-day medication); non-daily habits appear only on their due day, and streaks count due days, not calendar days
 - 🔥 **Streaks and statistics** — current and best streaks, completion rates, perfect days, weekly and monthly goals, per-habit heatmaps over the week, month, or any custom date range
 - 📊 **Charts on every habit page** — 30-day activity and 12-week trend charts rendered in your theme's colours
 - 📋 **Habits overview table** — a `habits-table` code block lists every active habit with its schedule and completed/due counts for the current week and the last three months
 - 📄 **Printable PDF reports** — pick your metrics, date range, and layout with a live A4 preview
-- 🚭 **Break bad habits** *(experimental)* — track things you're cutting down or quitting by staying under a daily limit, with quiet streaks for every clean day
+- 🎯 **At least or at most** — build a habit by reaching a target (at least 1.5 litres of water), or break one by staying within a limit (at most 2 coffees, or no smoking at all), with quiet streaks for every clean day
 - 📝 **Note habits** *(experimental)* — a Write/Open card backed by a per-day note, completed by a character count, a flexible checklist requirement, or both, with a fail keyword to flag a deliberate slip and [Templater](https://silentvoid13.github.io/Templater/) support for the note it creates
 - ✨ **AI summaries** *(experimental)* — on-demand feedback and advice on your stats, on screen and in PDF reports, using your own AI service (including free and fully local options)
 - 🔔 **Reschedule missed habits** *(experimental)* — a badged notification button surfaces missed due days so you can move one onto a different day, past or future, without ever risking a double entry
@@ -91,6 +91,29 @@ Any daily, weekly, monthly, or every-N-days habit can also carry one or more opt
 Non-daily cards surface only on their due dates in both the dashboard and the sidebar panel (the flexible "any day" frequencies are the exception — they show every day), so your list stays focused on what's actually due. Their **streaks and stats count due periods, not calendar days**: a Sunday-only habit's streak is the number of consecutive weeks you completed it, a Mon/Wed/Fri habit's is consecutive due days, a monthly habit's is consecutive months, and a "twice a week, any day" habit's is consecutive weeks its quota was met. Days a habit isn't due don't count against its completion rate. To log a due date you missed, use the dashboard's date arrows to step back to it — or, with **Reschedule missed habits** turned on, see [Rescheduling missed habits](#-rescheduling-missed-habits) below.
 
 The charts on a non-daily habit's page adapt too: instead of a 30-day grid, the activity chart plots each recent **due date** (labelled with the date it lands on), and a rolling completion-rate line shows the trend across periods. The summary tiles relabel accordingly — "Weeks completed" or "Months completed" rather than "Days completed".
+
+## 🎯 At least or at most
+
+Every habit except note habits has a **Goal**, chosen when you create or edit it:
+
+- **At least (reach a target)**: the default, for habits you're building. Drink at least 1.5 litres of water, read 20 pages, exercise for 30 minutes.
+- **At most (stay within a limit)**: for habits you're cutting down or quitting. At most 2 hours of gaming, no more than 2 coffees, or no smoking at all (a limit of 0). Reaching the limit exactly still counts as within it. Limit habits are daily.
+  - **Done/not-done limit habits** get two buttons: **Clean** and **Slipped**. An unlogged day already counts as clean — silence is success.
+  - **Counted and timed limit habits** log consumption against the limit; the progress bar fills toward the limit and turns red past it.
+  - Streaks count consecutive days within the limit, and only from the habit's start date — the years before you started quitting don't inflate anything.
+
+### Decimal amounts
+
+Counted habits accept decimals, so a target can be `1.5` litres and you can log `0.75`. Set a **Step size** to choose how much each **+** and **−** press changes the value: `0.25` for litres, `0.5` for kilometres, or the default `1`. You can also click the value on a card or panel row and type any amount. In frontmatter:
+
+```yaml
+type: repetition
+target: 1.5
+unit: litres
+step: 0.25
+```
+
+Timed habits stay in whole minutes.
 
 ## 🎠 The dashboard
 
@@ -248,14 +271,6 @@ group: Health
 
 Some features ship behind opt-in toggles under **Settings → Habits → Experimental** while they're being tested. They're **off by default**, and turning one off only hides it from menus — anything you created with it keeps working and keeps its meaning.
 
-### 🚭 Break bad habits
-
-Track habits you want to reduce or avoid by staying **under a daily limit** instead of reaching a target — at most 2 hours of gaming, no more than one coffee, or no smoking at all (a limit of 0).
-
-- **Done/not-done limit habits** get two buttons: **Clean** and **Slipped**. An unlogged day already counts as clean — silence is success.
-- **Counted and timed limit habits** log consumption against the limit; the progress bar fills toward the limit and turns red past it.
-- Streaks count consecutive days within the limit, and only from the habit's start date — the years before you started quitting don't inflate anything.
-
 ### 📝 Note habits
 
 Track a habit by writing, not by tapping a button — journals, morning pages, work logs, anything that lives in a note. A note habit's card shows a **Write** button that creates that day's note and, once it exists, an **Open** button to jump back into it.
@@ -323,7 +338,6 @@ Works with **any OpenAI-compatible service**: OpenAI, OpenRouter, Groq, Google A
 | Write reminders for due habits | Off | Maintain Reminder-plugin checklist lines for habits with planned times |
 | Where to write reminders | Daily note | Today's daily note, or one fixed note |
 | Reminder note path | `Habit reminders.md` | Vault path used when writing to a fixed note |
-| Break bad habits | Off | *(Experimental)* Limit habits: stay under a daily cap |
 | AI summaries | Off | *(Experimental)* AI feedback on stats tabs and PDF reports |
 
 ## 🛠️ Development

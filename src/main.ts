@@ -155,7 +155,6 @@ export default class HabitsPlugin extends Plugin {
 						// The dashboard reloads itself when reopened.
 					},
 					null,
-					this.settings.experimental.limitHabits,
 					this.settings.experimental.noteHabits,
 				).open();
 			},

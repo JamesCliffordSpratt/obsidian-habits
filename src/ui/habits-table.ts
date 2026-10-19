@@ -26,12 +26,15 @@ import {
 import { createNoteHabitEntry, notePathForDate } from "../note-habit";
 import {
 	formatTimeOfDay,
+	formatValue,
 	friendlyDateLabel,
 	fromDateKey,
 	groupHabits,
 	habitScheduleLabel,
+	roundValue,
 	sectionLabel,
 	sortHabits,
+	stepOf,
 	toDateKey,
 } from "../utils";
 
@@ -266,7 +269,7 @@ export class HabitsTable extends MarkdownRenderChild {
 
 		const value = habit.records[dateKey] ?? 0;
 		const commit = async (next: number): Promise<void> => {
-			const clamped = Math.max(0, next);
+			const clamped = roundValue(Math.max(0, next));
 			// Mirror the write locally so the cell can redraw immediately;
 			// the store keeps zero-values out of frontmatter, so do the same.
 			if (clamped > 0) {
@@ -281,13 +284,16 @@ export class HabitsTable extends MarkdownRenderChild {
 		if (isFlexible(habit)) {
 			// Still logs today's own value via `commit`; only the readout
 			// shows the whole period's running total instead of today's.
-			const step = habit.type === "timed" ? 5 : 1;
+			const step = habit.type === "timed" ? 5 : stepOf(habit);
 			const goal = habit.target > 0 ? habit.target : 1;
 			const periodTotal = flexiblePeriodTotal(habit, today);
 			const stepper = cell.createDiv({ cls: "habits-table-stepper" });
 			const minus = stepper.createEl("button", {
 				cls: "habits-icon-button habits-table-mini",
-				attr: { type: "button", "aria-label": t("Decrease by 1") },
+				attr: {
+					type: "button",
+					"aria-label": t("Decrease by {n}", { n: formatValue(step) }),
+				},
 			});
 			setIcon(minus, "minus");
 			this.registerDomEvent(minus, "click", () => {
@@ -295,13 +301,13 @@ export class HabitsTable extends MarkdownRenderChild {
 			});
 			stepper.createSpan({
 				cls: "habits-table-value",
-				text: `${periodTotal}/${goal}`,
+				text: `${formatValue(periodTotal)}/${formatValue(goal)}`,
 			});
 			const plus = stepper.createEl("button", {
 				cls: "habits-icon-button habits-table-mini",
 				attr: {
 					type: "button",
-					"aria-label": t("Increase by {n}", { n: step }),
+					"aria-label": t("Increase by {n}", { n: formatValue(step) }),
 				},
 			});
 			setIcon(plus, "plus");
@@ -344,13 +350,16 @@ export class HabitsTable extends MarkdownRenderChild {
 
 		// Counted and timed habits: [−] value/goal [+]. Timed habits step
 		// in 5-minute chunks, matching the spirit of the panel's steppers.
-		const step = habit.type === "timed" ? 5 : 1;
+		const step = habit.type === "timed" ? 5 : stepOf(habit);
 		const goal =
 			habit.goalDirection === "max" ? limitOf(habit) : habit.target;
 		const stepper = cell.createDiv({ cls: "habits-table-stepper" });
 		const minus = stepper.createEl("button", {
 			cls: "habits-icon-button habits-table-mini",
-			attr: { type: "button", "aria-label": t("Decrease by 1") },
+			attr: {
+					type: "button",
+					"aria-label": t("Decrease by {n}", { n: formatValue(step) }),
+				},
 		});
 		setIcon(minus, "minus");
 		this.registerDomEvent(minus, "click", () => {
@@ -358,13 +367,13 @@ export class HabitsTable extends MarkdownRenderChild {
 		});
 		stepper.createSpan({
 			cls: "habits-table-value",
-			text: `${value}/${goal}`,
+			text: `${formatValue(value)}/${formatValue(goal)}`,
 		});
 		const plus = stepper.createEl("button", {
 			cls: "habits-icon-button habits-table-mini",
 			attr: {
 				type: "button",
-				"aria-label": t("Increase by {n}", { n: step }),
+				"aria-label": t("Increase by {n}", { n: formatValue(step) }),
 			},
 		});
 		setIcon(plus, "plus");

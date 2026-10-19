@@ -24,14 +24,19 @@ import {
 } from "../stats";
 import { createNoteHabitEntry, notePathForDate } from "../note-habit";
 import {
+	allowsDecimals,
+	cleanValue,
 	formatTimeOfDay,
+	formatValue,
 	friendlyDateLabel,
 	fromDateKey,
 	groupHabits,
 	habitAccent,
 	registerLongPress,
 	sectionLabel,
+	roundValue,
 	sortHabits,
+	stepOf,
 	toDateKey,
 	type HabitSection,
 } from "../utils";
@@ -301,7 +306,6 @@ export class HabitsPanelView extends ItemView {
 				this.store,
 				() => this.reload(),
 				null,
-				this.getSettings().experimental.limitHabits,
 				this.getSettings().experimental.noteHabits,
 			).open();
 		});
@@ -320,7 +324,6 @@ export class HabitsPanelView extends ItemView {
 					this.store,
 					() => this.reload(),
 					null,
-					this.getSettings().experimental.limitHabits,
 					this.getSettings().experimental.noteHabits,
 				).open();
 			});
@@ -498,12 +501,13 @@ export class HabitsPanelView extends ItemView {
 
 		const value = this.valueOf(habit);
 		const timed = habit.type === "timed";
+		const step = stepOf(habit);
 		const isMax = habit.goalDirection === "max";
 		const goalValue = isMax ? limitOf(habit) : habit.target;
 		row.toggleClass("is-slipped", isMax && !done);
 		const valueBtn = main.createEl("button", {
 			cls: "habits-panel-value",
-			text: `${value}/${goalValue}`,
+			text: `${formatValue(value)}/${formatValue(goalValue)}`,
 			attr: { type: "button", "aria-label": t("Edit value") },
 		});
 		setTooltip(valueBtn, t("Click to type a value"));
@@ -513,11 +517,14 @@ export class HabitsPanelView extends ItemView {
 
 		const minus = main.createEl("button", {
 			cls: "habits-icon-button habits-panel-mini",
-			attr: { type: "button", "aria-label": t("Decrease by 1") },
+			attr: {
+				type: "button",
+				"aria-label": t("Decrease by {n}", { n: formatValue(step) }),
+			},
 		});
 		setIcon(minus, "minus");
 		this.registerDomEvent(minus, "click", async () => {
-			await this.commit(habit, value - 1, row);
+			await this.commit(habit, value - step, row);
 		});
 
 		if (timed) {
@@ -538,11 +545,14 @@ export class HabitsPanelView extends ItemView {
 		} else {
 			const plus = main.createEl("button", {
 				cls: "habits-icon-button habits-panel-mini",
-				attr: { type: "button", "aria-label": t("Increase by 1") },
+				attr: {
+					type: "button",
+					"aria-label": t("Increase by {n}", { n: formatValue(step) }),
+				},
 			});
 			setIcon(plus, "plus");
 			this.registerDomEvent(plus, "click", async () => {
-				await this.commit(habit, value + 1, row);
+				await this.commit(habit, value + step, row);
 			});
 		}
 
@@ -581,20 +591,24 @@ export class HabitsPanelView extends ItemView {
 	): void {
 		const value = this.valueOf(habit);
 		const timed = habit.type === "timed";
+		const step = stepOf(habit);
 		const goalValue = habit.target > 0 ? habit.target : 1;
 		const periodTotal = flexiblePeriodTotal(habit, new Date());
 		main.createSpan({
 			cls: "habits-panel-value habits-panel-readout-value",
-			text: `${periodTotal}/${goalValue}`,
+			text: `${formatValue(periodTotal)}/${formatValue(goalValue)}`,
 		});
 
 		const minus = main.createEl("button", {
 			cls: "habits-icon-button habits-panel-mini",
-			attr: { type: "button", "aria-label": t("Decrease by 1") },
+			attr: {
+				type: "button",
+				"aria-label": t("Decrease by {n}", { n: formatValue(step) }),
+			},
 		});
 		setIcon(minus, "minus");
 		this.registerDomEvent(minus, "click", async () => {
-			await this.commit(habit, value - 1, row);
+			await this.commit(habit, value - step, row);
 		});
 
 		if (timed) {
@@ -614,11 +628,14 @@ export class HabitsPanelView extends ItemView {
 		} else {
 			const plus = main.createEl("button", {
 				cls: "habits-icon-button habits-panel-mini",
-				attr: { type: "button", "aria-label": t("Increase by 1") },
+				attr: {
+					type: "button",
+					"aria-label": t("Increase by {n}", { n: formatValue(step) }),
+				},
 			});
 			setIcon(plus, "plus");
 			this.registerDomEvent(plus, "click", async () => {
-				await this.commit(habit, value + 1, row);
+				await this.commit(habit, value + step, row);
 			});
 		}
 
@@ -686,12 +703,12 @@ export class HabitsPanelView extends ItemView {
 			attr: {
 				type: "number",
 				min: "0",
-				step: "1",
-				inputmode: "numeric",
+				step: allowsDecimals(habit) ? "any" : "1",
+				inputmode: allowsDecimals(habit) ? "decimal" : "numeric",
 				"aria-label": t("Value"),
 			},
 		});
-		input.value = String(this.valueOf(habit));
+		input.value = formatValue(this.valueOf(habit));
 		valueBtn.replaceWith(input);
 		input.focus();
 		input.select();
@@ -705,11 +722,7 @@ export class HabitsPanelView extends ItemView {
 			if (save) {
 				const parsed = Number(input.value);
 				if (Number.isFinite(parsed)) {
-					await this.commit(
-						habit,
-						Math.max(0, Math.round(parsed)),
-						row,
-					);
+					await this.commit(habit, cleanValue(habit, parsed), row);
 					return;
 				}
 			}
@@ -737,7 +750,7 @@ export class HabitsPanelView extends ItemView {
 		row: HTMLElement,
 	): Promise<void> {
 		const wasDone = this.isDone(habit);
-		const clamped = Math.max(0, value);
+		const clamped = roundValue(Math.max(0, value));
 		const dateKey = this.todayKey();
 		if (clamped > 0) {
 			habit.records[dateKey] = clamped;
@@ -802,7 +815,6 @@ export class HabitsPanelView extends ItemView {
 						this.store,
 						() => this.reload(),
 						habit,
-						this.getSettings().experimental.limitHabits,
 						this.getSettings().experimental.noteHabits,
 					).open();
 				}),

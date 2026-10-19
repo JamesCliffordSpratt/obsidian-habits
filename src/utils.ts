@@ -116,6 +116,49 @@ export function habitScheduleLabel(habit: HabitDefinition): string {
 }
 
 /** True for the two "N times per period, any day" frequencies. */
+/**
+ * Whether a habit's logged values and target may be fractional (e.g. 1.5
+ * litres). Only counted habits: timed habits are whole minutes, and binary
+ * and note habits are never typed by hand.
+ */
+export function allowsDecimals(habit: Pick<HabitDefinition, "type">): boolean {
+	return habit.type === "repetition";
+}
+
+/**
+ * How much one +/− press changes a habit's value: a counted habit's own
+ * step size (1 by default, or e.g. 0.25 for litres), otherwise 1.
+ */
+export function stepOf(habit: Pick<HabitDefinition, "type" | "step">): number {
+	return allowsDecimals(habit) && habit.step > 0 ? habit.step : 1;
+}
+
+/**
+ * Round away floating-point noise (0.1 + 0.2 = 0.30000000000000004) so
+ * stored and displayed values stay tidy. Three decimal places is plenty for
+ * anything a person logs by hand.
+ */
+export function roundValue(value: number): number {
+	return Math.round(value * 1000) / 1000;
+}
+
+/** A logged value, total or target as display text, e.g. "1.5". */
+export function formatValue(value: number): string {
+	return String(roundValue(value));
+}
+
+/**
+ * A value ready to store: never negative, and a whole number for every
+ * habit type except counted habits, which keep their decimals.
+ */
+export function cleanValue(
+	habit: Pick<HabitDefinition, "type">,
+	value: number,
+): number {
+	const positive = Math.max(0, value);
+	return allowsDecimals(habit) ? roundValue(positive) : Math.round(positive);
+}
+
 export function isFlexibleFrequency(frequency: HabitFrequency): boolean {
 	return frequency === "flexibleWeekly" || frequency === "flexibleMonthly";
 }

@@ -37,7 +37,7 @@ import {
 	type DateRange,
 	type HabitPeriodStats,
 } from "../stats";
-import { addDays, fromDateKey, toDateKey } from "../utils";
+import { addDays, formatValue, fromDateKey, toDateKey } from "../utils";
 
 Chart.register(
 	CategoryScale,
@@ -1067,7 +1067,7 @@ export class ExportModal extends Modal {
 						days: stats.days,
 					})
 				: docT("{total} total", {
-						total: `${stats.total}${unit ? ` ${unit}` : ""}`,
+						total: `${formatValue(stats.total)}${unit ? ` ${unit}` : ""}`,
 					});
 		return docT("{rate}% · {total} · streak {current} (best {best})", {
 			rate: Math.round(stats.rate * 100),
