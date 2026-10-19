@@ -3016,3 +3016,108 @@ table.habits-table .habits-table-notdue {
 	width: 0.85em;
 	height: 0.85em;
 }
+
+/* Habits failed, skipped or snoozed for the day: a "N hidden" disclosure
+   under the dashboard's cards and the panel's rows, with Undo per habit. */
+
+.habits-closed {
+	display: flex;
+	flex-direction: column;
+	gap: 0.35rem;
+	margin-top: 0.75rem;
+}
+
+.habits-closed-toggle {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.3rem;
+	width: fit-content;
+	padding: 0.2rem 0.5rem;
+	font-size: var(--font-ui-small);
+	color: var(--text-muted);
+	background: transparent;
+	border: none;
+	box-shadow: none;
+	cursor: pointer;
+}
+
+.habits-closed-toggle:hover {
+	color: var(--text-normal);
+	background: var(--background-modifier-hover);
+}
+
+.habits-closed-chevron {
+	display: inline-flex;
+}
+
+.habits-closed-chevron .svg-icon {
+	width: 0.9em;
+	height: 0.9em;
+}
+
+.habits-closed-list {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+}
+
+.habits-closed-row {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	padding: 0.3rem 0.5rem;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: var(--radius-s);
+	background: var(--background-primary);
+	font-size: var(--font-ui-small);
+}
+
+.habits-closed-icon {
+	display: inline-flex;
+	color: var(--text-muted);
+}
+
+.habits-closed-name {
+	flex: 1;
+	min-width: 0;
+	overflow-wrap: anywhere;
+	color: var(--text-muted);
+}
+
+.habits-closed-row.is-failed .habits-closed-name {
+	text-decoration: line-through;
+}
+
+.habits-closed-status {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.25rem;
+	color: var(--text-faint);
+	white-space: nowrap;
+}
+
+.habits-closed-row.is-failed .habits-closed-status {
+	color: var(--color-red, var(--text-error));
+}
+
+.habits-closed-status-icon {
+	display: inline-flex;
+}
+
+.habits-closed-status-icon .svg-icon {
+	width: 0.85em;
+	height: 0.85em;
+}
+
+.habits-closed-undo {
+	padding: 0.1rem 0.5rem;
+	font-size: var(--font-ui-smaller);
+}
+
+table.habits-table .habits-table-toggle.habits-table-closed {
+	color: var(--text-muted);
+}
+
+table.habits-table .habits-table-toggle.habits-table-closed.is-failed {
+	color: var(--color-red, var(--text-error));
+}

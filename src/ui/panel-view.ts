@@ -43,6 +43,13 @@ import {
 import { t } from "../i18n";
 import { HabitModal } from "./habit-modal";
 import { MissedHabitsModal } from "./missed-habits-modal";
+import {
+	addDayStatusItems,
+	dayStatus,
+	renderClosedHabits,
+	scheduleSnoozeRefresh,
+	type ClosedHabit,
+} from "./day-status";
 import { ConfirmModal } from "./confirm-modal";
 import { applyHabitIcon } from "./icon-suggest-modal";
 
@@ -59,6 +66,10 @@ export class HabitsPanelView extends ItemView {
 	private habits: HabitDefinition[] = [];
 	/** Suppresses event-driven reloads while a row celebration plays. */
 	private suppressAutoReload = false;
+	/** Whether the "hidden for today" list under the rows is expanded. */
+	private closedOpen = false;
+	/** Cancels the pending refresh for when a snooze ends. */
+	private cancelSnoozeRefresh: () => void = () => {};
 
 	constructor(
 		leaf: WorkspaceLeaf,
@@ -131,6 +142,7 @@ export class HabitsPanelView extends ItemView {
 	}
 
 	async onClose(): Promise<void> {
+		this.cancelSnoozeRefresh();
 		this.contentEl.empty();
 	}
 
@@ -212,9 +224,30 @@ export class HabitsPanelView extends ItemView {
 		return settings.groupsEnabled && settings.sortMode === "group";
 	}
 
+	/** Whether the habit was failed, skipped or snoozed for today. */
+	private isClosedToday(habit: HabitDefinition): boolean {
+		return dayStatus(habit, this.todayKey(), this.store) !== null;
+	}
+
+	/** Habits due today but taken off the list, in order. */
+	private closedHabits(): ClosedHabit[] {
+		const closed: ClosedHabit[] = [];
+		for (const habit of this.habits) {
+			const status = this.isActiveToday(habit)
+				? dayStatus(habit, this.todayKey(), this.store)
+				: null;
+			if (status) {
+				closed.push({ habit, status });
+			}
+		}
+		return closed;
+	}
+
 	/** Sections mirroring the dashboard's grouping behaviour. */
 	private sections(): HabitSection[] {
-		const due = this.habits.filter((habit) => this.isActiveToday(habit));
+		const due = this.habits.filter(
+			(habit) => this.isActiveToday(habit) && !this.isClosedToday(habit),
+		);
 		return groupHabits(
 			due,
 			this.sectioned(),
@@ -330,10 +363,39 @@ export class HabitsPanelView extends ItemView {
 			return;
 		}
 
+		this.cancelSnoozeRefresh();
+		this.cancelSnoozeRefresh = scheduleSnoozeRefresh(
+			root.win,
+			this.store,
+			this.habits,
+			() => this.reload(),
+		);
+		const closed = this.closedHabits();
+		const showClosed = (): void =>
+			renderClosedHabits(
+				root,
+				this,
+				this.store,
+				closed,
+				this.todayKey(),
+				this.closedOpen,
+				(open) => {
+					this.closedOpen = open;
+					this.render();
+				},
+				() => this.render(),
+			);
+
 		const due = this.ordered();
 		if (due.length === 0) {
 			const none = root.createDiv({ cls: "habits-panel-empty" });
-			none.createEl("p", { text: t("Nothing due today.") });
+			none.createEl("p", {
+				text:
+					closed.length > 0
+						? t("Nothing left on today's list.")
+						: t("Nothing due today."),
+			});
+			showClosed();
 			return;
 		}
 
@@ -371,6 +433,7 @@ export class HabitsPanelView extends ItemView {
 				this.renderRow(list, habit);
 			}
 		}
+		showClosed();
 	}
 
 	private renderRow(list: HTMLElement, habit: HabitDefinition): void {
@@ -793,6 +856,9 @@ export class HabitsPanelView extends ItemView {
 		}
 		this.lastMenuAt = now;
 		const menu = new Menu();
+		addDayStatusItems(menu, this.app, this.store, habit, this.todayKey(), () =>
+			this.render(),
+		);
 		menu.addItem((item) =>
 			item
 				.setTitle(t("Open note"))

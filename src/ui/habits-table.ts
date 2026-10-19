@@ -1,6 +1,7 @@
 import {
 	App,
 	MarkdownRenderChild,
+	Menu,
 	TFile,
 	debounce,
 	normalizePath,
@@ -25,6 +26,14 @@ import {
 } from "../stats";
 import { createNoteHabitEntry, notePathForDate } from "../note-habit";
 import {
+	addDayStatusItems,
+	DAY_STATUS_ICON,
+	dayStatus,
+	dayStatusLabel,
+	reopenDay,
+	scheduleSnoozeRefresh,
+} from "./day-status";
+import {
 	formatTimeOfDay,
 	formatValue,
 	friendlyDateLabel,
@@ -33,6 +42,7 @@ import {
 	habitScheduleLabel,
 	roundValue,
 	sectionLabel,
+	registerLongPress,
 	sortHabits,
 	stepOf,
 	toDateKey,
@@ -60,6 +70,15 @@ export class HabitsTable extends MarkdownRenderChild {
 		root: HTMLElement,
 	) {
 		super(root);
+	}
+
+	/** Cancels the pending refresh for when a snooze ends. */
+	private cancelSnoozeRefresh: () => void = () => {};
+	/** Last time a Today-cell menu opened; guards double-fire on long-press. */
+	private lastMenuAt = 0;
+
+	onunload(): void {
+		this.cancelSnoozeRefresh();
 	}
 
 	onload(): void {
@@ -128,6 +147,13 @@ export class HabitsTable extends MarkdownRenderChild {
 		}
 
 		const today = new Date();
+		this.cancelSnoozeRefresh();
+		this.cancelSnoozeRefresh = scheduleSnoozeRefresh(
+			root.win,
+			this.store,
+			habits,
+			() => this.render(),
+		);
 		const columns = this.periodColumns(today);
 		const settings = this.getSettings();
 		const sections = groupHabits(
@@ -217,6 +243,30 @@ export class HabitsTable extends MarkdownRenderChild {
 
 		const todayCell = row.createEl("td", { cls: "habits-table-today" });
 		this.renderTodayCell(todayCell, habit, today);
+		// Right-click (or long-press) the Today cell to fail, skip or
+		// snooze the habit for today, like a dashboard card's menu.
+		const openMenu = (x: number, y: number): void => {
+			const now = Date.now();
+			if (now - this.lastMenuAt < 500) {
+				return;
+			}
+			this.lastMenuAt = now;
+			const menu = new Menu();
+			addDayStatusItems(
+				menu,
+				this.app,
+				this.store,
+				habit,
+				toDateKey(today),
+				() => this.renderTodayCell(todayCell, habit, today),
+			);
+			menu.showAtPosition({ x, y });
+		};
+		this.registerDomEvent(todayCell, "contextmenu", (evt: MouseEvent) => {
+			evt.preventDefault();
+			openMenu(evt.clientX, evt.clientY);
+		});
+		registerLongPress(this, todayCell, openMenu);
 
 		for (const column of columns) {
 			const stats = habitStats(habit, column.range, today);
@@ -248,6 +298,31 @@ export class HabitsTable extends MarkdownRenderChild {
 	): void {
 		cell.empty();
 		const dateKey = toDateKey(today);
+
+		// Failed, skipped or snoozed for today: the row stays (its period
+		// counts are still useful) but the cell says so, and a click puts
+		// the habit back.
+		const status = isActive(habit, today)
+			? dayStatus(habit, dateKey, this.store)
+			: null;
+		if (status) {
+			const pill = this.createPill(
+				cell,
+				DAY_STATUS_ICON[status],
+				dayStatusLabel(habit, status, this.store),
+				t("Undo"),
+				false,
+			);
+			pill.addClass("habits-table-closed");
+			pill.addClass(`is-${status}`);
+			setTooltip(pill, t("Click to undo"));
+			this.registerDomEvent(pill, "click", async () => {
+				pill.disabled = true;
+				await reopenDay(habit, dateKey, status, this.store);
+				this.renderTodayCell(cell, habit, today);
+			});
+			return;
+		}
 
 		if (isPausedOn(habit, dateKey)) {
 			const badge = cell.createSpan({

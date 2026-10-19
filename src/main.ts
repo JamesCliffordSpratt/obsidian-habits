@@ -442,6 +442,7 @@ export default class HabitsPlugin extends Plugin {
 			...(data?.frontmatterKeys ?? {}),
 		};
 		this.settings.groups = { ...(data?.groups ?? {}) };
+		this.settings.snoozes = { ...(data?.snoozes ?? {}) };
 	}
 
 	async saveSettings(): Promise<void> {

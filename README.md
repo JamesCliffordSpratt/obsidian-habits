@@ -24,6 +24,7 @@
 - 🔔 **Reschedule missed habits** *(experimental)* — a badged notification button surfaces missed due days so you can move one onto a different day, past or future, without ever risking a double entry
 - 📌 **Sidebar quick-log panel** — check off today's habits from anywhere, sized for narrow panes
 - ⏸️ **Pause without penalty** — ill or travelling? Paused days never break streaks or drag down your stats
+- 🚫 **Fail, skip or snooze for the day** — already know a habit isn't happening today? Close it out and get it off your list, so you can focus on the rest
 - 💬 **Per-day comments with tags and links** — flip any card over to jot down why a day went the way it did, with `#tag` and `[[note]]` autocomplete; comments live in the note body, so Obsidian indexes them against the day they belong to
 - 📅 **Daily-note aware** — a dashboard inside `2026-07-01.md` shows that day's habits automatically
 - 📱 **Mobile friendly** — responsive cards, long-press menus, and a configurable mobile layout
@@ -266,6 +267,35 @@ group: Health
 - **Pause** a habit when life gets in the way. Paused days are skipped entirely: streaks survive, completion rates ignore them, and the card waits dimmed at the back of the carousel until you resume.
 - **Stop tracking** a habit you've outgrown. It leaves the dashboard and stats but keeps its note and full history, with a one-click resume in its metrics view.
 - **Remove** deletes the habit's note (to your trash) — the only destructive action, and it asks first.
+
+## 🚫 Fail, skip or snooze for the day
+
+Sometimes you know in the morning that a habit isn't happening today: the weather is terrible, so no run. Rather than leaving it on your list all day, right-click its card (or long-press on mobile) and close it out:
+
+- **Fail for today**: the day counts as a miss, exactly as if you hadn't done it. It's a miss even for a limit habit, and even if you'd already logged something. Failing a habit you've already reached the target for isn't offered.
+- **Skip for today**: the day is set aside like a one-day pause, so it never counts for or against the habit and your streak survives. Unlike **Pause**, it ends on its own.
+- **Snooze…**: hide the habit for 30 minutes, 1 hour, 3 hours, or until a time you pick. It comes back by itself, and snoozing never affects your stats. Handy when you don't know yet whether you'll run in the morning or the evening.
+
+The habit leaves today's dashboard and sidebar panel. Underneath the list, a small **"2 hidden for today"** link expands to show what you closed, each with an **Undo** button. In the habits table the row stays, because its weekly and monthly counts are still useful, and the **Today** cell shows "Failed", "Skipped" or "Snoozed until…" instead. Click it to undo, or right-click the Today cell for the same Fail, Skip and Snooze options.
+
+You can also fail or skip a different day: step the dashboard back (or forward) to it and use the same menu. Snooze is for today only.
+
+Failed and skipped days are stored in the habit note's frontmatter, so they sync and stay with your history:
+
+```yaml
+failed:
+  - 2026-10-20
+skipped:
+  - 2026-10-22
+```
+
+A few details:
+
+- **Flexible habits** ("2× a week, any day"): failing or skipping just takes the card off that day. One day can't fail a weekly quota, so the week is still judged on its total.
+- A failed day isn't offered under **Reschedule missed habits**, since you decided it on purpose. A skipped day can't be missed in the first place.
+- No reminder line is written for a habit that's failed for the day.
+- On a habit's metrics heatmaps, a skipped day is drawn like a paused one, and a failed day as a miss, with "Skipped" or "Failed" in the tooltip.
+- Snoozes are kept in the plugin's settings rather than the note, because they're short-lived.
 
 ## 🧪 Experimental features
 

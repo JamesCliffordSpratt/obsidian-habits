@@ -364,6 +364,11 @@ export function isComplete(habit: HabitDefinition, dateKey: string): boolean {
 		const date = fromDateKey(dateKey);
 		return date ? meetsFlexibleTarget(habit, flexiblePeriodTotal(habit, date)) : false;
 	}
+	// "Fail for today" is a deliberate miss: it wins over any logged value,
+	// and over a limit habit's "silence is clean" default.
+	if (isFailedOn(habit, dateKey)) {
+		return false;
+	}
 	const value = habit.records[dateKey] ?? 0;
 	if (habit.goalDirection === "max") {
 		if (dateKey < trackingStartKey(habit)) {
@@ -377,13 +382,34 @@ export function isComplete(habit: HabitDefinition, dateKey: string): boolean {
 	return habit.target > 0 ? value >= habit.target : value > 0;
 }
 
-/** True when the habit was paused on the given day. */
+/**
+ * True when the habit was paused on the given day — including a day the
+ * user skipped ("Skip for today"), which is a one-day pause: it's left out
+ * of streaks and completion rates exactly like any other paused day.
+ */
 export function isPausedOn(habit: HabitDefinition, dateKey: string): boolean {
+	if (isSkippedOn(habit, dateKey)) {
+		return true;
+	}
 	return habit.pauses.some(
 		(pause) =>
 			dateKey >= pause.start &&
 			(pause.end === "" || dateKey <= pause.end),
 	);
+}
+
+/**
+ * True when the user closed the given day as failed ("Fail for today").
+ * Tolerates a habit object built without the list (e.g. a test fixture or
+ * a habit from an older code path), treating it as empty.
+ */
+export function isFailedOn(habit: HabitDefinition, dateKey: string): boolean {
+	return (habit.failed as string[] | undefined)?.includes(dateKey) ?? false;
+}
+
+/** True when the user skipped the given day ("Skip for today"). */
+export function isSkippedOn(habit: HabitDefinition, dateKey: string): boolean {
+	return (habit.skipped as string[] | undefined)?.includes(dateKey) ?? false;
 }
 
 /**
@@ -495,6 +521,9 @@ export function missedInstances(
 			if (
 				isDue(habit, cursor) &&
 				!isPausedOn(habit, key) &&
+				// A failed day was decided on purpose, not forgotten, so
+				// it isn't offered for rescheduling.
+				!isFailedOn(habit, key) &&
 				!isComplete(habit, key)
 			) {
 				results.push({ habit, dateKey: key });

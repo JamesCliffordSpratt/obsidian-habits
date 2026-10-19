@@ -2,7 +2,7 @@ import { App, TFile, moment, normalizePath } from "obsidian";
 import type { HabitStore } from "./habit-store";
 import type { HabitsPluginSettings } from "./settings";
 import type { HabitDefinition } from "./types";
-import { isDue, isPausedOn } from "./stats";
+import { isDue, isFailedOn, isPausedOn } from "./stats";
 import { toDateKey } from "./utils";
 
 /**
@@ -222,6 +222,7 @@ export function reminderLines(
 			habit.goalDirection === "max" ||
 			habit.times.length === 0 ||
 			isPausedOn(habit, dateKey) ||
+			isFailedOn(habit, dateKey) ||
 			!isDue(habit, today)
 		) {
 			continue;
@@ -440,6 +441,7 @@ export class ReminderSync {
 				habit.stopped ||
 				habit.goalDirection === "max" ||
 				isPausedOn(habit, dateKey) ||
+				isFailedOn(habit, dateKey) ||
 				!isDue(habit, today)
 			) {
 				continue;

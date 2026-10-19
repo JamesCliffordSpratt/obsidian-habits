@@ -20,6 +20,13 @@ import { MissedHabitsModal } from "./missed-habits-modal";
 import { createNoteHabitEntry, notePathForDate } from "../note-habit";
 import { ConfirmModal } from "./confirm-modal";
 import { ExportModal } from "./export-modal";
+import {
+	addDayStatusItems,
+	dayStatus,
+	renderClosedHabits,
+	scheduleSnoozeRefresh,
+	type ClosedHabit,
+} from "./day-status";
 import { t } from "../i18n";
 import { renderStatsView } from "./stats-view";
 import {
@@ -88,6 +95,10 @@ export class HabitsDashboard
 	private trackEl: HTMLElement | null = null;
 	/** Suppresses event-driven reloads while an animation sequence plays. */
 	private suppressAutoReload = false;
+	/** Whether the "hidden for today" list under the cards is expanded. */
+	private closedOpen = false;
+	/** Cancels the pending refresh for when a snooze ends. */
+	private cancelSnoozeRefresh: () => void = () => {};
 	/**
 	 * Days whose current "perfect episode" has already been celebrated, so
 	 * confirming a clean limit habit can't replay the celebration on every
@@ -264,16 +275,34 @@ export class HabitsDashboard
 			return;
 		}
 
+		this.cancelSnoozeRefresh();
+		this.cancelSnoozeRefresh = scheduleSnoozeRefresh(
+			this.root.win,
+			this.store,
+			this.habits,
+			() => this.reload(),
+		);
+
 		if (this.orderedHabits().length === 0) {
 			this.renderNothingDueState();
-			return;
-		}
-
-		if (this.getSettings().dashboardLayout === "carousel") {
+		} else if (this.getSettings().dashboardLayout === "carousel") {
 			this.renderCarousel();
 		} else {
 			this.renderGrid();
 		}
+		renderClosedHabits(
+			this.root,
+			this,
+			this.store,
+			this.closedHabits(),
+			toDateKey(this.selectedDate),
+			this.closedOpen,
+			(open) => {
+				this.closedOpen = open;
+				this.render();
+			},
+			() => this.render(),
+		);
 	}
 
 	/**
@@ -522,7 +551,11 @@ export class HabitsDashboard
 	private renderNothingDueState(): void {
 		const empty = this.root.createDiv({ cls: "habits-empty" });
 		empty.createEl("p", {
-			text: t("No habits are due on this day."),
+			// Habits failed, skipped or snoozed are still due, just hidden.
+			text:
+				this.closedHabits().length > 0
+					? t("Nothing left on this day's list.")
+					: t("No habits are due on this day."),
 		});
 	}
 
@@ -1022,6 +1055,7 @@ export class HabitsDashboard
 
 	onunload(): void {
 		this.disposeCommentSuggests();
+		this.cancelSnoozeRefresh();
 	}
 
 	/** Tear down comment suggesters before the cards they belong to go. */
@@ -1085,6 +1119,29 @@ export class HabitsDashboard
 		return isCompleteOn(habit, toDateKey(this.selectedDate));
 	}
 
+	/**
+	 * Whether the habit was taken off the selected day's cards — failed,
+	 * skipped or snoozed (see {@link dayStatus}).
+	 */
+	private isClosedOnSelected(habit: HabitDefinition): boolean {
+		return dayStatus(habit, toDateKey(this.selectedDate), this.store) !== null;
+	}
+
+	/** Habits due on the selected day but taken off its cards, in order. */
+	private closedHabits(): ClosedHabit[] {
+		const dateKey = toDateKey(this.selectedDate);
+		const closed: ClosedHabit[] = [];
+		for (const habit of this.habits) {
+			const status = this.isActiveOnSelected(habit)
+				? dayStatus(habit, dateKey, this.store)
+				: null;
+			if (status) {
+				closed.push({ habit, status });
+			}
+		}
+		return closed;
+	}
+
 	/** Whether the habit is paused on the currently selected day. */
 	private isPausedOnSelected(habit: HabitDefinition): boolean {
 		return isPausedOn(habit, toDateKey(this.selectedDate));
@@ -1131,8 +1188,9 @@ export class HabitsDashboard
 
 	/** Grouped sections before any status ordering. */
 	private rawSections(): HabitSection[] {
-		const due = this.habits.filter((habit) =>
-			this.isActiveOnSelected(habit),
+		const due = this.habits.filter(
+			(habit) =>
+				this.isActiveOnSelected(habit) && !this.isClosedOnSelected(habit),
 		);
 		return groupHabits(
 			due,
@@ -1829,6 +1887,14 @@ export class HabitsDashboard
 		}
 		this.lastMenuAt = now;
 		const menu = new Menu();
+		addDayStatusItems(
+			menu,
+			this.app,
+			this.store,
+			habit,
+			toDateKey(this.selectedDate),
+			() => this.render(),
+		);
 		menu.addItem((item) =>
 			item
 				.setTitle(t("Edit habit"))

@@ -74,6 +74,8 @@ export interface FrontmatterKeys {
 	startDate: string;
 	pauses: string;
 	reschedules: string;
+	failed: string;
+	skipped: string;
 	stopped: string;
 	stopDate: string;
 	icon: string;
@@ -110,6 +112,8 @@ export const DEFAULT_FRONTMATTER_KEYS: FrontmatterKeys = {
 	startDate: "startDate",
 	pauses: "pauses",
 	reschedules: "reschedules",
+	failed: "failed",
+	skipped: "skipped",
 	stopped: "stopped",
 	stopDate: "stopDate",
 	icon: "icon",
@@ -249,6 +253,13 @@ export interface HabitsPluginSettings {
 	/** Reminder-line generation for the Reminder plugin. */
 	reminders: ReminderSettings;
 	/**
+	 * Snoozed habits: habit note path → when the snooze ends (epoch ms).
+	 * Kept here rather than in the habit note because a snooze is
+	 * short-lived and never affects stats. Expired entries are pruned
+	 * whenever a snooze is set or cleared.
+	 */
+	snoozes: Record<string, number>;
+	/**
 	 * Frontmatter property names, so a habit note's frontmatter can share a
 	 * note with another plugin's own properties without colliding.
 	 */
@@ -275,6 +286,7 @@ export const DEFAULT_SETTINGS: HabitsPluginSettings = {
 	experimental: { ...DEFAULT_EXPERIMENTAL },
 	aiSummary: { ...DEFAULT_AI_SUMMARY },
 	reminders: { ...DEFAULT_REMINDERS },
+	snoozes: {},
 	frontmatterKeys: { ...DEFAULT_FRONTMATTER_KEYS },
 };
 
@@ -1090,6 +1102,8 @@ const FRONTMATTER_KEY_GROUPS: {
 			["startDate", () => t("Start date key")],
 			["pauses", () => t("Pauses key")],
 			["reschedules", () => t("Reschedules key")],
+			["failed", () => t("Failed days key")],
+			["skipped", () => t("Skipped days key")],
 			["stopped", () => t("Stopped key")],
 			["stopDate", () => t("Stop date key")],
 		],

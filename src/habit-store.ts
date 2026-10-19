@@ -273,6 +273,8 @@ export class HabitStore {
 			paused: pauses.some((pause) => pause.end === ""),
 			pauses,
 			reschedules: this.readReschedules(fm[k.reschedules]),
+			failed: this.readDateList(fm[k.failed]),
+			skipped: this.readDateList(fm[k.skipped]),
 			stopped: fm[k.stopped] === true,
 			stopDate: this.readDateString(fm[k.stopDate]),
 			records: this.readRecords(fm[k.records]),
@@ -338,6 +340,23 @@ export class HabitStore {
 			return `${year}-${month}-${day}`;
 		}
 		return "";
+	}
+
+	/**
+	 * Parse a frontmatter list of `YYYY-MM-DD` dates (the `failed` and
+	 * `skipped` days), dropping anything that isn't a date. A single scalar
+	 * date is accepted too, for hand-written notes.
+	 */
+	private readDateList(raw: unknown): string[] {
+		const values = Array.isArray(raw) ? raw : raw === undefined ? [] : [raw];
+		const dates = new Set<string>();
+		for (const value of values) {
+			const key = this.readDateString(value);
+			if (/^\d{4}-\d{2}-\d{2}$/.test(key)) {
+				dates.add(key);
+			}
+		}
+		return [...dates].sort();
 	}
 
 	private readNumber(value: unknown, fallback: number): number {
@@ -925,6 +944,89 @@ export class HabitStore {
 			fm[k.pauses] = this.serializePauses(pauses);
 		});
 		new Notice(t('Paused "{name}".', { name: habit.name }));
+	}
+
+	/**
+	 * Close a day as failed or skipped, or reopen it (`null`). A day holds at
+	 * most one of the two, so setting one clears the other; empty lists are
+	 * removed from the frontmatter rather than left as `[]`.
+	 */
+	async setDayStatus(
+		habit: HabitDefinition,
+		dateKey: string,
+		status: "failed" | "skipped" | null,
+	): Promise<void> {
+		const file = this.fileForHabit(habit);
+		if (!file) {
+			new Notice(
+				t('Could not find the note for "{name}".', {
+					name: habit.name,
+				}),
+			);
+			return;
+		}
+		const k = this.keys();
+		await this.app.fileManager.processFrontMatter(file, (frontmatter) => {
+			const fm = frontmatter as Record<string, unknown>;
+			for (const kind of ["failed", "skipped"] as const) {
+				const key = k[kind];
+				const dates = this.readDateList(fm[key]).filter(
+					(date) => date !== dateKey,
+				);
+				if (kind === status) {
+					dates.push(dateKey);
+					dates.sort();
+				}
+				if (dates.length > 0) {
+					fm[key] = dates;
+				} else {
+					delete fm[key];
+				}
+			}
+		});
+		// Mirror the write so a view repainting before the metadata cache
+		// catches up already sees the change.
+		habit.failed = habit.failed.filter((date) => date !== dateKey);
+		habit.skipped = habit.skipped.filter((date) => date !== dateKey);
+		if (status) {
+			habit[status].push(dateKey);
+		}
+	}
+
+	/** When the habit's snooze ends (epoch ms), or null if it isn't snoozed. */
+	snoozedUntil(habit: HabitDefinition, now = Date.now()): number | null {
+		const until = this.getSettings().snoozes[habit.path];
+		return typeof until === "number" && until > now ? until : null;
+	}
+
+	/** Hide a habit from today's lists until `until` (epoch ms). */
+	async snoozeHabit(habit: HabitDefinition, until: number): Promise<void> {
+		await this.writeSnoozes((snoozes) => {
+			snoozes[habit.path] = until;
+		});
+	}
+
+	/** End a habit's snooze early. */
+	async clearSnooze(habit: HabitDefinition): Promise<void> {
+		await this.writeSnoozes((snoozes) => {
+			delete snoozes[habit.path];
+		});
+	}
+
+	/** Apply a change to the snoozes, pruning any that have already ended. */
+	private async writeSnoozes(
+		change: (snoozes: Record<string, number>) => void,
+	): Promise<void> {
+		const now = Date.now();
+		const snoozes: Record<string, number> = {};
+		for (const [path, until] of Object.entries(this.getSettings().snoozes)) {
+			if (until > now) {
+				snoozes[path] = until;
+			}
+		}
+		change(snoozes);
+		this.getSettings().snoozes = snoozes;
+		await this.saveSettings();
 	}
 
 	/** Resume a paused habit; the pause period stays excluded from stats. */

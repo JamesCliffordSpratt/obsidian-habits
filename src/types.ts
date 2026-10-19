@@ -242,6 +242,19 @@ export interface HabitDefinition {
 	 * `experimental.rescheduling`). See {@link HabitReschedule}.
 	 */
 	reschedules: HabitReschedule[];
+	/**
+	 * Days the user closed as failed ("Fail for today"), as `YYYY-MM-DD`.
+	 * A failed day is hidden from that day's lists and always counts as a
+	 * miss, even for a limit habit or a value logged earlier. Flexible
+	 * habits only hide the card: one day can't fail a weekly quota.
+	 */
+	failed: string[];
+	/**
+	 * Days the user skipped ("Skip for today"), as `YYYY-MM-DD`. A skipped
+	 * day is hidden and treated exactly like a one-day pause, so it never
+	 * counts for or against the habit.
+	 */
+	skipped: string[];
 	/** True when the habit is no longer tracked but keeps its history. */
 	stopped: boolean;
 	/** Date tracking stopped, as `YYYY-MM-DD` (empty when tracking). */

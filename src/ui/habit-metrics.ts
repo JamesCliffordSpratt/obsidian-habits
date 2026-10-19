@@ -24,7 +24,9 @@ import {
 	isComplete,
 	isDue,
 	isFlexible,
+	isFailedOn,
 	isPausedOn,
+	isSkippedOn,
 	limitOf,
 	rescheduleSource,
 	trackingStartKey,
@@ -75,6 +77,8 @@ type HeatmapState =
 	| "notdue"
 	| "outside"
 	| "paused"
+	| "skipped"
+	| "failed"
 	| "complete"
 	| "over"
 	| "partial"
@@ -445,8 +449,15 @@ export class HabitMetrics extends MarkdownRenderChild {
 		if (key > todayKey) {
 			return { state: "future", value };
 		}
+		// A skipped day is a one-day pause, so check it first to name it.
+		if (isSkippedOn(habit, key)) {
+			return { state: "skipped", value };
+		}
 		if (isPausedOn(habit, key)) {
 			return { state: "paused", value };
+		}
+		if (isFailedOn(habit, key)) {
+			return { state: "failed", value };
 		}
 		if (isComplete(habit, key)) {
 			return { state: "complete", value };
@@ -467,6 +478,7 @@ export class HabitMetrics extends MarkdownRenderChild {
 			case "over":
 				return withAlpha(red, 0.8);
 			case "paused":
+			case "skipped":
 			case "future":
 				return "transparent";
 			case "outside":
@@ -493,7 +505,7 @@ export class HabitMetrics extends MarkdownRenderChild {
 		neutral: string,
 		background: string,
 	): { color: string; width: number } {
-		if (state === "paused" || state === "future") {
+		if (state === "paused" || state === "skipped" || state === "future") {
 			return { color: withAlpha(neutral, 0.8), width: 1 };
 		}
 		if (rescheduled) {
@@ -519,6 +531,8 @@ export class HabitMetrics extends MarkdownRenderChild {
 			notdue: t("Not due"),
 			outside: t("Outside this month"),
 			paused: t("Paused"),
+			skipped: t("Skipped"),
+			failed: t("Failed"),
 			complete: t("Complete"),
 			over: t("Over limit"),
 			partial: t("Logged"),
